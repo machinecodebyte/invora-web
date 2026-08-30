@@ -1,0 +1,47 @@
+# Features
+
+Business functionality lives here, one directory per frontend module. The
+Foundation module creates the directories and this convention only — every
+folder is intentionally empty of implementation, and no module ships fake data,
+placeholder business logic, or stub API calls.
+
+## Per-feature structure
+
+Each feature owns its full vertical slice:
+
+```text
+features/<feature>/
+  api/         Request functions built on `@/lib/api-client`, and query keys
+  components/  Feature-specific UI, composed from `@/components/ui`
+  hooks/       TanStack Query hooks and feature state
+  schemas/     Zod schemas and inferred form types
+  types/       Feature-owned models (Product, InventoryItem, Forecast, …)
+```
+
+Create only the subdirectories a feature actually needs.
+
+## Rules
+
+- A feature may import from `@/components`, `@/hooks`, `@/lib`, and `@/types`.
+- A feature must not import from another feature. Promote genuinely shared code
+  to `@/components` or `@/lib` instead of reaching sideways.
+- Business models belong to the feature that owns them, never to `@/types`,
+  which holds transport and generic types only.
+- Routes under `src/app` compose features; they do not contain business logic.
+
+## Module ownership
+
+| Directory         | Frontend module                |
+| ----------------- | ------------------------------ |
+| `auth`            | Auth                           |
+| `dashboard`       | Dashboard                      |
+| `products`        | Products                       |
+| `inventory`       | Inventory                      |
+| `sales`           | Sales Upload, Sales History    |
+| `forecasting`     | Forecast Run, Forecast Results |
+| `recommendations` | Recommendations                |
+| `reports`         | Reports                        |
+| `settings`        | Settings                       |
+
+See `docs/architecture.md` for the full architecture and `docs/progress.md` for
+module status.
