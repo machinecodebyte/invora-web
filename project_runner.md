@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (288 tests)
+npm run test              # unit + component (300 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -102,6 +102,7 @@ Then:
 npm run test:e2e          # headless
 npm run test:e2e:ui       # interactive UI mode
 npx playwright test e2e/auth.spec.ts  # Auth suite only
+npx playwright test e2e/dashboard.spec.ts  # Dashboard suite only
 ```
 
 By default Playwright builds the app and serves the production output, so the
@@ -170,9 +171,9 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Dashboard, Products, Inventory, Sales Upload,
-Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and
-Settings modules; any business API call; any business data, real or dummy.
+**Deliberately not implemented:** Products, Inventory, Sales Upload, Sales
+History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings
+modules; any business API call; any business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
 client exists and is tested against mocks, but no business endpoint is called.
@@ -187,7 +188,6 @@ Implemented:
 - Auth provider/action state over the existing in-memory session store
 - Local logout, public-only Auth routes, safe redirect validation, and protected
   route UX
-- `/dashboard` as a protected Auth test placeholder only
 - Unit, component, and Playwright Auth tests with a deterministic test-only
   adapter
 
@@ -195,3 +195,21 @@ Implemented:
 adapter makes no HTTP request and cannot authenticate a production user. The
 Playwright-only adapter is selected only for the managed E2E build and persists
 only a test email, never a token.
+
+## Current Dashboard Scope
+
+Implemented:
+
+- Protected `/dashboard`, reusing the completed Auth provider and access boundary
+- Data-driven KPI cards, responsive demand chart, reorder-alert summary, and
+  high-risk inventory summary aligned to Dashboard Analytics response semantics
+- Explicit loading skeleton plus empty and safe error states
+- Strongly typed `DashboardService` boundary, ready for future API/TanStack Query
+  integration; normal builds make no Dashboard request and show no fake data
+- Dashboard component and Playwright tests, including authenticated, populated,
+  empty, error, protected-route, and mobile flows
+
+**Real Dashboard Analytics integration is intentionally not enabled.** The
+Playwright-only service is selected exclusively in its managed test build and
+reads isolated fixture data from session storage. It is never selected by normal
+application builds.

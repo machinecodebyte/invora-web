@@ -37,9 +37,6 @@ test.describe('Auth', () => {
     await signIn(page);
 
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
-    await expect(
-      page.getByText('Dashboard module will be implemented in Module 2.'),
-    ).toBeVisible();
   });
 
   test('unauthenticated protected navigation redirects to login', async ({ page }) => {

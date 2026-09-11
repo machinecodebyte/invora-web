@@ -9,7 +9,7 @@ Implementation status of the Invora frontend, module by module.
 | Foundation       | **Completed**                            | Next.js 16 App Router, strict TypeScript, Tailwind 4 design tokens, typed API client, `ApiError` model, TanStack Query provider, auth infrastructure, RHF + Zod pattern, logger with redaction, security headers, error/not-found/loading routes, Vitest + RTL + MSW + Playwright harness, 262 unit/component tests, 6 E2E tests, documentation |
 | Shared UI        | **In progress — foundation established** | Button, Input, Label, Card (+ Header/Title/Description/Content/Footer), Spinner, Skeleton, EmptyState, ErrorState, Toaster; AppShell, Header, MainContent, PageContainer. All typed, accessible, and tested. Extended as modules need it.                                                                                                       |
 | Auth             | **Completed**                            | Login and registration routes, React Hook Form + Zod validation aligned to the backend contract, provider/action state, local logout, safe redirect handling, protected/public route boundaries, test-only E2E adapter, 26 unit/component tests, and 9 E2E tests. No real Auth API request is enabled.                                          |
-| Dashboard        | Pending                                  | `src/features/dashboard/` created empty                                                                                                                                                                                                                                                                                                         |
+| Dashboard        | **Completed**                            | Protected responsive Dashboard with backend-aligned KPI, demand-trend, reorder-alert, and inventory-risk view projections; typed no-request service boundary; loading/empty/error states; 12 unit/component tests and 6 E2E tests. Real Dashboard Analytics integration remains disabled.                                                       |
 | Products         | Pending                                  | `src/features/products/` created empty                                                                                                                                                                                                                                                                                                          |
 | Inventory        | Pending                                  | `src/features/inventory/` created empty                                                                                                                                                                                                                                                                                                         |
 | Sales Upload     | Pending                                  | `src/features/sales/` created empty                                                                                                                                                                                                                                                                                                             |
@@ -20,15 +20,16 @@ Implementation status of the Invora frontend, module by module.
 | Reports          | Pending                                  | `src/features/reports/` created empty                                                                                                                                                                                                                                                                                                           |
 | Settings         | Pending                                  | `src/features/settings/` created empty                                                                                                                                                                                                                                                                                                          |
 
-Feature directories exist as placeholders only. They contain no implementation, no
-stub API calls, and no business data.
+Future feature directories exist as placeholders only. They contain no
+implementation, stub API calls, or business data.
 
 ## Backend integration
 
-**Not enabled.** Foundation and Auth make no real backend request. The backend
-(`../backend`) was inspected read-only to align Auth fields and validation, but
-the frontend uses an unavailable-by-default adapter until the API integration
-phase. Each feature module wires up endpoints only when that phase is enabled.
+**Not enabled.** Foundation, Auth, and Dashboard make no real backend request.
+The backend (`../backend`) was inspected read-only to align Auth fields and
+Dashboard Analytics summary semantics, but the frontend uses unavailable or
+no-data-by-default adapters until the API integration phase. Each feature module
+wires up endpoints only when that phase is enabled.
 
 ## Current verification
 
@@ -36,23 +37,23 @@ phase. Each feature module wires up endpoints only when that phase is enabled.
 | ----------------------- | ------------------------------------------------------------------------------------------ |
 | `npm run lint`          | Pass — no errors, no warnings                                                              |
 | `npm run typecheck`     | Pass — no errors                                                                           |
-| `npm run test`          | Pass — 24 files, 288 tests                                                                 |
+| `npm run test`          | Pass — 26 files, 300 tests                                                                 |
 | `npm run test:coverage` | Pass — 97.97% statements, 97.98% branches, 96.85% functions, 97.94% lines (85% thresholds) |
 | `npm run build`         | Pass — `/`, `/dashboard`, `/login`, `/register`, and `/_not-found` compile successfully    |
 | `npm run start`         | Pass — verified via the Playwright managed production server                               |
-| `npm run test:e2e`      | Pass — 15 tests in Chromium against a production build                                     |
+| `npm run test:e2e`      | Pass — 21 tests in Chromium against a production build                                     |
 
 ## Foundation exclusions
 
 Deliberately not implemented, by scope:
 
-- Any future business module (Dashboard through Settings)
+- Future business modules Products through Settings
 - Any business API call
 - Any business data — no fake products, sales, inventory, forecasts,
   recommendations, reports, KPIs, or users
 - Real authentication endpoints, backend session invalidation, token refresh,
   password reset, verification, MFA, or OAuth
-- Dashboard business functionality, analytics, or data
+- Real Dashboard Analytics requests or production fixture data
 - Content-Security-Policy (requires per-request nonce plumbing; see
   [`architecture.md`](architecture.md))
 - External observability platform

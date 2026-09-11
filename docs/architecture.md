@@ -2,9 +2,9 @@
 
 ## Scope of this document
 
-How the Invora frontend is organized, why, and how future modules plug in. The
-Foundation module establishes this architecture; it implements **no business
-module**.
+How the Invora frontend is organized, why, and how modules plug in. Foundation
+establishes the architecture; Auth and Dashboard extend it without changing its
+shared boundaries.
 
 ## Next.js App Router
 
@@ -13,7 +13,7 @@ Routes live in `src/app/` using the App Router.
 ```text
 src/app/
   layout.tsx        Root layout: document shell, metadata, viewport, providers
-  providers.tsx     Client provider composition (TanStack Query)
+  providers.tsx     Client provider composition (TanStack Query, Auth)
   page.tsx          Root page (Foundation status only)
   loading.tsx       Route-level streaming fallback
   error.tsx         Route-level error boundary
@@ -242,8 +242,8 @@ the Auth module.
 - `redirects.ts` — accepts internal paths only and rejects open redirects.
 
 Routes are server components by default: `/login` and `/register` compose small
-client-side form/boundary components; `/dashboard` is an Auth-only protected
-placeholder for E2E verification and contains no Dashboard feature behavior.
+client-side form/boundary components; `/dashboard` composes the protected Module
+2 Dashboard feature without creating a second Auth boundary.
 
 The backend register contract currently returns a token pair, so registration is
 modelled as the same session transition as login. A future HTTP adapter maps that
@@ -252,6 +252,45 @@ response without changing UI, schemas, or route behavior.
 **Frontend Auth route protection is not the backend authorization boundary.** It
 only controls navigation and rendering. Backend APIs must independently enforce
 authentication and authorization when integration is enabled.
+
+## Dashboard architecture
+
+`src/features/dashboard/` is the Module 2 vertical slice:
+
+- `types.ts` defines dashboard-facing, normalized projections aligned to the
+  backend Dashboard Analytics summary: KPI counts, demand-trend points,
+  inventory-risk items, and reorder alerts. It does not duplicate Product,
+  Inventory, Forecast, or Recommendation domain entities.
+- `api.ts` defines `DashboardService`. The normal adapter resolves to `null`,
+  which renders the honest no-data state and performs no HTTP request or endpoint
+  composition. A future HTTP adapter will normalize `/dashboard/summary` through
+  the Foundation API client without changing feature components.
+- `hooks.ts` owns the explicit `loading`, `ready`, `empty`, and `error` view
+  state. It is deliberately independent from Auth state and ready to become a
+  TanStack Query integration seam when live server state is enabled.
+- `components/` composes reusable KPI cards, a lightweight responsive SVG demand
+  chart, reorder-alert and inventory-risk summaries, and a structural skeleton.
+  The chart has textual summary content, so visual data is not its only accessible
+  representation.
+
+The server `app/dashboard/page.tsx` reuses `ProtectedRoute`, `AppShell`,
+`PageContainer`, and `LogoutButton` from completed modules. The smallest client
+boundary is `DashboardView`, which uses the feature hook. No global Dashboard
+store or second Auth system exists.
+
+No chart package was added: the current static demand projection is served by a
+small responsive SVG, avoiding an unnecessary client dependency. Runtime
+Dashboard components are prop/state driven and contain no fake KPI, alert, risk,
+or chart values. Deterministic values live only in `src/tests/fixtures/dashboard.ts`.
+The Playwright-only service is selected with
+`NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE=true` in `playwright.config.ts` and reads
+serialized test fixtures from browser session storage; normal builds never select
+it.
+
+**Module 2 implements Dashboard frontend architecture and UI only. Real Dashboard
+Analytics API integration remains deferred.** Frontend route protection is a UX
+boundary; backend authorization remains the authoritative security boundary once
+API integration is enabled.
 
 ## Form validation strategy
 

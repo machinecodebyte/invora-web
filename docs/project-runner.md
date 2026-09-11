@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation or Auth.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, or Dashboard.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (288 tests)
+npm run test              # both suites (300 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -175,6 +175,7 @@ the command fails below them. Reports land in `coverage/`.
 npm run test:e2e
 npm run test:e2e:ui
 npx playwright test e2e/auth.spec.ts
+npx playwright test e2e/dashboard.spec.ts
 ```
 
 Playwright builds and serves the production output by default, so the smoke test
@@ -197,8 +198,15 @@ that stores only a test email in browser `sessionStorage` so protected navigatio
 survives full-page test navigation. This mode is not enabled by `.env.example`,
 does not contact FastAPI, and never stores a token.
 
-Auth routes are `/login` and `/register`. `/dashboard` is a protected Module 1
-placeholder only; it is not the Dashboard feature.
+### Dashboard E2E behavior
+
+`/dashboard` is the protected Module 2 Dashboard route. It uses the completed
+Auth boundary for UX access control and the normal Dashboard service resolves to
+an honest no-data state without a request. The Playwright-managed build also sets
+`NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE=true`; only in that build, the test service
+reads serialized fixtures from browser `sessionStorage` to exercise populated,
+empty, and error UI states. No fixture is used by normal builds, and no backend
+process is needed.
 
 ## 12. Full verification
 
@@ -207,16 +215,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth:
+Expected results for Foundation + Auth + Dashboard:
 
-| Step            | Expected                                         |
-| --------------- | ------------------------------------------------ |
-| `lint`          | no errors, no warnings                           |
-| `typecheck`     | no errors                                        |
-| `test`          | 24 files, 288 tests passing                      |
-| `test:coverage` | above all 85% thresholds                         |
-| `build`         | compiles; Foundation, Auth, and protected routes |
-| `test:e2e`      | 15 tests passing in Chromium                     |
+| Step            | Expected                                                    |
+| --------------- | ----------------------------------------------------------- |
+| `lint`          | no errors, no warnings                                      |
+| `typecheck`     | no errors                                                   |
+| `test`          | 26 files, 300 tests passing                                 |
+| `test:coverage` | above all 85% thresholds                                    |
+| `build`         | compiles; Foundation, Auth, Dashboard, and protected routes |
+| `test:e2e`      | 21 tests passing in Chromium                                |
 
 ## 13. Troubleshooting
 

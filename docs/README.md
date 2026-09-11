@@ -3,8 +3,8 @@
 Documentation for the Invora frontend: what it is, how it is structured, how to
 run it, and how it is tested.
 
-| Document                                  | Contents                                                                                                                         |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Document                                 | Contents                                                                                                                         |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | [`architecture.md`](architecture.md)     | Feature-based structure, layering rules, server/client strategy, API client and TanStack Query design, future module integration |
 | [`testing.md`](testing.md)               | Vitest, RTL, MSW, and Playwright; what exists today; the per-module test plan                                                    |
 | [`commands.md`](commands.md)             | Every command, what it does, and package-manager notes                                                                           |
@@ -43,19 +43,29 @@ but are not supported by that toolchain yet.
 
 ## Current implementation status
 
-**Foundation: COMPLETED. Auth: COMPLETED.** All remaining business modules are
-**PENDING**. See [`progress.md`](progress.md).
+**Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED.** All remaining
+business modules are **PENDING**. See [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
 local logout, protected-route UX, and a test-only E2E adapter. No real backend
-Auth request or future business-module API call is enabled.
+Auth request is enabled. Module 2 adds the protected Dashboard UI, typed summary
+projections, and explicit loading/empty/error states. No real Dashboard Analytics
+or other business-module API call is enabled.
 
 ## Auth module
 
 `src/features/auth/` owns the Auth adapter contract, provider, schemas, forms,
 redirect validation, and access boundaries. Public routes are `/login` and
-`/register`; `/dashboard` exists only as the protected Auth test destination until
-Module 2. Real backend authentication integration remains intentionally deferred.
+`/register`; `/dashboard` is the protected Dashboard route. Real backend
+authentication integration remains intentionally deferred.
+
+## Dashboard module
+
+`src/features/dashboard/` owns Dashboard Analytics-facing summary types, the
+unavailable-by-default service contract, state hook, and data-driven KPI, chart,
+alert, and inventory-risk components. The normal application never creates fake
+business values or makes a Dashboard API request. Playwright receives serialized
+test fixtures only under its managed test-mode build.
 
 ## How modules will be structured
 
@@ -70,9 +80,9 @@ Details and the full rule set: [`architecture.md`](architecture.md) and
 ## How testing works
 
 Unit tests cover `lib/`, `types/`, and feature schemas/adapter boundaries.
-Component tests cover shared controls plus Auth forms and access boundaries
-through their accessible surface. Playwright covers whole-application behavior in
-a real browser. MSW backs every HTTP interaction in Vitest, configured to fail on
+Component tests cover shared controls plus Auth and Dashboard through their
+accessible surface. Playwright covers whole-application behavior in a real
+browser. MSW backs every HTTP interaction in Vitest, configured to fail on
 unmocked requests.
 
 Details: [`testing.md`](testing.md).

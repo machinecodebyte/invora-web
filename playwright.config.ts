@@ -50,6 +50,8 @@ export default defineConfig({
       NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV ?? 'local',
       // Enables the deterministic adapter only in the Playwright-managed build.
       NEXT_PUBLIC_AUTH_E2E_TEST_MODE: 'true',
+      // Enables the fixture reader only in the Playwright-managed build.
+      NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE: 'true',
       PORT: String(port),
     },
   },
