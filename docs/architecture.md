@@ -190,9 +190,10 @@ Future modules own their query keys and hooks inside their own feature slice.
 
 ## Auth architecture
 
-`src/lib/auth.ts` and `src/hooks/use-auth.ts` provide infrastructure only. There
-are **no auth endpoints, no login/register/refresh calls, and no auth UI** — those
-belong to the Auth module.
+`src/lib/auth.ts` and `src/hooks/use-auth.ts` provide the generic in-memory
+session store and the token-safe store hook. Module 1 extends that foundation
+through `src/features/auth/`; there are still no Auth HTTP requests, endpoint
+paths, refresh calls, or production token persistence.
 
 The store is created by `createAuthStore()` and exposes `getState`, `subscribe`,
 `setSession`, `clearSession`, `getAccessToken`, and `isAuthenticated`. Snapshots
@@ -220,6 +221,37 @@ are reference-stable between mutations, as `useSyncExternalStore` requires.
 The expiry timer is local state management only: it makes no network call and
 does not implement token refresh. Refresh logic remains the responsibility of
 the Auth module.
+
+### Module 1 Auth feature
+
+`src/features/auth/` is a vertical slice containing:
+
+- `api.ts` — an `AuthService` adapter contract. The normal adapter is explicitly
+  unavailable until backend integration; it performs no fetches. Playwright sets
+  `NEXT_PUBLIC_AUTH_E2E_TEST_MODE=true` to select a deterministic test-only
+  adapter. That adapter persists only a test email in `sessionStorage` for
+  full-page E2E navigation, never a token, and is not selected by normal builds.
+- `schemas.ts` — login and registration Zod schemas aligned to the backend's
+  email normalization and password policy. `confirmPassword` is UI-only.
+- `components/auth-provider.tsx` — initialization and pending-action state over
+  the single Foundation `authStore`; it does not create a second session source.
+- `components/login-form.tsx`, `register-form.tsx`, and `logout-button.tsx` —
+  React Hook Form UI with safe errors, loading states, and no credential logging.
+- `components/protected-route.tsx` and `public-only-route.tsx` — client UX
+  boundaries for protected and public Auth routes.
+- `redirects.ts` — accepts internal paths only and rejects open redirects.
+
+Routes are server components by default: `/login` and `/register` compose small
+client-side form/boundary components; `/dashboard` is an Auth-only protected
+placeholder for E2E verification and contains no Dashboard feature behavior.
+
+The backend register contract currently returns a token pair, so registration is
+modelled as the same session transition as login. A future HTTP adapter maps that
+response without changing UI, schemas, or route behavior.
+
+**Frontend Auth route protection is not the backend authorization boundary.** It
+only controls navigation and rendering. Backend APIs must independently enforce
+authentication and authorization when integration is enabled.
 
 ## Form validation strategy
 

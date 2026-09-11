@@ -80,38 +80,43 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation tests
+## Foundation and Auth tests
 
-**262 unit and component tests across 19 files, plus 6 E2E tests. All passing.**
+**288 unit and component tests across 24 files, plus 15 E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
-| File                   | Covers                                                                                                                                                                                                                           |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `utils.test.ts`        | `cn` conflict resolution, number/date formatting incl. invalid input, URL joining                                                                                                                                                |
-| `constants.test.ts`    | Brand strings, `API_V1_PREFIX` matching the backend contract, timeout sanity                                                                                                                                                     |
-| `env.test.ts`          | Env validation: missing/empty/relative/non-http URLs, trailing-slash stripping, environment enum, non-throwing probe                                                                                                             |
-| `api-error.test.ts`    | Envelope parsing, safe status fallbacks, **no leakage of HTML/traceback bodies**, message truncation, detail normalization, correlation id, type guards                                                                          |
-| `api-client.test.ts`   | Query serialization, envelope unwrapping, JSON vs FormData bodies, all verbs, 204/empty bodies, text/blob/void formats, auth headers, header precedence, HTTP/network/parse errors, timeout vs caller abort, base-URL resolution |
-| `auth.test.ts`         | Expiry maths, memory storage, store lifecycle, subscribe/unsubscribe, snapshot stability, injected storage, instance isolation                                                                                                   |
-| `query-client.test.ts` | Retry policy per status class, backoff and cap, client defaults, no mutation retries, per-call independence                                                                                                                      |
-| `toast.test.ts`        | Queueing, dismissal, auto-dismiss timing, timer cancellation, notification semantics, snapshot stability                                                                                                                         |
-| `forms.test.ts`        | API validation errors mapped to fields, unknown/field-less issues routed to form level, non-`ApiError` inputs ignored                                                                                                            |
-| `logger.test.ts`       | Redaction (incl. nested and case-insensitive), level gating in production, behavior when env is misconfigured                                                                                                                    |
-| `pagination.test.ts`   | `hasMorePages`, `currentPageNumber`, `totalPageCount`, divide-by-zero guards                                                                                                                                                     |
+| File                     | Covers                                                                                                                                                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `utils.test.ts`          | `cn` conflict resolution, number/date formatting incl. invalid input, URL joining                                                                                                                                                |
+| `constants.test.ts`      | Brand strings, `API_V1_PREFIX` matching the backend contract, timeout sanity                                                                                                                                                     |
+| `env.test.ts`            | Env validation: missing/empty/relative/non-http URLs, trailing-slash stripping, environment enum, non-throwing probe                                                                                                             |
+| `api-error.test.ts`      | Envelope parsing, safe status fallbacks, **no leakage of HTML/traceback bodies**, message truncation, detail normalization, correlation id, type guards                                                                          |
+| `api-client.test.ts`     | Query serialization, envelope unwrapping, JSON vs FormData bodies, all verbs, 204/empty bodies, text/blob/void formats, auth headers, header precedence, HTTP/network/parse errors, timeout vs caller abort, base-URL resolution |
+| `auth.test.ts`           | Expiry maths, memory storage, store lifecycle, subscribe/unsubscribe, snapshot stability, injected storage, instance isolation                                                                                                   |
+| `query-client.test.ts`   | Retry policy per status class, backoff and cap, client defaults, no mutation retries, per-call independence                                                                                                                      |
+| `toast.test.ts`          | Queueing, dismissal, auto-dismiss timing, timer cancellation, notification semantics, snapshot stability                                                                                                                         |
+| `forms.test.ts`          | API validation errors mapped to fields, unknown/field-less issues routed to form level, non-`ApiError` inputs ignored                                                                                                            |
+| `logger.test.ts`         | Redaction (incl. nested and case-insensitive), level gating in production, behavior when env is misconfigured                                                                                                                    |
+| `pagination.test.ts`     | `hasMorePages`, `currentPageNumber`, `totalPageCount`, divide-by-zero guards                                                                                                                                                     |
+| `auth-schemas.test.ts`   | Backend-aligned email normalization, login requirements, registration password rules, confirmation mismatch, and UI-only confirmation omission                                                                                   |
+| `auth-api.test.ts`       | Unavailable default adapter, deterministic E2E adapter, and test-state cleanup                                                                                                                                                   |
+| `auth-redirects.test.ts` | Internal return paths, external/protocol-relative/backslash rejection, malformed/default fallback                                                                                                                                |
 
 ### Component tests — `src/tests/components/`
 
-| File                 | Covers                                                                                                                                                                                             |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `button.test.tsx`    | Rendering, default `type="button"`, pointer and keyboard activation, disabled, loading (`aria-busy`, blocked clicks, visible label, status region), variants, class override, attribute forwarding |
-| `input.test.tsx`     | Label association, typing, `aria-invalid` present only when invalid, `aria-describedby` error wiring, disabled, `ref` as a plain prop, required marker excluded from the accessible name           |
-| `card.test.tsx`      | Composed card regions, heading level control, attribute forwarding; `Spinner` status role and labels; `Skeleton` hidden from assistive tech                                                        |
-| `states.test.tsx`    | `EmptyState` defaults/actions/decorative icon and absence of an alert role; `ErrorState` `role="alert"`, conditional retry, custom label, keyboard operation                                       |
-| `layout.test.tsx`    | Banner/main/contentinfo landmarks, branding, skip link target and focus order, navigation landmark only when navigation exists, `PageContainer` single `h1`                                        |
-| `toaster.test.tsx`   | Hook-raised toasts, `role="alert"` for errors vs `role="status"` otherwise, labelled dismiss control, clear-all, stacking                                                                          |
-| `providers.test.tsx` | TanStack Query provider works end to end (provider → hook → API client → MSW) and surfaces a normalized, display-safe error                                                                        |
-| `use-auth.test.tsx`  | Unauthenticated default, sign-in/sign-out transitions, external store updates, and that the **access token never reaches the render tree**                                                         |
+| File                       | Covers                                                                                                                                                                                             |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `button.test.tsx`          | Rendering, default `type="button"`, pointer and keyboard activation, disabled, loading (`aria-busy`, blocked clicks, visible label, status region), variants, class override, attribute forwarding |
+| `input.test.tsx`           | Label association, typing, `aria-invalid` present only when invalid, `aria-describedby` error wiring, disabled, `ref` as a plain prop, required marker excluded from the accessible name           |
+| `card.test.tsx`            | Composed card regions, heading level control, attribute forwarding; `Spinner` status role and labels; `Skeleton` hidden from assistive tech                                                        |
+| `states.test.tsx`          | `EmptyState` defaults/actions/decorative icon and absence of an alert role; `ErrorState` `role="alert"`, conditional retry, custom label, keyboard operation                                       |
+| `layout.test.tsx`          | Banner/main/contentinfo landmarks, branding, skip link target and focus order, navigation landmark only when navigation exists, `PageContainer` single `h1`                                        |
+| `toaster.test.tsx`         | Hook-raised toasts, `role="alert"` for errors vs `role="status"` otherwise, labelled dismiss control, clear-all, stacking                                                                          |
+| `providers.test.tsx`       | TanStack Query provider works end to end (provider → hook → API client → MSW) and surfaces a normalized, display-safe error                                                                        |
+| `use-auth.test.tsx`        | Unauthenticated default, sign-in/sign-out transitions, external store updates, and that the **access token never reaches the render tree**                                                         |
+| `auth-forms.test.tsx`      | Login and registration labels, validation, credential normalization, safe errors, adapter inputs, and success redirects                                                                            |
+| `auth-boundaries.test.tsx` | Protected-route redirect/render behavior and logout state cleanup/navigation                                                                                                                       |
 
 ### E2E tests — `e2e/foundation.spec.ts`
 
@@ -123,6 +128,22 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 5. Unknown routes return 404 and render the not-found page
 6. Mobile viewport (375×667) renders without horizontal body overflow
 
+### Auth E2E tests — `e2e/auth.spec.ts`
+
+1. Login route renders branding and accessible form controls
+2. Login validates missing credentials without a network request
+3. Deterministic test-only login reaches the protected placeholder
+4. Unauthenticated dashboard access redirects safely to login
+5. Authenticated protected navigation and public-route bounce behavior work
+6. Logout clears state and restores protected-route redirect behavior
+7. Registration renders, validates email/password/confirmation, and establishes
+   the adapter-backed test session
+
+The Playwright-only adapter is enabled solely through the managed build's
+`NEXT_PUBLIC_AUTH_E2E_TEST_MODE=true` variable. Browser contexts isolate the
+test-only `sessionStorage` value; no FastAPI process or production credential is
+needed.
+
 ### Coverage
 
 Measured with `npm run test:coverage`:
@@ -130,7 +151,7 @@ Measured with `npm run test:coverage`:
 | Metric     | Result | Threshold |
 | ---------- | ------ | --------- |
 | Statements | 97.97% | 85%       |
-| Branches   | 97.97% | 85%       |
+| Branches   | 97.98% | 85%       |
 | Functions  | 96.85% | 85%       |
 | Lines      | 97.94% | 85%       |
 
@@ -170,20 +191,20 @@ Playwright needs a one-time browser install: `npx playwright install chromium`.
 
 Per-module minimum, in addition to unit tests for any new `lib/` logic:
 
-| Module           | Required test layers | Focus                                                                                                              |
-| ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Auth             | unit + E2E           | Schema validation, token handling, session persistence policy, sign-in/sign-out journey, protected-route redirects |
-| Dashboard        | component + E2E      | KPI and chart panels across loading/empty/error states; dashboard loads for an authenticated user                  |
-| Products         | component + E2E      | Product forms, validation, list filtering/pagination; create-edit-archive journey                                  |
-| Inventory        | component + E2E      | Stock adjustment forms, threshold display, low-stock views; stock movement journey                                 |
-| Sales Upload     | component + E2E      | File selection, CSV validation feedback, upload progress, rejected rows; upload journey                            |
-| Sales History    | component            | Filters, pagination, summaries, empty states                                                                       |
-| Forecast Run     | component + E2E      | Run configuration, pre-flight validation, status polling; trigger-run journey                                      |
-| Forecast Results | component + E2E      | Prediction tables, charts, metrics, pagination; view-results journey                                               |
-| Recommendations  | component + E2E      | Recommendation list, risk levels, acknowledge/dismiss; acknowledge journey                                         |
-| Reports          | component            | Report selection, rendering, CSV export trigger                                                                    |
-| Settings         | component            | Preference forms, validation, save and reset feedback                                                              |
-| Shared UI        | unit + component     | Every new primitive: rendering, accessibility, interaction, all states                                             |
+| Module           | Required test layers               | Focus                                                                                                          |
+| ---------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys |
+| Dashboard        | component + E2E                    | KPI and chart panels across loading/empty/error states; dashboard loads for an authenticated user              |
+| Products         | component + E2E                    | Product forms, validation, list filtering/pagination; create-edit-archive journey                              |
+| Inventory        | component + E2E                    | Stock adjustment forms, threshold display, low-stock views; stock movement journey                             |
+| Sales Upload     | component + E2E                    | File selection, CSV validation feedback, upload progress, rejected rows; upload journey                        |
+| Sales History    | component                          | Filters, pagination, summaries, empty states                                                                   |
+| Forecast Run     | component + E2E                    | Run configuration, pre-flight validation, status polling; trigger-run journey                                  |
+| Forecast Results | component + E2E                    | Prediction tables, charts, metrics, pagination; view-results journey                                           |
+| Recommendations  | component + E2E                    | Recommendation list, risk levels, acknowledge/dismiss; acknowledge journey                                     |
+| Reports          | component                          | Report selection, rendering, CSV export trigger                                                                |
+| Settings         | component                          | Preference forms, validation, save and reset feedback                                                          |
+| Shared UI        | unit + component                   | Every new primitive: rendering, accessibility, interaction, all states                                         |
 
 Each module adds MSW handlers for its own endpoints and updates this document
 with the tests it introduced.

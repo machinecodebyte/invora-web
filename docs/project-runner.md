@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in the Foundation module.**
+> **Backend integration is intentionally NOT enabled in Foundation or Auth.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (262 tests)
+npm run test              # both suites (288 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -174,6 +174,7 @@ the command fails below them. Reports land in `coverage/`.
 ```bash
 npm run test:e2e
 npm run test:e2e:ui
+npx playwright test e2e/auth.spec.ts
 ```
 
 Playwright builds and serves the production output by default, so the smoke test
@@ -188,6 +189,17 @@ PLAYWRIGHT_PORT=3100 npm run test:e2e                          # different port
 Artifacts: `playwright-report/` (HTML), `test-results/` (traces, screenshots,
 videos on failure). Both are git-ignored.
 
+### Auth E2E behavior
+
+`e2e/auth.spec.ts` runs against the production build with the Playwright-only
+`NEXT_PUBLIC_AUTH_E2E_TEST_MODE=true` flag. It selects a deterministic adapter
+that stores only a test email in browser `sessionStorage` so protected navigation
+survives full-page test navigation. This mode is not enabled by `.env.example`,
+does not contact FastAPI, and never stores a token.
+
+Auth routes are `/login` and `/register`. `/dashboard` is a protected Module 1
+placeholder only; it is not the Dashboard feature.
+
 ## 12. Full verification
 
 ```bash
@@ -195,16 +207,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for the Foundation module:
+Expected results for Foundation + Auth:
 
-| Step            | Expected                                           |
-| --------------- | -------------------------------------------------- |
-| `lint`          | no errors, no warnings                             |
-| `typecheck`     | no errors                                          |
-| `test`          | 19 files, 262 tests passing                        |
-| `test:coverage` | above all 85% thresholds                           |
-| `build`         | compiles; routes `/` and `/_not-found` prerendered |
-| `test:e2e`      | 6 tests passing in Chromium                        |
+| Step            | Expected                                         |
+| --------------- | ------------------------------------------------ |
+| `lint`          | no errors, no warnings                           |
+| `typecheck`     | no errors                                        |
+| `test`          | 24 files, 288 tests passing                      |
+| `test:coverage` | above all 85% thresholds                         |
+| `build`         | compiles; Foundation, Auth, and protected routes |
+| `test:e2e`      | 15 tests passing in Chromium                     |
 
 ## 13. Troubleshooting
 

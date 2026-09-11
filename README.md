@@ -8,13 +8,16 @@ recommendation system for small-business inventory management.
 ## Current status
 
 **Frontend Module 0 — Foundation: COMPLETED.**
+**Frontend Module 1 — Auth: COMPLETED.**
 
-This repository currently contains the frontend foundation only: application
-shell, design tokens, shared UI primitives, API client, TanStack Query setup,
-auth infrastructure, form validation plumbing, and the full test harness.
+The frontend currently contains the Foundation and Auth modules: application
+shell, shared primitives, API/client infrastructure, login and registration
+routes, local logout, safe protected-route UX, and the full test harness.
 
-No business module is implemented yet, and the frontend is **not** connected to
-the backend API. See [`docs/progress.md`](docs/progress.md) for per-module status.
+Auth uses an adapter boundary and is **not** connected to the backend API yet.
+The Dashboard route is an Auth-only protected placeholder; no Dashboard business
+functionality is implemented. See [`docs/progress.md`](docs/progress.md) for
+per-module status.
 
 ## Technology stack
 
@@ -83,7 +86,7 @@ src/
   components/
     layout/     AppShell, Header, MainContent, PageContainer
     ui/         Button, Input, Label, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
-  features/     One directory per business module (created empty by Foundation)
+  features/     Auth vertical slice plus placeholders for future modules
   hooks/        Shared hooks (use-auth, use-toast)
   lib/          api-client, api-error, query-client, auth, env, forms, logger, toast, constants, utils
   types/        Generic transport and utility types
@@ -99,8 +102,9 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-262 unit and component tests plus a Playwright smoke suite. Coverage of the
-foundation source exceeds the required 85% threshold for every measured metric.
+288 unit and component tests plus 15 Playwright tests cover the Foundation and
+Auth modules. Configured coverage exceeds the required 85% threshold for every
+measured metric.
 
 ```bash
 npm run test
@@ -125,6 +129,7 @@ Strategy and per-module plan: [`docs/testing.md`](docs/testing.md).
 ## Backend
 
 The backend is a separate FastAPI modular monolith in `../backend` and is already
-complete. This module deliberately does not call it: API integration lands with
-each business module. See [`docs/architecture.md`](docs/architecture.md) for the
-integration plan.
+complete. Auth request shapes and validation were aligned with it through a
+read-only inspection, but no frontend Auth request is made at runtime. API
+integration lands in a later integration phase. See
+[`docs/architecture.md`](docs/architecture.md) for the integration plan.

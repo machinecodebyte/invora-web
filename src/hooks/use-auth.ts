@@ -12,7 +12,8 @@ import {
 
 export interface UseAuthResult {
   status: AuthStatus;
-  session: AuthSession | null;
+  /** Session metadata safe to expose to a render tree; never includes a token. */
+  session: Pick<AuthSession, 'expiresAt' | 'user'> | null;
   user: AuthUser | null;
   isAuthenticated: boolean;
   /** Replace the active session; called by the Auth module after sign-in. */
@@ -46,10 +47,18 @@ export function useAuth(): UseAuthResult {
     authStore.clearSession();
   }, []);
 
+  const session =
+    state.session === null
+      ? null
+      : {
+          expiresAt: state.session.expiresAt,
+          user: state.session.user,
+        };
+
   return {
     status: state.status,
-    session: state.session,
-    user: state.session?.user ?? null,
+    session,
+    user: session?.user ?? null,
     isAuthenticated: state.status === 'authenticated',
     setSession,
     signOut,

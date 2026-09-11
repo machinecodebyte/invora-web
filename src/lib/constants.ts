@@ -27,4 +27,7 @@ export const MAIN_CONTENT_ELEMENT_ID = 'main-content';
 /** Application routes owned by the foundation. Feature routes are added by their module. */
 export const ROUTES = {
   home: '/',
+  login: '/login',
+  register: '/register',
+  dashboard: '/dashboard',
 } as const;

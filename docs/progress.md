@@ -8,7 +8,7 @@ Implementation status of the Invora frontend, module by module.
 | ---------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Foundation       | **Completed**                            | Next.js 16 App Router, strict TypeScript, Tailwind 4 design tokens, typed API client, `ApiError` model, TanStack Query provider, auth infrastructure, RHF + Zod pattern, logger with redaction, security headers, error/not-found/loading routes, Vitest + RTL + MSW + Playwright harness, 262 unit/component tests, 6 E2E tests, documentation |
 | Shared UI        | **In progress — foundation established** | Button, Input, Label, Card (+ Header/Title/Description/Content/Footer), Spinner, Skeleton, EmptyState, ErrorState, Toaster; AppShell, Header, MainContent, PageContainer. All typed, accessible, and tested. Extended as modules need it.                                                                                                       |
-| Auth             | Pending                                  | `src/features/auth/` created empty. Infrastructure ready in `lib/auth.ts` and `hooks/use-auth.ts`; no endpoints, no UI.                                                                                                                                                                                                                         |
+| Auth             | **Completed**                            | Login and registration routes, React Hook Form + Zod validation aligned to the backend contract, provider/action state, local logout, safe redirect handling, protected/public route boundaries, test-only E2E adapter, 26 unit/component tests, and 9 E2E tests. No real Auth API request is enabled.                                          |
 | Dashboard        | Pending                                  | `src/features/dashboard/` created empty                                                                                                                                                                                                                                                                                                         |
 | Products         | Pending                                  | `src/features/products/` created empty                                                                                                                                                                                                                                                                                                          |
 | Inventory        | Pending                                  | `src/features/inventory/` created empty                                                                                                                                                                                                                                                                                                         |
@@ -25,34 +25,34 @@ stub API calls, and no business data.
 
 ## Backend integration
 
-**Not enabled.** The Foundation module makes no API calls. The backend
-(`../backend`) is complete, and the frontend API client is built and tested
-against its response contract, but no business endpoint is called yet. Each
-feature module wires up its own endpoints as it is implemented.
+**Not enabled.** Foundation and Auth make no real backend request. The backend
+(`../backend`) was inspected read-only to align Auth fields and validation, but
+the frontend uses an unavailable-by-default adapter until the API integration
+phase. Each feature module wires up endpoints only when that phase is enabled.
 
-## Verification at Foundation completion
+## Current verification
 
 | Check                   | Result                                                                                     |
 | ----------------------- | ------------------------------------------------------------------------------------------ |
 | `npm run lint`          | Pass — no errors, no warnings                                                              |
 | `npm run typecheck`     | Pass — no errors                                                                           |
-| `npm run test`          | Pass — 19 files, 262 tests                                                                 |
-| `npm run test:coverage` | Pass — 97.97% statements, 97.97% branches, 96.85% functions, 97.94% lines (85% thresholds) |
-| `npm run build`         | Pass — `/` and `/_not-found` prerendered as static content                                 |
+| `npm run test`          | Pass — 24 files, 288 tests                                                                 |
+| `npm run test:coverage` | Pass — 97.97% statements, 97.98% branches, 96.85% functions, 97.94% lines (85% thresholds) |
+| `npm run build`         | Pass — `/`, `/dashboard`, `/login`, `/register`, and `/_not-found` compile successfully    |
 | `npm run start`         | Pass — verified via the Playwright managed production server                               |
-| `npm run test:e2e`      | Pass — 6 tests in Chromium against a production build                                      |
+| `npm run test:e2e`      | Pass — 15 tests in Chromium against a production build                                     |
 
 ## Foundation exclusions
 
 Deliberately not implemented, by scope:
 
-- Any business module (Auth through Settings)
+- Any future business module (Dashboard through Settings)
 - Any business API call
 - Any business data — no fake products, sales, inventory, forecasts,
   recommendations, reports, KPIs, or users
-- Authentication endpoints, login/registration UI, password reset, refresh-token
-  flow
-- Dashboard navigation and authenticated chrome
+- Real authentication endpoints, backend session invalidation, token refresh,
+  password reset, verification, MFA, or OAuth
+- Dashboard business functionality, analytics, or data
 - Content-Security-Policy (requires per-request nonce plumbing; see
   [`architecture.md`](architecture.md))
 - External observability platform

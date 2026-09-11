@@ -48,6 +48,8 @@ export default defineConfig({
       NEXT_PUBLIC_API_BASE_URL:
         process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000',
       NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV ?? 'local',
+      // Enables the deterministic adapter only in the Playwright-managed build.
+      NEXT_PUBLIC_AUTH_E2E_TEST_MODE: 'true',
       PORT: String(port),
     },
   },

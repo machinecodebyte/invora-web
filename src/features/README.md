@@ -1,9 +1,9 @@
 # Features
 
-Business functionality lives here, one directory per frontend module. The
-Foundation module creates the directories and this convention only — every
-folder is intentionally empty of implementation, and no module ships fake data,
-placeholder business logic, or stub API calls.
+Business functionality lives here, one directory per frontend module. Module 1
+implements the Auth vertical slice; every other feature directory remains empty
+of implementation. No module ships fake business data, placeholder business
+logic, or stub API calls.
 
 ## Per-feature structure
 

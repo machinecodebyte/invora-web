@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (262 tests)
+npm run test              # unit + component (288 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -101,6 +101,7 @@ Then:
 ```bash
 npm run test:e2e          # headless
 npm run test:e2e:ui       # interactive UI mode
+npx playwright test e2e/auth.spec.ts  # Auth suite only
 ```
 
 By default Playwright builds the app and serves the production output, so the
@@ -169,10 +170,28 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Auth, Dashboard, Products, Inventory, Sales
-Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports,
-and Settings modules; any business API call; any business data, real or dummy.
+**Deliberately not implemented:** Dashboard, Products, Inventory, Sales Upload,
+Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and
+Settings modules; any business API call; any business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
 client exists and is tested against mocks, but no business endpoint is called.
 Integration lands with each feature module.
+
+## Current Auth Scope
+
+Implemented:
+
+- `/login` and `/register` with React Hook Form, Zod, accessible validation, and
+  backend-aligned email/password rules
+- Auth provider/action state over the existing in-memory session store
+- Local logout, public-only Auth routes, safe redirect validation, and protected
+  route UX
+- `/dashboard` as a protected Auth test placeholder only
+- Unit, component, and Playwright Auth tests with a deterministic test-only
+  adapter
+
+**Real backend Auth integration is intentionally not enabled.** The normal
+adapter makes no HTTP request and cannot authenticate a production user. The
+Playwright-only adapter is selected only for the managed E2E build and persists
+only a test email, never a token.
