@@ -12,16 +12,22 @@ recommendation system for small-business inventory management.
 **Frontend Module 2 — Dashboard: COMPLETED.**
 **Frontend Module 3 — Products: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, Dashboard, and Products: the application
+**Frontend Module 4 — Inventory: COMPLETED.**
+
+The frontend currently contains Foundation, Auth, Dashboard, Products, and Inventory: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
 loading, empty, and error states. Module 3 adds a protected Product Catalog with
 create/edit forms, backend-aligned list filters, and explicit loading, empty, and
-error states.
+error states. Module 4 adds protected Inventory monitoring with backend-aligned
+stock status, search/status filters, a dedicated low-stock view, and immutable
+stock-movement updates validated with React Hook Form and Zod. Normal builds
+keep Inventory unavailable rather than showing stock fixtures or making a backend
+request.
 
-Auth, Dashboard, and Products use adapter boundaries and are **not** connected
-to the backend API yet. In normal builds Dashboard and Products show honest
+Auth, Dashboard, Products, and Inventory use adapter boundaries and are **not** connected
+to the backend API yet. In normal builds Dashboard, Products, and Inventory show honest
 no-data states; test fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
@@ -93,7 +99,7 @@ src/
   components/
     layout/     AppShell, Header, MainContent, PageContainer
     ui/         Button, Input, Label, Select, Textarea, Dialog, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
-  features/     Auth, Dashboard, and Products vertical slices plus future-module placeholders
+  features/     Auth, Dashboard, Products, and Inventory vertical slices plus future-module placeholders
   hooks/        Shared hooks (use-auth, use-toast)
   lib/          api-client, api-error, query-client, auth, env, forms, logger, toast, constants, utils
   types/        Generic transport and utility types
@@ -109,8 +115,8 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-320 unit and component tests plus 28 Playwright tests cover the Foundation, Auth,
-Dashboard, and Products modules. Configured coverage exceeds the required 85%
+334 unit and component tests plus 40 Playwright tests cover the Foundation, Auth,
+Dashboard, Products, and Inventory modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
 ```bash
@@ -136,8 +142,9 @@ Strategy and per-module plan: [`docs/testing.md`](docs/testing.md).
 ## Backend
 
 The backend is a separate FastAPI modular monolith in `../backend` and is already
-complete. Auth fields, Dashboard Analytics summary semantics, and Product Catalog
-validation/list semantics were aligned through read-only inspection, but no
-frontend Auth, Dashboard, or Products request is made at runtime. API integration
+complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
+validation/list semantics, and Inventory movement/low-stock semantics were aligned
+through read-only inspection, but no frontend Auth, Dashboard, Products, or Inventory
+request is made at runtime. API integration
 lands in a later integration phase. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.

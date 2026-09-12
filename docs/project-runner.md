@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, or Products.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, or Inventory.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (320 tests)
+npm run test              # both suites (334 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -177,6 +177,7 @@ npm run test:e2e:ui
 npx playwright test e2e/auth.spec.ts
 npx playwright test e2e/dashboard.spec.ts
 npx playwright test e2e/products.spec.ts
+npx playwright test e2e/inventory.spec.ts
 ```
 
 Playwright builds and serves the production output by default, so the smoke test
@@ -218,6 +219,15 @@ fixture adapter reads and mutates isolated browser session storage for
 deterministic list, filter, create, and edit coverage. No production Product data
 or FastAPI process is used.
 
+### Inventory E2E behavior
+
+`/inventory` is the protected Module 4 Inventory route. The normal Inventory
+service never composes an endpoint or makes a request. The Playwright-managed
+build alone sets `NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE=true`; its deterministic
+adapter reads and mutates isolated browser `sessionStorage` fixture state for
+stock-movement flows. It never stores credentials or tokens, is not selected by
+normal builds, and requires no FastAPI process.
+
 ## 12. Full verification
 
 ```bash
@@ -225,16 +235,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory:
 
-| Step            | Expected                                                              |
-| --------------- | --------------------------------------------------------------------- |
-| `lint`          | no errors, no warnings                                                |
-| `typecheck`     | no errors                                                             |
-| `test`          | 30 files, 320 tests passing                                           |
-| `test:coverage` | above all 85% thresholds                                              |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, and protected routes |
-| `test:e2e`      | 28 tests passing in Chromium                                          |
+| Step            | Expected                                                                         |
+| --------------- | -------------------------------------------------------------------------------- |
+| `lint`          | no errors, no warnings                                                           |
+| `typecheck`     | no errors                                                                        |
+| `test`          | 33 files, 334 tests passing                                                      |
+| `test:coverage` | above all 85% thresholds                                                         |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, and protected routes |
+| `test:e2e`      | 40 tests passing in Chromium                                                     |
 
 ## 13. Troubleshooting
 

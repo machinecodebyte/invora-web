@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, and Products extend it without
+establishes the architecture; Auth, Dashboard, Products, and Inventory extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -16,6 +16,7 @@ src/app/
   providers.tsx     Client provider composition (TanStack Query, Auth)
   page.tsx          Root page (Foundation status only)
   products/page.tsx Protected Product Catalog route (Module 3)
+  inventory/page.tsx Protected Inventory route (Module 4)
   loading.tsx       Route-level streaming fallback
   error.tsx         Route-level error boundary
   global-error.tsx  Boundary for failures in the root layout itself
@@ -332,6 +333,42 @@ images are likewise not part of Module 3.
 Frontend Product route protection is UX only. Backend Product Catalog APIs must
 independently enforce authentication and authorization once integration is
 enabled.
+
+## Inventory architecture
+
+The Module 4 Inventory feature is an isolated `src/features/inventory/` vertical
+slice. `types.ts` exposes only backend-safe inventory and embedded Product
+references; it does not duplicate Product Catalog CRUD or model movement history.
+`schemas.ts` and `stock-update-form.tsx` use React Hook Form and Zod to mirror the
+read-only inspected movement contract: `stock_in` and `stock_out` require a
+positive quantity, `adjustment` sets an absolute non-negative quantity, and
+`correction` accepts a non-zero signed delta. Quantities permit no more than three
+decimal places and are retained as text at the form-to-adapter boundary.
+
+`api.ts` defines `InventoryService` with separate list, dedicated low-stock list,
+and immutable stock-movement operations. The normal service intentionally makes
+no endpoint composition or network request; it returns an honest unavailable or
+no-data state until the API integration phase. The low-stock method is separate
+from a status filter because the backend endpoint returns active items where
+`current_stock <= minimum_stock`, including zero-stock items. A future HTTP
+adapter can normalize that contract through the Foundation API client without
+changing the UI or tests.
+
+`hooks.ts` owns explicit loading, ready, empty, error, and stock-update-pending
+state. `components/` composes a semantic, mobile-contained inventory table,
+backend-supported search/status controls, the dedicated low-stock view, safe
+empty/error states, and an accessible movement dialog. The server route
+`app/inventory/page.tsx` reuses the existing `ProtectedRoute`, `AppShell`,
+`PageContainer`, and `LogoutButton`; it creates no new Auth system.
+
+Only the Playwright-managed build selects the deterministic Inventory adapter via
+`NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE=true`. It reads and writes test-supplied,
+session-scoped fixtures, never credentials or tokens. Normal application builds
+do not ship fake inventory data or local persistence.
+
+**Frontend Inventory route protection is UX only. Backend Inventory APIs must
+independently enforce authentication and authorization when integration is
+enabled.**
 
 ## Form validation strategy
 

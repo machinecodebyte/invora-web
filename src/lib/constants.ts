@@ -31,4 +31,5 @@ export const ROUTES = {
   register: '/register',
   dashboard: '/dashboard',
   products: '/products',
+  inventory: '/inventory',
 } as const;
