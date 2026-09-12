@@ -43,13 +43,16 @@ but are not supported by that toolchain yet.
 
 ## Current implementation status
 
-**Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED.** All remaining
+**Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
+COMPLETED.** All remaining
 business modules are **PENDING**. See [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
 local logout, protected-route UX, and a test-only E2E adapter. No real backend
 Auth request is enabled. Module 2 adds the protected Dashboard UI, typed summary
-projections, and explicit loading/empty/error states. No real Dashboard Analytics
+projections, and explicit loading/empty/error states. Module 3 adds a protected
+Product Catalog with backend-aligned validation, list filters, create/edit UI,
+and a no-network service boundary. No real Dashboard Analytics, Product Catalog,
 or other business-module API call is enabled.
 
 ## Auth module
@@ -67,6 +70,16 @@ alert, and inventory-risk components. The normal application never creates fake
 business values or makes a Dashboard API request. Playwright receives serialized
 test fixtures only under its managed test-mode build.
 
+## Products module
+
+The Product Catalog feature owns Product types, service boundary, state hook,
+Zod schemas, and the responsive list/create/edit UI on /products. Production
+builds use an unavailable service that never calls the backend or pretends a
+local write is persistent. The Playwright-managed build alone selects a
+deterministic session-scoped fixture adapter for browser tests. Category
+management, archive/delete, inventory, sales, and all other business modules
+remain outside Module 3.
+
 ## How modules will be structured
 
 Each future module is a vertical slice under `src/features/<feature>/`, owning its
@@ -80,7 +93,7 @@ Details and the full rule set: [`architecture.md`](architecture.md) and
 ## How testing works
 
 Unit tests cover `lib/`, `types/`, and feature schemas/adapter boundaries.
-Component tests cover shared controls plus Auth and Dashboard through their
+Component tests cover shared controls plus Auth, Dashboard, and Products through their
 accessible surface. Playwright covers whole-application behavior in a real
 browser. MSW backs every HTTP interaction in Vitest, configured to fail on
 unmocked requests.

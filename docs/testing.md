@@ -80,9 +80,9 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation, Auth, and Dashboard tests
+## Foundation, Auth, Dashboard, and Products tests
 
-**300 unit and component tests across 26 files, plus 21 E2E tests. All passing.**
+**320 unit and component tests across 30 files, plus 28 E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
@@ -160,16 +160,34 @@ build. `e2e/dashboard.spec.ts` places serialized fixtures in isolated browser
 `sessionStorage`; those values are not production source data and no FastAPI
 process is contacted.
 
+### Products tests
+
+Product schema tests cover backend-aligned name, SKU, unit, description, price,
+and active-status validation plus adapter-boundary normalization. Product service
+tests cover the unavailable default, deterministic session-scoped E2E fixture
+adapter, create/edit behavior, filtering, and malformed fixture safety.
+
+Product component tests cover accessible form fields, invalid and safe mutation
+errors, pending controls, create/update payloads, status text, semantic tables,
+dialog focus behavior, loading, ready, filtered empty, successful empty, and
+safe error states. The dialog test also covers labelled modal semantics, Escape,
+and focus restoration.
+
+Products E2E covers protected-route redirect, authenticated table rendering,
+search, active-status filtering, validation, deterministic create/edit,
+empty/error states, and mobile layout. The Product E2E fixture adapter is
+selected only by the managed Playwright build and never contacts FastAPI.
+
 ### Coverage
 
 Measured with `npm run test:coverage`:
 
 | Metric     | Result | Threshold |
 | ---------- | ------ | --------- |
-| Statements | 97.97% | 85%       |
-| Branches   | 97.98% | 85%       |
-| Functions  | 96.85% | 85%       |
-| Lines      | 97.94% | 85%       |
+| Statements | 94.46% | 85%       |
+| Branches   | 92.95% | 85%       |
+| Functions  | 94.89% | 85%       |
+| Lines      | 94.38% | 85%       |
 
 Uncovered remainder is in `useCallback` bodies reached only through the shared
 module store, and defensive branches in `api-client`/`api-error`.
@@ -207,20 +225,20 @@ Playwright needs a one-time browser install: `npx playwright install chromium`.
 
 Per-module minimum, in addition to unit tests for any new `lib/` logic:
 
-| Module           | Required test layers               | Focus                                                                                                           |
-| ---------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys  |
-| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow |
-| Products         | component + E2E                    | Product forms, validation, list filtering/pagination; create-edit-archive journey                               |
-| Inventory        | component + E2E                    | Stock adjustment forms, threshold display, low-stock views; stock movement journey                              |
-| Sales Upload     | component + E2E                    | File selection, CSV validation feedback, upload progress, rejected rows; upload journey                         |
-| Sales History    | component                          | Filters, pagination, summaries, empty states                                                                    |
-| Forecast Run     | component + E2E                    | Run configuration, pre-flight validation, status polling; trigger-run journey                                   |
-| Forecast Results | component + E2E                    | Prediction tables, charts, metrics, pagination; view-results journey                                            |
-| Recommendations  | component + E2E                    | Recommendation list, risk levels, acknowledge/dismiss; acknowledge journey                                      |
-| Reports          | component                          | Report selection, rendering, CSV export trigger                                                                 |
-| Settings         | component                          | Preference forms, validation, save and reset feedback                                                           |
-| Shared UI        | unit + component                   | Every new primitive: rendering, accessibility, interaction, all states                                          |
+| Module           | Required test layers               | Focus                                                                                                                              |
+| ---------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys                     |
+| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow                    |
+| Products         | unit + component + E2E — completed | Schemas, no-network adapter, forms, list/search/status states, protected route, deterministic create/edit, and mobile browser flow |
+| Inventory        | component + E2E                    | Stock adjustment forms, threshold display, low-stock views; stock movement journey                                                 |
+| Sales Upload     | component + E2E                    | File selection, CSV validation feedback, upload progress, rejected rows; upload journey                                            |
+| Sales History    | component                          | Filters, pagination, summaries, empty states                                                                                       |
+| Forecast Run     | component + E2E                    | Run configuration, pre-flight validation, status polling; trigger-run journey                                                      |
+| Forecast Results | component + E2E                    | Prediction tables, charts, metrics, pagination; view-results journey                                                               |
+| Recommendations  | component + E2E                    | Recommendation list, risk levels, acknowledge/dismiss; acknowledge journey                                                         |
+| Reports          | component                          | Report selection, rendering, CSV export trigger                                                                                    |
+| Settings         | component                          | Preference forms, validation, save and reset feedback                                                                              |
+| Shared UI        | unit + component                   | Every new primitive: rendering, accessibility, interaction, all states                                                             |
 
 Each module adds MSW handlers for its own endpoints and updates this document
 with the tests it introduced.

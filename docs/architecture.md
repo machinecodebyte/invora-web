@@ -3,8 +3,8 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth and Dashboard extend it without changing its
-shared boundaries.
+establishes the architecture; Auth, Dashboard, and Products extend it without
+changing its shared boundaries.
 
 ## Next.js App Router
 
@@ -15,6 +15,7 @@ src/app/
   layout.tsx        Root layout: document shell, metadata, viewport, providers
   providers.tsx     Client provider composition (TanStack Query, Auth)
   page.tsx          Root page (Foundation status only)
+  products/page.tsx Protected Product Catalog route (Module 3)
   loading.tsx       Route-level streaming fallback
   error.tsx         Route-level error boundary
   global-error.tsx  Boundary for failures in the root layout itself
@@ -291,6 +292,46 @@ it.
 Analytics API integration remains deferred.** Frontend route protection is a UX
 boundary; backend authorization remains the authoritative security boundary once
 API integration is enabled.
+
+## Products architecture
+
+The Module 3 Product Catalog lives in the Product feature slice:
+
+- Types define only safe public Product fields and the backend-supported unit and
+  active/inactive status values. Product inventory, category management, sales,
+  and vendor models are intentionally not represented here.
+- The service contract has list, create, and update operations. Its normal
+  implementation is unavailable by design: it composes no endpoint and makes no
+  runtime request. A future HTTP adapter can map the Product Catalog contract
+  through the shared API client without changing the UI.
+- The state hook expresses loading, ready, empty, error, and create/update
+  pending states without a competing global store. It is a future TanStack Query
+  seam, but local no-network state does not force TanStack Query prematurely.
+- Zod schemas mirror backend normalization and constraints for name, SKU, units,
+  optional description, non-negative prices with up to two decimals, and update
+  status. React Hook Form keeps validation feedback and duplicate-submit
+  prevention inside the small client form boundary.
+- Components compose an accessible Product table, search and active-status
+  filters, explicit empty/error/skeleton states, and a reusable dialog for
+  create/edit forms. The server Products route is protected by the existing Auth
+  boundary and reuses the existing app shell and logout control.
+
+The normal application never contains test Product records or claims a local
+create/edit is a persistent server write. Only the Playwright-managed build
+selects the Product fixture adapter through the Products E2E test-mode variable.
+That adapter reads and writes session-scoped browser fixture state supplied by
+the E2E test; it is not selected by normal builds and stores no credentials or
+tokens.
+
+Product list search and active-status filtering align to the read-only inspected
+backend contract. Category selection is deliberately omitted because categories
+are a separate out-of-scope UI concern and the backend permits no category.
+Archive/delete, bulk actions, import/export, inventory operations, and Product
+images are likewise not part of Module 3.
+
+Frontend Product route protection is UX only. Backend Product Catalog APIs must
+independently enforce authentication and authorization once integration is
+enabled.
 
 ## Form validation strategy
 

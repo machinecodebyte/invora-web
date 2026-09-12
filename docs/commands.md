@@ -136,7 +136,7 @@ Runs `src/tests/components/**`.
 npm run test
 ```
 
-Unit + component in one pass (currently 300 tests).
+Unit + component in one pass (currently 320 tests).
 
 Run the Auth-focused Vitest files without changing package scripts:
 
@@ -149,6 +149,7 @@ Run the Dashboard-focused Vitest files:
 
 ```bash
 npx vitest run src/tests/unit/dashboard-api.test.ts src/tests/components/dashboard.test.tsx
+npx vitest run src/tests/unit/products-schemas.test.ts src/tests/unit/products-api.test.ts src/tests/components/products.test.tsx src/tests/components/dialog.test.tsx
 ```
 
 ## Watch mode
@@ -194,6 +195,7 @@ npx playwright test --debug                   # step through
 npx playwright test e2e/foundation.spec.ts    # single file
 npx playwright test e2e/auth.spec.ts          # Auth E2E suite
 npx playwright test e2e/dashboard.spec.ts     # Dashboard E2E suite
+npx playwright test e2e/products.spec.ts      # Products E2E suite
 npx playwright show-report                    # last HTML report
 ```
 

@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, or Dashboard.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, or Products.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (300 tests)
+npm run test              # both suites (320 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -176,6 +176,7 @@ npm run test:e2e
 npm run test:e2e:ui
 npx playwright test e2e/auth.spec.ts
 npx playwright test e2e/dashboard.spec.ts
+npx playwright test e2e/products.spec.ts
 ```
 
 Playwright builds and serves the production output by default, so the smoke test
@@ -208,6 +209,15 @@ reads serialized fixtures from browser `sessionStorage` to exercise populated,
 empty, and error UI states. No fixture is used by normal builds, and no backend
 process is needed.
 
+### Products E2E behavior
+
+/products is the protected Module 3 Product Catalog route. The normal Product
+service returns an honest unavailable state and never makes a request. The
+Playwright-managed build alone sets the Products E2E test-mode variable; its
+fixture adapter reads and mutates isolated browser session storage for
+deterministic list, filter, create, and edit coverage. No production Product data
+or FastAPI process is used.
+
 ## 12. Full verification
 
 ```bash
@@ -215,16 +225,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard:
+Expected results for Foundation + Auth + Dashboard + Products:
 
-| Step            | Expected                                                    |
-| --------------- | ----------------------------------------------------------- |
-| `lint`          | no errors, no warnings                                      |
-| `typecheck`     | no errors                                                   |
-| `test`          | 26 files, 300 tests passing                                 |
-| `test:coverage` | above all 85% thresholds                                    |
-| `build`         | compiles; Foundation, Auth, Dashboard, and protected routes |
-| `test:e2e`      | 21 tests passing in Chromium                                |
+| Step            | Expected                                                              |
+| --------------- | --------------------------------------------------------------------- |
+| `lint`          | no errors, no warnings                                                |
+| `typecheck`     | no errors                                                             |
+| `test`          | 30 files, 320 tests passing                                           |
+| `test:coverage` | above all 85% thresholds                                              |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, and protected routes |
+| `test:e2e`      | 28 tests passing in Chromium                                          |
 
 ## 13. Troubleshooting
 

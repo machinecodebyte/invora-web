@@ -10,16 +10,20 @@ recommendation system for small-business inventory management.
 **Frontend Module 0 — Foundation: COMPLETED.**
 **Frontend Module 1 — Auth: COMPLETED.**
 **Frontend Module 2 — Dashboard: COMPLETED.**
+**Frontend Module 3 — Products: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, and Dashboard: the application
+The frontend currently contains Foundation, Auth, Dashboard, and Products: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
-loading, empty, and error states.
+loading, empty, and error states. Module 3 adds a protected Product Catalog with
+create/edit forms, backend-aligned list filters, and explicit loading, empty, and
+error states.
 
-Auth and Dashboard use adapter boundaries and are **not** connected to the
-backend API yet. In a normal build the Dashboard shows its honest no-data state;
-test fixtures are isolated to component and Playwright infrastructure. See
+Auth, Dashboard, and Products use adapter boundaries and are **not** connected
+to the backend API yet. In normal builds Dashboard and Products show honest
+no-data states; test fixtures are isolated to component and Playwright
+infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
 ## Technology stack
@@ -88,8 +92,8 @@ src/
   app/          Routes, layouts, providers (App Router)
   components/
     layout/     AppShell, Header, MainContent, PageContainer
-    ui/         Button, Input, Label, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
-  features/     Auth and Dashboard vertical slices plus future-module placeholders
+    ui/         Button, Input, Label, Select, Textarea, Dialog, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
+  features/     Auth, Dashboard, and Products vertical slices plus future-module placeholders
   hooks/        Shared hooks (use-auth, use-toast)
   lib/          api-client, api-error, query-client, auth, env, forms, logger, toast, constants, utils
   types/        Generic transport and utility types
@@ -105,9 +109,9 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-300 unit and component tests plus 21 Playwright tests cover the Foundation, Auth,
-and Dashboard modules. Configured coverage exceeds the required 85% threshold for
-every measured metric.
+320 unit and component tests plus 28 Playwright tests cover the Foundation, Auth,
+Dashboard, and Products modules. Configured coverage exceeds the required 85%
+threshold for every measured metric.
 
 ```bash
 npm run test
@@ -132,7 +136,8 @@ Strategy and per-module plan: [`docs/testing.md`](docs/testing.md).
 ## Backend
 
 The backend is a separate FastAPI modular monolith in `../backend` and is already
-complete. Auth fields and Dashboard Analytics summary semantics were aligned
-through read-only inspection, but no frontend Auth or Dashboard request is made at
-runtime. API integration lands in a later integration phase. See
+complete. Auth fields, Dashboard Analytics summary semantics, and Product Catalog
+validation/list semantics were aligned through read-only inspection, but no
+frontend Auth, Dashboard, or Products request is made at runtime. API integration
+lands in a later integration phase. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.

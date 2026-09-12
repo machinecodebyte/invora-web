@@ -52,6 +52,8 @@ export default defineConfig({
       NEXT_PUBLIC_AUTH_E2E_TEST_MODE: 'true',
       // Enables the fixture reader only in the Playwright-managed build.
       NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE: 'true',
+      // Enables the Product Catalog fixture adapter only in E2E builds.
+      NEXT_PUBLIC_PRODUCTS_E2E_TEST_MODE: 'true',
       PORT: String(port),
     },
   },

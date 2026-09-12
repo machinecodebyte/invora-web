@@ -1,8 +1,8 @@
 # Features
 
-Business functionality lives here, one directory per frontend module. Modules 1
-and 2 implement the Auth and Dashboard vertical slices; every future feature
-directory remains empty of implementation. No module ships fake business data,
+Business functionality lives here, one directory per frontend module. Modules 1,
+2, and 3 implement the Auth, Dashboard, and Products vertical slices; every
+future feature directory remains empty of implementation. No module ships fake business data,
 placeholder business logic, or stub API calls.
 
 ## Per-feature structure

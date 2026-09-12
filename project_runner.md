@@ -11,8 +11,8 @@ Quick start for running the Invora frontend locally. For the long-form version
 - Git
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
-No database, Redis, or backend service is required: the Foundation module makes
-no API calls.
+No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
+and Products make no production API calls.
 
 ## Installation
 
@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (300 tests)
+npm run test              # unit + component (320 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -103,6 +103,7 @@ npm run test:e2e          # headless
 npm run test:e2e:ui       # interactive UI mode
 npx playwright test e2e/auth.spec.ts  # Auth suite only
 npx playwright test e2e/dashboard.spec.ts  # Dashboard suite only
+npx playwright test e2e/products.spec.ts   # Products suite only
 ```
 
 By default Playwright builds the app and serves the production output, so the
@@ -160,8 +161,8 @@ Implemented:
 
 - App Router shell with metadata, viewport, error/not-found/loading routes
 - Tailwind CSS 4 design tokens with light and dark palettes
-- Accessible UI primitives: Button, Input, Label, Card, Spinner, Skeleton,
-  EmptyState, ErrorState, Toaster
+- Accessible UI primitives: Button, Input, Label, Select, Textarea, Dialog,
+  Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
 - Layout primitives: AppShell, Header, MainContent, PageContainer
 - Typed API client: timeouts, cancellation, envelope unwrapping, normalized errors
 - `ApiError` model with status, code, validation details, and correlation id
@@ -171,9 +172,9 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Products, Inventory, Sales Upload, Sales
-History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings
-modules; any business API call; any business data, real or dummy.
+**Deliberately not implemented:** Inventory, Sales Upload, Sales History,
+Forecast Run, Forecast Results, Recommendations, Reports, and Settings modules;
+any business API call; any business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
 client exists and is tested against mocks, but no business endpoint is called.
@@ -213,3 +214,20 @@ Implemented:
 Playwright-only service is selected exclusively in its managed test build and
 reads isolated fixture data from session storage. It is never selected by normal
 application builds.
+
+## Current Products Scope
+
+Implemented:
+
+- Protected /products route using the established Auth boundary and app shell
+- Responsive Product Catalog table with search and active-status filters
+- React Hook Form and Zod create/edit form for backend-aligned Product fields
+- Loading, empty, filtered-empty, and safe error states; create/edit pending
+  states and a reusable accessible dialog
+- Typed no-network Product service contract and Product component and Playwright
+  tests, including deterministic test-only create/edit behavior
+
+**Real Product Catalog API integration is intentionally not enabled.** Normal
+builds make no Product request and do not persist local Product writes. The
+Playwright-only adapter is selected only by the managed E2E build and uses
+isolated session-scoped fixture state, never a token or production Product data.
