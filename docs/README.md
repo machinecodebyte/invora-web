@@ -44,7 +44,8 @@ but are not supported by that toolchain yet.
 ## Current implementation status
 
 **Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
-COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED.** All remaining
+COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED. Sales History:
+COMPLETED.** All remaining
 business modules are **PENDING**. See [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
@@ -57,7 +58,7 @@ monitoring, movement validation, and low-stock handling through a no-network
 service boundary. Module 5 adds protected CSV file selection, backend-aligned
 preflight, upload-state UX, safe batch results, and rejected-row presentation
 through a no-network service boundary. No real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, or
-other business-module API call is enabled.
+Sales Transaction API call is enabled.
 
 ## Auth module
 
@@ -106,6 +107,16 @@ rejected-row projections. Its inspected contract is `.csv`, up to 5 MiB, with
 the file; Playwright alone selects a session-scoped deterministic adapter. Sales
 History, transaction management, and Inventory updates remain outside Module 5.
 
+## Sales History module
+
+`src/features/sales/` also owns the protected `/sales` read-only Sales History
+route. It renders a semantic historical transaction table, product/SKU search,
+source and inclusive date filters, backend-aligned offset/limit pagination
+infrastructure, and an accessible quantity-trend chart. The normal
+`SalesHistoryService` returns no data and makes no network request; deterministic
+transaction/trend fixtures exist only in unit and component test infrastructure.
+Real Sales Transaction API integration remains intentionally deferred.
+
 ## How modules will be structured
 
 Each future module is a vertical slice under `src/features/<feature>/`, owning its
@@ -119,7 +130,7 @@ Details and the full rule set: [`architecture.md`](architecture.md) and
 ## How testing works
 
 Unit tests cover `lib/`, `types/`, and feature schemas/adapter boundaries.
-Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, and Sales Upload through their
+Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History through their
 accessible surface. Playwright covers whole-application behavior in a real
 browser. MSW backs every HTTP interaction in Vitest, configured to fail on
 unmocked requests.

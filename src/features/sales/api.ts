@@ -1,4 +1,7 @@
 import type {
+  SalesHistoryPage,
+  SalesHistoryQuery,
+  SalesTrendPoint,
   SalesUploadProgress,
   SalesUploadSubmission,
 } from '@/features/sales/types';
@@ -55,7 +58,12 @@ export type SalesUploadE2EFixture =
   | { readonly state: 'row_errors'; readonly submission: SalesUploadSubmission }
   | { readonly state: 'error' };
 
-const E2E_PROGRESS_DELAY_MS = 80;
+/**
+ * Each Playwright-only progress stage must remain visible long enough for a
+ * browser assertion to observe the rendered state. This is test-adapter UI
+ * pacing, not simulated production transport latency.
+ */
+const E2E_PROGRESS_STAGE_MS = 300;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -127,7 +135,7 @@ function readE2EFixture(): SalesUploadE2EFixture {
 
 function waitForE2EProgress(): Promise<void> {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, E2E_PROGRESS_DELAY_MS);
+    window.setTimeout(resolve, E2E_PROGRESS_STAGE_MS);
   });
 }
 
@@ -163,3 +171,40 @@ const isE2ETestMode = process.env.NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE === 'tr
 export const salesUploadService: SalesUploadService = isE2ETestMode
   ? createE2ESalesUploadService()
   : createUnavailableSalesUploadService();
+
+export type SalesHistoryServiceErrorCode = 'sales_history_unavailable';
+
+/** Safe Sales History error exposed across the service and presentation boundary. */
+export class SalesHistoryServiceError extends Error {
+  constructor(
+    public readonly code: SalesHistoryServiceErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'SalesHistoryServiceError';
+  }
+}
+
+/**
+ * Transport-independent boundary for the Sales Transaction list and trends
+ * projections. The integration phase will provide the HTTP implementation.
+ */
+export interface SalesHistoryService {
+  listSalesHistory(query: SalesHistoryQuery): Promise<SalesHistoryPage | null>;
+  getSalesTrend(query: SalesHistoryQuery): Promise<readonly SalesTrendPoint[] | null>;
+}
+
+/**
+ * Honest normal-runtime placeholder. It sends no transaction or trend request
+ * and keeps the route in its meaningful no-data state until integration.
+ */
+export function createUnavailableSalesHistoryService(): SalesHistoryService {
+  return {
+    listSalesHistory: () => Promise.resolve(null),
+    getSalesTrend: () => Promise.resolve(null),
+  };
+}
+
+/** The sole Sales History service selected for normal frontend builds. */
+export const salesHistoryService: SalesHistoryService =
+  createUnavailableSalesHistoryService();

@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, Inventory, and Sales Upload extend it without
+establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -17,6 +17,7 @@ src/app/
   page.tsx          Root page (Foundation status only)
   products/page.tsx Protected Product Catalog route (Module 3)
   inventory/page.tsx Protected Inventory route (Module 4)
+  sales/page.tsx     Protected Sales History route (Module 6)
   sales/upload/page.tsx Protected Sales Upload route (Module 5)
   loading.tsx       Route-level streaming fallback
   error.tsx         Route-level error boundary
@@ -399,6 +400,38 @@ tokens and is not enabled in a normal build.
 **Frontend Sales Upload route protection is UX only. Backend Sales Upload APIs
 must independently enforce authentication and authorization when integration is
 enabled.**
+
+## Sales History architecture
+
+Modules 5 and 6 share the `src/features/sales/` boundary without sharing UI
+responsibilities. Module 5 owns CSV selection and upload results; Module 6 owns
+the protected, read-only `app/sales/page.tsx` history view. `types.ts` adds a
+minimal Sales Transaction product reference and safe transaction projection: the
+table does not model customers, notes, deleted metadata, or Product Catalog edit
+state.
+
+`SalesHistoryService` defines separate list and trend methods because the
+inspected Sales Transaction contract exposes independent endpoints. The normal
+adapter returns no data and composes no URL or network request. Its future HTTP
+adapter will preserve the backend's inclusive ISO date filters, source/search
+semantics, `limit`/`offset` pagination (limit 1–200), and default `sale_date`
+descending sort. The UI intentionally offers product/SKU search rather than a
+Product Catalog lookup before integration; it does not invent client-side server
+pagination or transaction mutations.
+
+`useSalesHistory` keeps list and chart states independent so an available table
+is not hidden by a trend failure. `salesHistoryFiltersSchema` validates calendar
+date input and rejects start-after-end ranges before a future request. The
+semantic table has responsible horizontal containment, and the lightweight SVG
+quantity trend reuses the Dashboard chart pattern. Currency symbols are omitted
+until application currency configuration exists. Deterministic transaction and
+trend values live only in `src/tests/fixtures/sales-history.ts`.
+
+> Module 6 implements Sales History frontend UI and architecture only. Real Sales Transaction API integration remains intentionally deferred.
+
+**Frontend Sales History filtering and route protection are UX controls. Backend
+APIs remain responsible for authorization, ownership checks, and authoritative
+filtering when integration is enabled.**
 
 ## Form validation strategy
 

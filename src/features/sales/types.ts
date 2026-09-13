@@ -117,3 +117,102 @@ export type SalesUploadViewState =
       readonly metadata: SalesUploadFileMetadata;
       readonly message: string;
     };
+
+/**
+ * Safe, Sales-facing product reference returned with a historical transaction.
+ * It deliberately does not import the Product Catalog editing model.
+ */
+export interface SalesTransactionProductReference {
+  readonly id: string;
+  readonly name: string;
+  readonly sku: string;
+}
+
+/** Backend-defined source values for historical sales transactions. */
+export type SalesTransactionSource = 'csv_upload' | 'manual' | 'api';
+
+/**
+ * Render-ready public transaction projection. Customer names, notes, deletion
+ * metadata, and other detail-only fields intentionally stay outside this
+ * read-only history table model.
+ */
+export interface SalesTransaction {
+  readonly id: string;
+  readonly productId: string;
+  readonly product: SalesTransactionProductReference;
+  readonly uploadBatchId: string | null;
+  /** ISO-8601 calendar date; this is not a browser-local timestamp. */
+  readonly saleDate: string;
+  readonly quantity: number;
+  readonly unitPrice: number | null;
+  readonly totalAmount: number | null;
+  readonly source: SalesTransactionSource;
+  readonly createdAt: string;
+}
+
+/** Supported server-side sort fields kept ready for the future HTTP adapter. */
+export type SalesTransactionSortField =
+  | 'sale_date'
+  | 'quantity'
+  | 'unit_price'
+  | 'total_amount'
+  | 'source'
+  | 'channel'
+  | 'created_at'
+  | 'updated_at'
+  | 'product_name'
+  | 'sku';
+
+export type SalesSortOrder = 'asc' | 'desc';
+
+/** UI-controlled filters supported by the future transaction list endpoint. */
+export interface SalesHistoryFilters {
+  readonly search: string;
+  readonly dateFrom: string;
+  readonly dateTo: string;
+  readonly source: SalesTransactionSource | 'all';
+}
+
+/**
+ * Future list request projection. Pagination follows the backend's offset /
+ * limit model rather than inventing page-number semantics.
+ */
+export interface SalesHistoryQuery {
+  readonly search: string | null;
+  readonly dateFrom: string | null;
+  readonly dateTo: string | null;
+  readonly source: SalesTransactionSource | null;
+  readonly limit: number;
+  readonly offset: number;
+  readonly sortBy: SalesTransactionSortField;
+  readonly sortOrder: SalesSortOrder;
+}
+
+/** Backend-aligned offset/limit list response projection. */
+export interface SalesHistoryPage {
+  readonly transactions: readonly SalesTransaction[];
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
+}
+
+/** Public trend aggregate returned by the backend Sales Transaction trends API. */
+export interface SalesTrendPoint {
+  /** ISO-8601 calendar date representing the returned reporting period. */
+  readonly periodStart: string;
+  readonly totalQuantity: number;
+  readonly totalAmount: number;
+  readonly transactionCount: number;
+}
+
+export type SalesHistoryListState =
+  | { readonly status: 'loading' }
+  | { readonly status: 'ready'; readonly data: SalesHistoryPage }
+  | { readonly status: 'empty' }
+  | { readonly status: 'error'; readonly message: string };
+
+export type SalesHistoryChartState =
+  | { readonly status: 'loading' }
+  | { readonly status: 'ready'; readonly points: readonly SalesTrendPoint[] }
+  | { readonly status: 'empty' }
+  | { readonly status: 'error'; readonly message: string };

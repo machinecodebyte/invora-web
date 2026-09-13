@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, or Sales Upload.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, or Sales History.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (345 tests)
+npm run test              # both suites (357 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -238,6 +238,15 @@ its deterministic, session-scoped fixture adapter supplies progress, completed
 batch summaries, safe row errors, or a safe failure. It is not a mock backend,
 never persists file contents, and requires no FastAPI process.
 
+### Sales History component behavior
+
+`/sales` is the protected Module 6 read-only Sales History route. Its normal
+`SalesHistoryService` composes no endpoint and resolves to no data; it has no
+Playwright fixture mode or Module 6 E2E suite. Unit/component tests inject
+isolated transaction and trend fixtures to verify the table, filters, pagination,
+quantity trend, and safe states without a FastAPI process. `/sales/upload`
+remains the separate Module 5 upload workflow.
+
 ## 12. Full verification
 
 ```bash
@@ -245,16 +254,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History:
 
-| Step            | Expected                                                                                       |
-| --------------- | ---------------------------------------------------------------------------------------------- |
-| `lint`          | no errors, no warnings                                                                         |
-| `typecheck`     | no errors                                                                                      |
-| `test`          | 36 files, 345 tests passing                                                                    |
-| `test:coverage` | above all 85% thresholds                                                                       |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, and protected routes |
-| `test:e2e`      | 51 tests passing in Chromium                                                                   |
+| Step            | Expected                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `lint`          | no errors, no warnings                                                                                        |
+| `typecheck`     | no errors                                                                                                     |
+| `test`          | 39 files, 357 tests passing                                                                                   |
+| `test:coverage` | above all 85% thresholds                                                                                      |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and protected routes |
+| `test:e2e`      | 51 tests passing in Chromium                                                                                  |
 
 ## 13. Troubleshooting
 

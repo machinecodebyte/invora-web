@@ -6,6 +6,8 @@ import {
   type SalesUploadFileError,
   type SalesUploadFileMetadata,
   type SalesUploadPreflightResult,
+  type SalesHistoryFilters,
+  type SalesTransactionSource,
 } from '@/features/sales/types';
 
 const MAX_HEADER_INSPECTION_BYTES = 64 * 1024;
@@ -205,4 +207,64 @@ export async function validateSalesUploadFile(
   }
 
   return { valid: true, metadata };
+}
+
+const SALES_TRANSACTION_SOURCES = ['csv_upload', 'manual', 'api'] as const;
+
+const optionalSalesHistoryDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/u, 'Use a valid calendar date.')
+  .or(z.literal(''));
+
+/**
+ * Browser-side validation for backend-supported list filters. Date strings are
+ * intentionally left as ISO calendar dates so a future adapter can preserve
+ * the API's inclusive date semantics without timezone conversion.
+ */
+export const salesHistoryFiltersSchema = z
+  .object({
+    search: z.string().trim().max(255, 'Search must be 255 characters or fewer.'),
+    dateFrom: optionalSalesHistoryDateSchema,
+    dateTo: optionalSalesHistoryDateSchema,
+    source: z.enum(['all', ...SALES_TRANSACTION_SOURCES]),
+  })
+  .superRefine((filters, context) => {
+    if (
+      filters.dateFrom !== '' &&
+      filters.dateTo !== '' &&
+      filters.dateFrom > filters.dateTo
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dateTo'],
+        message: 'End date must be on or after the start date.',
+      });
+    }
+  });
+
+export interface SalesHistoryFilterValidation {
+  readonly valid: boolean;
+  readonly message: string | null;
+}
+
+/** Returns a safe user-facing validation message for the filter toolbar. */
+export function validateSalesHistoryFilters(
+  filters: SalesHistoryFilters,
+): SalesHistoryFilterValidation {
+  const result = salesHistoryFiltersSchema.safeParse(filters);
+  if (result.success) {
+    return { valid: true, message: null };
+  }
+
+  return {
+    valid: false,
+    message: result.error.issues.at(0)?.message ?? 'Review the sales filters.',
+  };
+}
+
+/** Narrows a native select value without trusting arbitrary DOM values. */
+export function isSalesTransactionSource(
+  value: string,
+): value is SalesTransactionSource {
+  return SALES_TRANSACTION_SOURCES.includes(value as SalesTransactionSource);
 }

@@ -12,7 +12,7 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
-Products, Inventory, and Sales Upload make no production API calls.
+Products, Inventory, Sales Upload, and Sales History make no production API calls.
 
 ## Installation
 
@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (345 tests)
+npm run test              # unit + component (357 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -174,8 +174,8 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Sales History,
-Forecast Run, Forecast Results, Recommendations, Reports, and Settings modules;
+**Deliberately not implemented:** Forecast Run, Forecast Results, Recommendations,
+Reports, and Settings modules;
 any business API call; any production business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
@@ -270,3 +270,19 @@ Implemented:
 service never sends or persists a file. Only the Playwright-managed build selects
 a test-only session fixture adapter; it does not contact FastAPI or retain file
 contents after the browser test.
+
+## Current Sales History Scope
+
+Implemented:
+
+- Protected `/sales` route using the existing Auth boundary and app shell
+- Read-only, responsive semantic transaction table with safe public fields
+- Product/SKU search, source and inclusive date filters with date-range feedback
+- Backend-aligned offset/limit pagination infrastructure and accessible quantity trend
+- Independent table/chart loading, empty, filtered-empty, and safe error states
+- Typed no-network service boundary with deterministic unit/component fixtures
+
+**Real Sales Transaction API integration is intentionally not enabled.** The
+normal service makes no request and renders no fake sales. Sales History has
+component coverage only by roadmap; completed Modules 1–5 E2E suites remain part
+of full regression.

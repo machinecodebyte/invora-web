@@ -1,17 +1,28 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  SalesHistoryServiceError,
   SalesUploadServiceError,
+  salesHistoryService,
   salesUploadService,
+  type SalesHistoryService,
   type SalesUploadService,
 } from '@/features/sales/api';
 import {
   getSalesUploadFileMetadata,
+  validateSalesHistoryFilters,
   validateSalesUploadFile,
 } from '@/features/sales/schemas';
-import type { SalesUploadProgress, SalesUploadViewState } from '@/features/sales/types';
+import type {
+  SalesHistoryChartState,
+  SalesHistoryFilters,
+  SalesHistoryListState,
+  SalesHistoryQuery,
+  SalesUploadProgress,
+  SalesUploadViewState,
+} from '@/features/sales/types';
 
 const GENERIC_UPLOAD_ERROR = 'Unable to upload the sales file.';
 
@@ -120,4 +131,175 @@ export function useSalesUpload(
   }, [state, uploadFile]);
 
   return { state, selectFile, upload, retry, reset };
+}
+
+const GENERIC_SALES_HISTORY_ERROR = 'Unable to load sales history.';
+const GENERIC_SALES_CHART_ERROR = 'Unable to load sales chart.';
+
+export const DEFAULT_SALES_HISTORY_FILTERS: SalesHistoryFilters = {
+  search: '',
+  dateFrom: '',
+  dateTo: '',
+  source: 'all',
+};
+
+/** Matches the backend list endpoint's default limit and sort convention. */
+export const SALES_HISTORY_DEFAULT_LIMIT = 50;
+
+function toSafeSalesHistoryErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof SalesHistoryServiceError ? error.message : fallback;
+}
+
+function createSalesHistoryQuery(
+  filters: SalesHistoryFilters,
+  offset: number,
+): SalesHistoryQuery {
+  const search = filters.search.trim();
+  return {
+    search: search === '' ? null : search,
+    dateFrom: filters.dateFrom === '' ? null : filters.dateFrom,
+    dateTo: filters.dateTo === '' ? null : filters.dateTo,
+    source: filters.source === 'all' ? null : filters.source,
+    limit: SALES_HISTORY_DEFAULT_LIMIT,
+    offset,
+    sortBy: 'sale_date',
+    sortOrder: 'desc',
+  };
+}
+
+export function hasActiveSalesHistoryFilters(filters: SalesHistoryFilters): boolean {
+  return (
+    filters.search.trim() !== '' ||
+    filters.dateFrom !== '' ||
+    filters.dateTo !== '' ||
+    filters.source !== 'all'
+  );
+}
+
+export interface UseSalesHistoryResult {
+  readonly listState: SalesHistoryListState;
+  readonly chartState: SalesHistoryChartState;
+  readonly filters: SalesHistoryFilters;
+  readonly filterError: string | null;
+  readonly setFilters: (filters: SalesHistoryFilters) => void;
+  readonly clearFilters: () => void;
+  readonly setPageOffset: (offset: number) => void;
+  readonly reload: () => void;
+}
+
+/**
+ * Loads list and trend projections independently because the inspected backend
+ * exposes distinct endpoints. This preserves a usable table when chart data is
+ * temporarily unavailable, while keeping all requests behind a future adapter.
+ */
+export function useSalesHistory(
+  service: SalesHistoryService = salesHistoryService,
+): UseSalesHistoryResult {
+  const [filters, setFiltersState] = useState<SalesHistoryFilters>(
+    DEFAULT_SALES_HISTORY_FILTERS,
+  );
+  const [offset, setOffset] = useState(0);
+  const [requestVersion, setRequestVersion] = useState(0);
+  const [listState, setListState] = useState<SalesHistoryListState>({
+    status: 'loading',
+  });
+  const [chartState, setChartState] = useState<SalesHistoryChartState>({
+    status: 'loading',
+  });
+  const validation = validateSalesHistoryFilters(filters);
+  const query = useMemo(
+    () => createSalesHistoryQuery(filters, offset),
+    [filters, offset],
+  );
+
+  useEffect(() => {
+    if (!validation.valid) {
+      return undefined;
+    }
+
+    let active = true;
+
+    void service
+      .listSalesHistory(query)
+      .then((page) => {
+        if (!active) {
+          return;
+        }
+        setListState(
+          page === null ? { status: 'empty' } : { status: 'ready', data: page },
+        );
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setListState({
+            status: 'error',
+            message: toSafeSalesHistoryErrorMessage(error, GENERIC_SALES_HISTORY_ERROR),
+          });
+        }
+      });
+
+    void service
+      .getSalesTrend(query)
+      .then((points) => {
+        if (!active) {
+          return;
+        }
+        setChartState(
+          points === null || points.length === 0
+            ? { status: 'empty' }
+            : { status: 'ready', points },
+        );
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setChartState({
+            status: 'error',
+            message: toSafeSalesHistoryErrorMessage(error, GENERIC_SALES_CHART_ERROR),
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [query, requestVersion, service, validation.valid]);
+
+  const setFilters = useCallback((nextFilters: SalesHistoryFilters): void => {
+    setFiltersState(nextFilters);
+    setOffset(0);
+    if (validateSalesHistoryFilters(nextFilters).valid) {
+      setListState({ status: 'loading' });
+      setChartState({ status: 'loading' });
+    }
+  }, []);
+
+  const clearFilters = useCallback((): void => {
+    setFiltersState(DEFAULT_SALES_HISTORY_FILTERS);
+    setOffset(0);
+    setListState({ status: 'loading' });
+    setChartState({ status: 'loading' });
+  }, []);
+
+  const setPageOffset = useCallback((nextOffset: number): void => {
+    setOffset(Math.max(nextOffset, 0));
+    setListState({ status: 'loading' });
+    setChartState({ status: 'loading' });
+  }, []);
+
+  const reload = useCallback((): void => {
+    setListState({ status: 'loading' });
+    setChartState({ status: 'loading' });
+    setRequestVersion((version) => version + 1);
+  }, []);
+
+  return {
+    listState,
+    chartState,
+    filters,
+    filterError: validation.message,
+    setFilters,
+    clearFilters,
+    setPageOffset,
+    reload,
+  };
 }
