@@ -19,8 +19,9 @@ recommendation system for small-business inventory management.
 **Frontend Module 6 — Sales History: COMPLETED.**
 
 **Frontend Module 7 — Forecast Run: COMPLETED.**
+**Frontend Module 8 — Forecast Results: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run: the application
+The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
@@ -38,10 +39,14 @@ Transaction request and do not contain sales records. Module 7 adds a protected
 Forecast Run form with backend-aligned 7-, 15-, and 30-day horizons, explicit
 pending/running/completed/failed lifecycle presentation, and manual status refresh.
 Normal builds make no Forecast Run or ML request and do not contain forecast data.
+Module 8 adds a protected completed-run results route with backend-aligned summary,
+MAE/RMSE/MAPE, paginated prediction rows, and an accessible actual-versus-predicted
+chart that preserves missing actual observations. Normal builds make no Forecast
+Results, backend, or ML request and contain no forecast result data.
 
-Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run use adapter boundaries and
+Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results use adapter boundaries and
 are **not** connected to the backend API yet. In normal builds Dashboard,
-Products, Inventory, Sales Upload, Sales History, and Forecast Run remain honest; test fixtures are isolated to component and Playwright
+Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results remain honest; test fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
@@ -128,8 +133,8 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-367 unit and component tests plus 58 Playwright tests cover the Foundation, Auth,
-Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run modules. Configured coverage exceeds the required 85%
+381 unit and component tests plus 67 Playwright tests cover the Foundation, Auth,
+Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
 ```bash
@@ -157,8 +162,8 @@ Strategy and per-module plan: [`docs/testing.md`](docs/testing.md).
 The backend is a separate FastAPI modular monolith in `../backend` and is already
 complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
-CSV requirements, Sales Transaction list/trend semantics, and Forecast Run
+CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
 horizon/lifecycle semantics were aligned through read-only inspection, but no frontend Auth,
-Dashboard, Products, Inventory, Sales Upload, Sales Transaction, or Forecast Run request is made at runtime. API integration
+Dashboard, Products, Inventory, Sales Upload, Sales Transaction, Forecast Run, or Forecast Results request is made at runtime. API integration
 lands in a later integration phase. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.

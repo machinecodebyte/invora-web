@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run extend it without
+establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -18,6 +18,7 @@ src/app/
   products/page.tsx Protected Product Catalog route (Module 3)
   inventory/page.tsx Protected Inventory route (Module 4)
   forecasts/runs/page.tsx Protected Forecast Run route (Module 7)
+  forecasts/results/page.tsx Protected Forecast Results route (Module 8)
   sales/page.tsx     Protected Sales History route (Module 6)
   sales/upload/page.tsx Protected Sales Upload route (Module 5)
   loading.tsx       Route-level streaming fallback
@@ -482,6 +483,47 @@ contain no forecast run, prediction, result, progress, or ML fixture data.
 **Frontend Forecast Run route protection and lifecycle presentation are UX only.
 Backend APIs must independently enforce authentication, authorization, ownership,
 validation, and run lifecycle transitions when integration is enabled.**
+
+## Forecast Results architecture
+
+Module 8 extends `features/forecasting/` without changing the Module 7 Forecast
+Run composition:
+
+```text
+features/forecasting/
+  api.ts        ForecastResultsService boundary and Playwright-only fixture reader
+  hooks.ts      Query-local loading, ready, empty, not-ready, failed, and error state
+  schemas.ts    Validated UUID run id and backend-supported result filters
+  types.ts      Safe overview, metrics, prediction, chart, pagination projections
+  components/   Summary, metrics, filters, table, chart, skeleton, and page view
+```
+
+`app/forecasts/results/page.tsx` is a Server Component that accepts the optional
+untrusted `runId` query parameter and passes it to the protected client boundary.
+The feature accepts only UUID values, renders an explicit no-selection/invalid-id
+state otherwise, and never selects a “latest” run. Filters are limited to the
+inspected result-list contract: product/SKU search and inclusive forecast dates;
+the list uses backend-shaped `limit`/`offset` pagination and forecast-date sort.
+
+`ForecastResultsService` is a transport-neutral read boundary. Its normal adapter
+does not compose an endpoint or make a request. A future HTTP adapter can compose
+the backend overview, prediction-list, metrics, and chart reads without changing
+the components. The Playwright-only adapter is selected only when
+`NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE=true` and reads a test-supplied,
+session-scoped fixture. It is not a production mock backend or data store.
+
+The summary shows only backend response fields. Evaluation cards render only MAE,
+RMSE, and MAPE. The prediction table deliberately has no actual-demand column,
+because actual quantity is absent from its backend contract. The separate
+aggregate chart carries nullable `actualQuantity`; `null` is shown as unavailable
+and is never coerced to zero. Its chart failure remains local so available summary
+and prediction data can remain usable when the future adapter supports partial
+responses.
+
+> Frontend Forecast Results route protection, UUID validation, and filter UI are
+> user-experience controls only. Backend APIs must independently enforce
+> authentication, authorization, run ownership, result readiness, and filtering
+> when integration is enabled.
 
 ## Form validation strategy
 

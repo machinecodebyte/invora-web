@@ -136,7 +136,7 @@ Runs `src/tests/components/**`.
 npm run test
 ```
 
-Unit + component in one pass (currently 367 tests).
+Unit + component in one pass (currently 381 tests).
 
 Run the Auth-focused Vitest files without changing package scripts:
 
@@ -154,6 +154,7 @@ npx vitest run src/tests/unit/inventory-schemas.test.ts src/tests/unit/inventory
 npx vitest run src/tests/unit/sales-upload-schemas.test.ts src/tests/unit/sales-upload-api.test.ts src/tests/components/sales-upload.test.tsx
 npx vitest run src/tests/unit/sales-history-schemas.test.ts src/tests/unit/sales-history-api.test.ts src/tests/components/sales-history.test.tsx
 npx vitest run src/tests/unit/forecast-run-schemas.test.ts src/tests/unit/forecast-run-api.test.ts src/tests/components/forecast-run.test.tsx
+npx vitest run src/tests/unit/forecast-results-schemas.test.ts src/tests/unit/forecast-results-api.test.ts src/tests/components/forecast-results.test.tsx
 ```
 
 ## Watch mode
@@ -203,6 +204,7 @@ npx playwright test e2e/products.spec.ts      # Products E2E suite
 npx playwright test e2e/inventory.spec.ts     # Inventory E2E suite
 npx playwright test e2e/sales-upload.spec.ts  # Sales Upload E2E suite
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run E2E suite
+npx playwright test e2e/forecast-results.spec.ts # Forecast Results E2E suite
 npx playwright show-report                    # last HTML report
 ```
 

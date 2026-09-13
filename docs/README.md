@@ -45,7 +45,7 @@ but are not supported by that toolchain yet.
 
 **Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
 COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED. Sales History:
-COMPLETED. Forecast Run: COMPLETED.** All remaining
+COMPLETED. Forecast Run: COMPLETED. Forecast Results: COMPLETED.** All remaining
 business modules are **PENDING**. See [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
@@ -59,8 +59,10 @@ service boundary. Module 5 adds protected CSV file selection, backend-aligned
 preflight, upload-state UX, safe batch results, and rejected-row presentation
 through a no-network service boundary. Module 7 adds a protected global Forecast
 Run configuration and lifecycle-status surface with a no-network service boundary.
-No real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, Sales
-Transaction, Forecast Run, or ML API call is enabled.
+Module 8 adds a protected completed-run Forecast Results surface with a no-network
+result adapter, summary, allowed metrics, prediction list, filters, and an
+actual-versus-predicted aggregate chart. No real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, Sales
+Transaction, Forecast Run, Forecast Results, or ML API call is enabled.
 
 ## Auth module
 
@@ -132,6 +134,19 @@ makes no request; the Playwright-managed build alone selects a deterministic,
 session-scoped test adapter. Real Forecast Run and ML integration remain
 intentionally deferred.
 
+## Forecast Results module
+
+`src/features/forecasting/` also owns the protected `/forecasts/results` route.
+It accepts only a validated UUID `runId` query, then composes safe completed-run
+summary fields, backend-produced MAE/RMSE/MAPE metrics, offset/limit prediction
+rows, product/SKU and inclusive date filters, and an accessible lightweight SVG
+aggregate chart. Actual quantity is nullable and is never converted to zero;
+the prediction table does not invent actual values because they are absent from
+the backend list contract. Normal runtime uses an unavailable service with no
+HTTP/ML call. Playwright alone receives isolated session-scoped result fixtures.
+Real Forecast Results API and ML pipeline integration remain intentionally
+deferred.
+
 ## How modules will be structured
 
 Each future module is a vertical slice under `src/features/<feature>/`, owning its
@@ -145,7 +160,7 @@ Details and the full rule set: [`architecture.md`](architecture.md) and
 ## How testing works
 
 Unit tests cover `lib/`, `types/`, and feature schemas/adapter boundaries.
-Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run through their
+Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results through their
 accessible surface. Playwright covers whole-application behavior in a real
 browser. MSW backs every HTTP interaction in Vitest, configured to fail on
 unmocked requests.

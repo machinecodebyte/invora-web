@@ -35,4 +35,5 @@ export const ROUTES = {
   sales: '/sales',
   salesUpload: '/sales/upload',
   forecastRuns: '/forecasts/runs',
+  forecastResults: '/forecasts/results',
 } as const;

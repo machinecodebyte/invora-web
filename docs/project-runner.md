@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, or Forecast Run.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, or Forecast Results.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (367 tests)
+npm run test              # both suites (381 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -257,6 +257,18 @@ does not invoke an ML pipeline. The Playwright-managed build alone sets
 only test-supplied, isolated `sessionStorage` lifecycle sequences. It provides no
 production forecast data, percentage progress, result UI, or backend connection.
 
+### Forecast Results E2E behavior
+
+`/forecasts/results` is the protected Module 8 completed-run result surface. It
+requires a validated UUID `runId` query and deliberately has no “latest run”
+fallback. Its normal service makes no request and supplies no local forecast
+data. The Playwright-managed build alone sets
+`NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE=true`; the adapter reads only
+test-supplied, isolated `sessionStorage` fixtures for populated, empty,
+not-ready, failed, and safe-error flows. It never connects to FastAPI or an ML
+pipeline. Actual chart observations remain nullable; the table does not invent
+actual-demand fields.
+
 ## 12. Full verification
 
 ```bash
@@ -264,16 +276,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results:
 
 | Step            | Expected                                                                                                                    |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `lint`          | no errors, no warnings                                                                                                      |
 | `typecheck`     | no errors                                                                                                                   |
-| `test`          | 42 files, 367 tests passing                                                                                                 |
+| `test`          | 45 files, 381 tests passing                                                                                                 |
 | `test:coverage` | above all 85% thresholds                                                                                                    |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and protected routes |
-| `test:e2e`      | 58 tests passing in Chromium                                                                                                |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and protected routes |
+| `test:e2e`      | 67 tests passing in Chromium                                                                                                |
 
 ## 13. Troubleshooting
 

@@ -82,9 +82,9 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run tests
+## Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results tests
 
-**367 unit and component tests across 42 files, plus 58 E2E tests. All passing.**
+**381 unit and component tests across 45 files, plus 67 E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
@@ -113,6 +113,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `sales-history-api.test.ts`     | Honest unavailable Sales Transaction list/trend service boundary with no runtime request                                                                                                                                         |
 | `forecast-run-schemas.test.ts`  | Backend-supported 7/15/30-day horizons, missing/unsupported rejection, and native-select request normalization                                                                                                                   |
 | `forecast-run-api.test.ts`      | Unavailable normal service, deterministic session-scoped lifecycle adapter, and malformed-fixture safety                                                                                                                         |
+| `forecast-results-schemas.test.ts` | Result filter validation, date-range safety, search normalization, and UUID run-id validation                                                                                                                               |
+| `forecast-results-api.test.ts`  | Honest unavailable normal Forecast Results service boundary with no runtime request                                                                                                                                               |
 
 ### Component tests — `src/tests/components/`
 
@@ -133,6 +135,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `sales-upload.test.tsx`    | Native file input, preflight feedback, selected-file reset, semantic progress, duplicate prevention, safe errors/retry, result summary, and rejected-row table                                     |
 | `sales-history.test.tsx`   | Semantic transaction table, zero-value formatting, product/SKU/source/date filters, reset, pagination controls, quantity trend, loading, no-data, filtered-empty, and safe partial/error states    |
 | `forecast-run.test.tsx`    | Accessible horizon validation, pending/running/completed lifecycle, duplicate-start prevention, safe failures, refresh retry, and reset                                                            |
+| `forecast-results.test.tsx` | Run selection, loading, summary/metrics/table/chart rendering, zero/null distinction, filter validation, empty/not-ready/failed/error states, and safe adapter failures                            |
 
 ### E2E tests — `e2e/foundation.spec.ts`
 
@@ -250,6 +253,22 @@ session-scoped lifecycle fixtures under
 `NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE=true`; no FastAPI service, forecast
 result, or ML process is used.
 
+### Forecast Results tests
+
+Forecast Results unit and component tests cover validated UUID selection, the
+normal no-request service boundary, product/SKU and inclusive forecast-date
+filter validation, loading, completed-run empty, not-ready, failed-run, and safe
+error states. They assert that zero prediction/metric values remain visible,
+nullable actual observations are not treated as zero, the table contains only its
+backend-supported columns, and the comparison SVG has an accessible summary.
+
+`e2e/forecast-results.spec.ts` covers unauthenticated redirect, authenticated
+no-selection, populated summary/metrics/table/chart rendering, zero and missing
+actual values, search/date validation, empty, not-ready, failed-run, safe-error,
+and 375×667 overflow behavior. The suite uses session-scoped fixtures only under
+`NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE=true`; it makes no FastAPI or ML
+pipeline request.
+
 ### Coverage
 
 Measured with `npm run test:coverage`:
@@ -306,7 +325,7 @@ Per-module minimum, in addition to unit tests for any new `lib/` logic:
 | Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                    |
 | Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                      |
 | Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                            |
-| Forecast Results | component + E2E                    | Prediction tables, charts, metrics, pagination; view-results journey                                                                                 |
+| Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey  |
 | Recommendations  | component + E2E                    | Recommendation list, risk levels, acknowledge/dismiss; acknowledge journey                                                                           |
 | Reports          | component                          | Report selection, rendering, CSV export trigger                                                                                                      |
 | Settings         | component                          | Preference forms, validation, save and reset feedback                                                                                                |
