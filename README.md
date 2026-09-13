@@ -14,7 +14,9 @@ recommendation system for small-business inventory management.
 
 **Frontend Module 4 — Inventory: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, Dashboard, Products, and Inventory: the application
+**Frontend Module 5 — Sales Upload: COMPLETED.**
+
+The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, and Sales Upload: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
@@ -22,13 +24,14 @@ loading, empty, and error states. Module 3 adds a protected Product Catalog with
 create/edit forms, backend-aligned list filters, and explicit loading, empty, and
 error states. Module 4 adds protected Inventory monitoring with backend-aligned
 stock status, search/status filters, a dedicated low-stock view, and immutable
-stock-movement updates validated with React Hook Form and Zod. Normal builds
-keep Inventory unavailable rather than showing stock fixtures or making a backend
-request.
+stock-movement updates validated with React Hook Form and Zod. Module 5 adds a
+protected CSV selection and preflight experience with upload progress, safe result
+summaries, and rejected-row feedback. Normal builds make no Sales Upload request
+or persistent local write.
 
-Auth, Dashboard, Products, and Inventory use adapter boundaries and are **not** connected
-to the backend API yet. In normal builds Dashboard, Products, and Inventory show honest
-no-data states; test fixtures are isolated to component and Playwright
+Auth, Dashboard, Products, Inventory, and Sales Upload use adapter boundaries and
+are **not** connected to the backend API yet. In normal builds Dashboard,
+Products, Inventory, and Sales Upload remain honest; test fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
@@ -99,7 +102,7 @@ src/
   components/
     layout/     AppShell, Header, MainContent, PageContainer
     ui/         Button, Input, Label, Select, Textarea, Dialog, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
-  features/     Auth, Dashboard, Products, and Inventory vertical slices plus future-module placeholders
+  features/     Auth, Dashboard, Products, Inventory, and Sales vertical slices plus future-module placeholders
   hooks/        Shared hooks (use-auth, use-toast)
   lib/          api-client, api-error, query-client, auth, env, forms, logger, toast, constants, utils
   types/        Generic transport and utility types
@@ -115,8 +118,8 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-334 unit and component tests plus 40 Playwright tests cover the Foundation, Auth,
-Dashboard, Products, and Inventory modules. Configured coverage exceeds the required 85%
+345 unit and component tests plus 51 Playwright tests cover the Foundation, Auth,
+Dashboard, Products, Inventory, and Sales Upload modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
 ```bash
@@ -143,8 +146,8 @@ Strategy and per-module plan: [`docs/testing.md`](docs/testing.md).
 
 The backend is a separate FastAPI modular monolith in `../backend` and is already
 complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
-validation/list semantics, and Inventory movement/low-stock semantics were aligned
-through read-only inspection, but no frontend Auth, Dashboard, Products, or Inventory
-request is made at runtime. API integration
+validation/list semantics, Inventory movement/low-stock semantics, and Sales Upload
+CSV requirements were aligned through read-only inspection, but no frontend Auth,
+Dashboard, Products, Inventory, or Sales Upload request is made at runtime. API integration
 lands in a later integration phase. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.

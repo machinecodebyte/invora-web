@@ -12,55 +12,56 @@ Implementation status of the Invora frontend, module by module.
 | Dashboard        | **Completed**                            | Protected responsive Dashboard with backend-aligned KPI, demand-trend, reorder-alert, and inventory-risk view projections; typed no-request service boundary; loading/empty/error states; 12 unit/component tests and 6 E2E tests. Real Dashboard Analytics integration remains disabled.                                                                             |
 | Products         | **Completed**                            | Protected Product Catalog list with search and active-status filters; React Hook Form + Zod create/edit form; loading/empty/error/pending states; typed no-request service boundary; deterministic test-only E2E fixture adapter; 20 Product-specific unit/component tests and 7 E2E tests. Real Product Catalog API integration remains disabled.                    |
 | Inventory        | **Completed**                            | Protected Inventory table with backend-aligned stock status, search/status filters, dedicated low-stock view, and immutable stock-movement form; loading/empty/error/pending states; typed no-request service boundary; deterministic test-only fixture adapter; 14 Inventory unit/component tests and 12 E2E tests. Real Inventory API integration remains disabled. |
-| Sales Upload     | Pending                                  | `src/features/sales/` created empty                                                                                                                                                                                                                                                                                                                                   |
-| Sales History    | Pending                                  | `src/features/sales/` created empty                                                                                                                                                                                                                                                                                                                                   |
+| Sales Upload     | **Completed**                            | Protected single-CSV selection, backend-aligned preflight (`.csv`, 5 MiB, MIME, normalized required headers), explicit upload state, semantic progress, safe summary/rejected rows, no-network service boundary, test-only E2E adapter, 11 unit/component tests, and 11 E2E tests. Real Sales Upload integration remains disabled.                                    |
+| Sales History    | Pending                                  | `src/features/sales/` also owns this future module; no Sales History implementation exists.                                                                                                                                                                                                                                                                           |
 | Forecast Run     | Pending                                  | `src/features/forecasting/` created empty                                                                                                                                                                                                                                                                                                                             |
 | Forecast Results | Pending                                  | `src/features/forecasting/` created empty                                                                                                                                                                                                                                                                                                                             |
 | Recommendations  | Pending                                  | `src/features/recommendations/` created empty                                                                                                                                                                                                                                                                                                                         |
 | Reports          | Pending                                  | `src/features/reports/` created empty                                                                                                                                                                                                                                                                                                                                 |
 | Settings         | Pending                                  | `src/features/settings/` created empty                                                                                                                                                                                                                                                                                                                                |
 
-Future feature directories exist as placeholders only. They contain no
+Remaining future feature directories exist as placeholders only. They contain no
 implementation, stub API calls, or business data.
 
 Shared UI was incrementally extended for Module 3 with typed, tested Select,
 Textarea, and accessible Dialog primitives. Existing Foundation primitives and
-layout components were preserved. Module 4 reuses those primitives without
-changing the shared UI surface.
+layout components were preserved. Modules 4 and 5 reuse the shared UI surface;
+Module 5 uses a native semantic `<progress>` within its feature because no broader
+reusable progress primitive was required.
 
 ## Backend integration
 
-**Not enabled.** Foundation, Auth, Dashboard, Products, and Inventory make no real backend
+**Not enabled.** Foundation, Auth, Dashboard, Products, Inventory, and Sales Upload make no real backend
 request.
 The backend (`../backend`) was inspected read-only to align Auth fields,
 Dashboard Analytics summary semantics, Product Catalog validation/list semantics,
-and Inventory movement/low-stock semantics, but the frontend uses unavailable or
+and Inventory movement/low-stock semantics, and Sales Upload CSV rules, but the frontend uses unavailable or
 no-data-by-default adapters until the API integration phase. Each feature module
 wires up endpoints only when that phase is enabled.
 
 ## Current verification
 
-| Check                   | Result                                                                                                             |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `npm run lint`          | Pass — no errors, no warnings                                                                                      |
-| `npm run typecheck`     | Pass — no errors                                                                                                   |
-| `npm run test`          | Pass — 33 files, 334 tests                                                                                         |
-| `npm run test:coverage` | Pass — 94.46% statements, 92.95% branches, 94.89% functions, 94.38% lines (85% thresholds)                         |
-| `npm run build`         | Pass — `/`, `/dashboard`, `/inventory`, `/products`, `/login`, `/register`, and `/_not-found` compile successfully |
-| `npm run start`         | Pass — verified via the Playwright managed production server                                                       |
-| `npm run test:e2e`      | Pass — 40 tests in Chromium against a production build                                                             |
+| Check                   | Result                                                                                                                              |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`          | Pass — no errors, no warnings                                                                                                       |
+| `npm run typecheck`     | Pass — no errors                                                                                                                    |
+| `npm run test`          | Pass — 36 files, 345 tests                                                                                                          |
+| `npm run test:coverage` | Pass — 94.46% statements, 92.95% branches, 94.89% functions, 94.38% lines (85% thresholds)                                          |
+| `npm run build`         | Pass — `/`, `/dashboard`, `/inventory`, `/products`, `/sales/upload`, `/login`, `/register`, and `/_not-found` compile successfully |
+| `npm run start`         | Pass — verified via the Playwright managed production server                                                                        |
+| `npm run test:e2e`      | Pass — 51 tests in Chromium against a production build                                                                              |
 
 ## Foundation exclusions
 
 Deliberately not implemented, by scope:
 
-- Future business modules Sales Upload through Settings
+- Future business modules Sales History through Settings
 - Any business API call
-- Any business data — no fake products, sales, inventory, forecasts,
+- Any production business data — no fake products, sales, inventory, forecasts,
   recommendations, reports, KPIs, or users
 - Real authentication endpoints, backend session invalidation, token refresh,
   password reset, verification, MFA, or OAuth
-- Real Dashboard Analytics, Product Catalog, or Inventory requests, or production fixture data
+- Real Dashboard Analytics, Product Catalog, Inventory, or Sales Upload requests, or production fixture data
 - Content-Security-Policy (requires per-request nonce plumbing; see
   [`architecture.md`](architecture.md))
 - External observability platform

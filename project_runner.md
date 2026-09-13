@@ -12,7 +12,7 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
-Products, and Inventory make no production API calls.
+Products, Inventory, and Sales Upload make no production API calls.
 
 ## Installation
 
@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (334 tests)
+npm run test              # unit + component (345 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -105,6 +105,7 @@ npx playwright test e2e/auth.spec.ts  # Auth suite only
 npx playwright test e2e/dashboard.spec.ts  # Dashboard suite only
 npx playwright test e2e/products.spec.ts   # Products suite only
 npx playwright test e2e/inventory.spec.ts  # Inventory suite only
+npx playwright test e2e/sales-upload.spec.ts # Sales Upload suite only
 ```
 
 By default Playwright builds the app and serves the production output, so the
@@ -173,9 +174,9 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Sales Upload, Sales History,
+**Deliberately not implemented:** Sales History,
 Forecast Run, Forecast Results, Recommendations, Reports, and Settings modules;
-any business API call; any business data, real or dummy.
+any business API call; any production business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
 client exists and is tested against mocks, but no business endpoint is called.
@@ -252,3 +253,20 @@ Implemented:
 make no Inventory request and do not persist local stock writes. The
 Playwright-only adapter is selected only by the managed E2E build and uses
 isolated session-scoped fixture state, never a token or production Inventory data.
+
+## Current Sales Upload Scope
+
+Implemented:
+
+- Protected `/sales/upload` route using the existing Auth boundary and app shell
+- One-file CSV selection with backend-aligned extension, MIME, 5 MiB, and required
+  header preflight checks
+- Explicit validating, ready, uploading, success, validation-error, and safe
+  failure states; semantic progress; reset and retry controls
+- Safe upload-batch summary and bounded rejected-row feedback without raw CSV data
+- Typed no-network service contract plus deterministic component and Playwright tests
+
+**Real Sales Upload API integration is intentionally not enabled.** The normal
+service never sends or persists a file. Only the Playwright-managed build selects
+a test-only session fixture adapter; it does not contact FastAPI or retain file
+contents after the browser test.

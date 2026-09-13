@@ -44,7 +44,7 @@ but are not supported by that toolchain yet.
 ## Current implementation status
 
 **Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
-COMPLETED. Inventory: COMPLETED.** All remaining
+COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED.** All remaining
 business modules are **PENDING**. See [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
@@ -54,7 +54,9 @@ projections, and explicit loading/empty/error states. Module 3 adds a protected
 Product Catalog with backend-aligned validation, list filters, create/edit UI,
 and a no-network service boundary. Module 4 adds protected Inventory stock
 monitoring, movement validation, and low-stock handling through a no-network
-service boundary. No real Dashboard Analytics, Product Catalog, Inventory, or
+service boundary. Module 5 adds protected CSV file selection, backend-aligned
+preflight, upload-state UX, safe batch results, and rejected-row presentation
+through a no-network service boundary. No real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, or
 other business-module API call is enabled.
 
 ## Auth module
@@ -95,6 +97,15 @@ session-scoped fixtures; normal builds contain no inventory records and make no
 request. Product CRUD, threshold settings, and movement history are outside this
 module.
 
+## Sales Upload module
+
+`src/features/sales/` owns the protected `/sales/upload` route, single CSV file
+selection, client preflight, explicit upload state, and safe batch-result and
+rejected-row projections. Its inspected contract is `.csv`, up to 5 MiB, with
+`sale_date`, `product_sku`, and `quantity` headers. The normal service never sends
+the file; Playwright alone selects a session-scoped deterministic adapter. Sales
+History, transaction management, and Inventory updates remain outside Module 5.
+
 ## How modules will be structured
 
 Each future module is a vertical slice under `src/features/<feature>/`, owning its
@@ -108,7 +119,7 @@ Details and the full rule set: [`architecture.md`](architecture.md) and
 ## How testing works
 
 Unit tests cover `lib/`, `types/`, and feature schemas/adapter boundaries.
-Component tests cover shared controls plus Auth, Dashboard, Products, and Inventory through their
+Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, and Sales Upload through their
 accessible surface. Playwright covers whole-application behavior in a real
 browser. MSW backs every HTTP interaction in Vitest, configured to fail on
 unmocked requests.

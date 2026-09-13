@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, and Inventory extend it without
+establishes the architecture; Auth, Dashboard, Products, Inventory, and Sales Upload extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -17,6 +17,7 @@ src/app/
   page.tsx          Root page (Foundation status only)
   products/page.tsx Protected Product Catalog route (Module 3)
   inventory/page.tsx Protected Inventory route (Module 4)
+  sales/upload/page.tsx Protected Sales Upload route (Module 5)
   loading.tsx       Route-level streaming fallback
   error.tsx         Route-level error boundary
   global-error.tsx  Boundary for failures in the root layout itself
@@ -368,6 +369,35 @@ do not ship fake inventory data or local persistence.
 
 **Frontend Inventory route protection is UX only. Backend Inventory APIs must
 independently enforce authentication and authorization when integration is
+enabled.**
+
+## Sales Upload architecture
+
+Module 5 is an isolated `src/features/sales/` slice. `types.ts` exposes safe
+upload-batch and rejected-row projections; raw CSV row data is intentionally not
+modeled. `schemas.ts` preflights only the read-only inspected backend contract:
+one `.csv` file, a 5 MiB maximum, allowed CSV MIME types, and normalized required
+headers `sale_date`, `product_sku`, and `quantity`. It reads only a bounded header
+prefix and leaves product ownership, duplicate-content detection, row validation,
+and all persistence to the backend.
+
+`hooks.ts` owns a mutually exclusive `idle`, `validating`, `ready`, `uploading`,
+`success`, `validation_error`, or `error` state. The backend completes upload
+work synchronously, so the UI deliberately has no processing or polling state.
+`api.ts` declares `SalesUploadService` without endpoint composition or a runtime
+request; the normal adapter reports availability truthfully. A future HTTP
+adapter will submit the file and retrieve the backend's paginated rejected-row
+projection before resolving the safe UI submission model.
+
+`app/sales/upload/page.tsx` reuses `ProtectedRoute`, `AppShell`,
+`PageContainer`, and `LogoutButton`. The view uses a native file input, semantic
+`<progress>`, and a bounded rejected-rows table. The Playwright-only service is
+selected with `NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE=true` and reads only a
+test-supplied session fixture; it never stores file content, credentials, or
+tokens and is not enabled in a normal build.
+
+**Frontend Sales Upload route protection is UX only. Backend Sales Upload APIs
+must independently enforce authentication and authorization when integration is
 enabled.**
 
 ## Form validation strategy
