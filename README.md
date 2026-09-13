@@ -18,7 +18,9 @@ recommendation system for small-business inventory management.
 
 **Frontend Module 6 — Sales History: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History: the application
+**Frontend Module 7 — Forecast Run: COMPLETED.**
+
+The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
@@ -32,11 +34,14 @@ summaries, and rejected-row feedback. Normal builds make no Sales Upload request
 or persistent local write. Module 6 adds a protected read-only Sales History table,
 backend-aligned product/SKU search, source and inclusive date filters, offset/limit
 pagination infrastructure, and a quantity-trend chart. Normal builds make no Sales
-Transaction request and do not contain sales records.
+Transaction request and do not contain sales records. Module 7 adds a protected
+Forecast Run form with backend-aligned 7-, 15-, and 30-day horizons, explicit
+pending/running/completed/failed lifecycle presentation, and manual status refresh.
+Normal builds make no Forecast Run or ML request and do not contain forecast data.
 
-Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History use adapter boundaries and
+Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run use adapter boundaries and
 are **not** connected to the backend API yet. In normal builds Dashboard,
-Products, Inventory, Sales Upload, and Sales History remain honest; test fixtures are isolated to component and Playwright
+Products, Inventory, Sales Upload, Sales History, and Forecast Run remain honest; test fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
@@ -123,8 +128,8 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-357 unit and component tests plus 51 Playwright tests cover the Foundation, Auth,
-Dashboard, Products, Inventory, Sales Upload, and Sales History modules. Configured coverage exceeds the required 85%
+367 unit and component tests plus 58 Playwright tests cover the Foundation, Auth,
+Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
 ```bash
@@ -152,7 +157,8 @@ Strategy and per-module plan: [`docs/testing.md`](docs/testing.md).
 The backend is a separate FastAPI modular monolith in `../backend` and is already
 complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
-CSV requirements were aligned through read-only inspection, but no frontend Auth,
-Dashboard, Products, Inventory, Sales Upload, or Sales Transaction request is made at runtime. API integration
+CSV requirements, Sales Transaction list/trend semantics, and Forecast Run
+horizon/lifecycle semantics were aligned through read-only inspection, but no frontend Auth,
+Dashboard, Products, Inventory, Sales Upload, Sales Transaction, or Forecast Run request is made at runtime. API integration
 lands in a later integration phase. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.

@@ -82,9 +82,9 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History tests
+## Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run tests
 
-**357 unit and component tests across 39 files, plus 51 E2E tests. All passing.**
+**367 unit and component tests across 42 files, plus 58 E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
@@ -111,6 +111,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `sales-upload-api.test.ts`      | Unavailable normal service, deterministic progress/result fixture, safe missing-fixture failure                                                                                                                                  |
 | `sales-history-schemas.test.ts` | Inclusive same-day date validation, cleared dates, malformed dates, and start-after-end rejection                                                                                                                                |
 | `sales-history-api.test.ts`     | Honest unavailable Sales Transaction list/trend service boundary with no runtime request                                                                                                                                         |
+| `forecast-run-schemas.test.ts`  | Backend-supported 7/15/30-day horizons, missing/unsupported rejection, and native-select request normalization                                                                                                                   |
+| `forecast-run-api.test.ts`      | Unavailable normal service, deterministic session-scoped lifecycle adapter, and malformed-fixture safety                                                                                                                         |
 
 ### Component tests — `src/tests/components/`
 
@@ -130,6 +132,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `inventory.test.tsx`       | Accessible movement form, field-level validation, safe mutation failure, pending controls, status text, semantic table, and composed loading/ready/empty/filtered-empty/low-stock/error states     |
 | `sales-upload.test.tsx`    | Native file input, preflight feedback, selected-file reset, semantic progress, duplicate prevention, safe errors/retry, result summary, and rejected-row table                                     |
 | `sales-history.test.tsx`   | Semantic transaction table, zero-value formatting, product/SKU/source/date filters, reset, pagination controls, quantity trend, loading, no-data, filtered-empty, and safe partial/error states    |
+| `forecast-run.test.tsx`    | Accessible horizon validation, pending/running/completed lifecycle, duplicate-start prevention, safe failures, refresh retry, and reset                                                            |
 
 ### E2E tests — `e2e/foundation.spec.ts`
 
@@ -230,6 +233,23 @@ loading, no-data, filtered-empty, and independent table/chart error behavior.
 No Sales History E2E suite was added: Module 6 requires component testing, while
 the completed Modules 1–5 E2E suites remain part of full regression.
 
+### Forecast Run tests
+
+Forecast Run unit and component tests cover the one backend-supported request
+field, 7/15/30-day validation, native-select normalization, unavailable normal
+service, malformed fixture safety, accessible required feedback, disabled/pending
+submission, duplicate-start prevention, `pending`/`running`/`completed` states,
+safe failure/status-refresh treatment, and reset for another run. They never
+render raw failure detail, prediction data, result metrics, or fake progress.
+
+`e2e/forecast-flow.spec.ts` covers protected-route redirect, authenticated page
+load, allowed horizon options, required horizon validation, deterministic
+pending/running/completed status refresh, safe failure/reset, status-refresh
+failure, and 375Ã—667 overflow containment. Its 7 browser scenarios use only
+session-scoped lifecycle fixtures under
+`NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE=true`; no FastAPI service, forecast
+result, or ML process is used.
+
 ### Coverage
 
 Measured with `npm run test:coverage`:
@@ -285,7 +305,7 @@ Per-module minimum, in addition to unit tests for any new `lib/` logic:
 | Inventory        | unit + component + E2E — completed | Movement schemas, unavailable/test-only adapter, stock update form, table/search/status/low-stock states, protected flow, and mobile browser journey |
 | Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                    |
 | Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                      |
-| Forecast Run     | component + E2E                    | Run configuration, pre-flight validation, status polling; trigger-run journey                                                                        |
+| Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                            |
 | Forecast Results | component + E2E                    | Prediction tables, charts, metrics, pagination; view-results journey                                                                                 |
 | Recommendations  | component + E2E                    | Recommendation list, risk levels, acknowledge/dismiss; acknowledge journey                                                                           |
 | Reports          | component                          | Report selection, rendering, CSV export trigger                                                                                                      |

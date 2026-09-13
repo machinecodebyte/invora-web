@@ -34,4 +34,5 @@ export const ROUTES = {
   inventory: '/inventory',
   sales: '/sales',
   salesUpload: '/sales/upload',
+  forecastRuns: '/forecasts/runs',
 } as const;

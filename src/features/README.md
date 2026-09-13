@@ -1,9 +1,10 @@
 # Features
 
 Business functionality lives here, one directory per frontend module. Modules 1,
-2, 3, 4, 5, and 6 implement the Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History vertical slices; every
-remaining future feature directory remains empty of implementation. No normal-runtime module ships fake business data,
-placeholder business logic, or stub API calls.
+2, 3, 4, 5, 6, and 7 implement the Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run vertical slices. No other future
+business scope is implemented; Forecast Results shares `forecasting/` but has no
+files or UI. No normal-runtime module ships fake business data, placeholder
+business logic, or stub API calls.
 
 ## Per-feature structure
 
@@ -38,7 +39,7 @@ Create only the subdirectories a feature actually needs.
 | `products`        | Products                                             |
 | `inventory`       | Inventory                                            |
 | `sales`           | Sales Upload (Module 5) and Sales History (Module 6) |
-| `forecasting`     | Forecast Run, Forecast Results                       |
+| `forecasting`     | Forecast Run (Module 7), Forecast Results            |
 | `recommendations` | Recommendations                                      |
 | `reports`         | Reports                                              |
 | `settings`        | Settings                                             |

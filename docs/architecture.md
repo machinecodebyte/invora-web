@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History extend it without
+establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast Run extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -17,6 +17,7 @@ src/app/
   page.tsx          Root page (Foundation status only)
   products/page.tsx Protected Product Catalog route (Module 3)
   inventory/page.tsx Protected Inventory route (Module 4)
+  forecasts/runs/page.tsx Protected Forecast Run route (Module 7)
   sales/page.tsx     Protected Sales History route (Module 6)
   sales/upload/page.tsx Protected Sales Upload route (Module 5)
   loading.tsx       Route-level streaming fallback
@@ -432,6 +433,55 @@ trend values live only in `src/tests/fixtures/sales-history.ts`.
 **Frontend Sales History filtering and route protection are UX controls. Backend
 APIs remain responsible for authorization, ownership checks, and authoritative
 filtering when integration is enabled.**
+
+## Forecast Run architecture
+
+`features/forecasting/` is the Module 7 vertical slice:
+
+```text
+features/forecasting/
+  api.ts        ForecastRunService boundary and Playwright-only fixture adapter
+  hooks.ts      Explicit frontend action/state orchestration
+  schemas.ts    RHF/Zod forecast-horizon validation and request normalization
+  types.ts      Safe public run projection and discriminated UI states
+  components/   Form, lifecycle-status card, and page composition
+```
+
+`app/forecasts/runs/page.tsx` remains a Server Component that composes the
+existing `ProtectedRoute`, `AppShell`, `PageContainer`, and `LogoutButton` with
+the small client-side `ForecastRunView`. The view collects only `horizonDays`;
+there is no product selection because the inspected backend creates global runs.
+The form accepts only 7, 15, and 30 days and normalizes the native select string
+at the feature boundary.
+
+`ForecastRunService` declares `startForecast()` and `getForecastRunStatus()` but
+the normal adapter does not compose a route, send an HTTP request, or invoke ML.
+The future HTTP adapter can map backend creation/status calls into this boundary
+without changing the UI. The backend creates a pending run and processes it
+asynchronously; the frontend represents `pending`, `running`, `completed`,
+`failed`, and `cancelled` status but has no cancellation control in Module 7.
+It exposes explicit manual status refresh rather than speculative production
+polling. The backend provides no percentage progress, so the UI intentionally
+uses lifecycle text only.
+
+`ForecastRunViewState` is a discriminated union separate from backend lifecycle
+status: `idle`, `starting`, `tracking`, `checking_status`, `status_error`,
+`completed`, `failed`, and `cancelled`. This prevents a request-pending flag and
+server status from becoming contradictory. Failed status detail is normalized to
+safe frontend copy; raw `failureReason` is deliberately not rendered.
+
+Playwright's managed build alone sets
+`NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE=true`. Its isolated adapter reads only
+serialized, test-supplied lifecycle fixtures from `sessionStorage`; normal builds
+contain no forecast run, prediction, result, progress, or ML fixture data.
+
+> Module 7 is a Forecast Run configuration and status surface only. Forecast
+> results, predictions, metrics, charts, and recommendations remain future module
+> scope.
+
+**Frontend Forecast Run route protection and lifecycle presentation are UX only.
+Backend APIs must independently enforce authentication, authorization, ownership,
+validation, and run lifecycle transitions when integration is enabled.**
 
 ## Form validation strategy
 

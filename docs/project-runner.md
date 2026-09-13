@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, or Sales History.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, or Forecast Run.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (357 tests)
+npm run test              # both suites (367 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -179,6 +179,7 @@ npx playwright test e2e/dashboard.spec.ts
 npx playwright test e2e/products.spec.ts
 npx playwright test e2e/inventory.spec.ts
 npx playwright test e2e/sales-upload.spec.ts
+npx playwright test e2e/forecast-flow.spec.ts
 ```
 
 Playwright builds and serves the production output by default, so the smoke test
@@ -247,6 +248,15 @@ isolated transaction and trend fixtures to verify the table, filters, pagination
 quantity trend, and safe states without a FastAPI process. `/sales/upload`
 remains the separate Module 5 upload workflow.
 
+### Forecast Run E2E behavior
+
+`/forecasts/runs` is the protected Module 7 Forecast Run configuration and
+lifecycle-status route. Its normal `ForecastRunService` sends no request and
+does not invoke an ML pipeline. The Playwright-managed build alone sets
+`NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE=true`; its deterministic adapter reads
+only test-supplied, isolated `sessionStorage` lifecycle sequences. It provides no
+production forecast data, percentage progress, result UI, or backend connection.
+
 ## 12. Full verification
 
 ```bash
@@ -254,16 +264,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run:
 
-| Step            | Expected                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------- |
-| `lint`          | no errors, no warnings                                                                                        |
-| `typecheck`     | no errors                                                                                                     |
-| `test`          | 39 files, 357 tests passing                                                                                   |
-| `test:coverage` | above all 85% thresholds                                                                                      |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and protected routes |
-| `test:e2e`      | 51 tests passing in Chromium                                                                                  |
+| Step            | Expected                                                                                                                    |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `lint`          | no errors, no warnings                                                                                                      |
+| `typecheck`     | no errors                                                                                                                   |
+| `test`          | 42 files, 367 tests passing                                                                                                 |
+| `test:coverage` | above all 85% thresholds                                                                                                    |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and protected routes |
+| `test:e2e`      | 58 tests passing in Chromium                                                                                                |
 
 ## 13. Troubleshooting
 

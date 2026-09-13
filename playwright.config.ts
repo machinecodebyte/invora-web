@@ -58,6 +58,8 @@ export default defineConfig({
       NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE: 'true',
       // Enables the Sales Upload fixture adapter only in E2E builds.
       NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE: 'true',
+      // Enables the Forecast Run fixture adapter only in E2E builds.
+      NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE: 'true',
       PORT: String(port),
     },
   },

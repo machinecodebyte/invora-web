@@ -12,7 +12,7 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
-Products, Inventory, Sales Upload, and Sales History make no production API calls.
+Products, Inventory, Sales Upload, Sales History, and Forecast Run make no production API calls.
 
 ## Installation
 
@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (357 tests)
+npm run test              # unit + component (367 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -106,6 +106,7 @@ npx playwright test e2e/dashboard.spec.ts  # Dashboard suite only
 npx playwright test e2e/products.spec.ts   # Products suite only
 npx playwright test e2e/inventory.spec.ts  # Inventory suite only
 npx playwright test e2e/sales-upload.spec.ts # Sales Upload suite only
+npx playwright test e2e/forecast-flow.spec.ts # Forecast Run suite only
 ```
 
 By default Playwright builds the app and serves the production output, so the
@@ -174,8 +175,8 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Forecast Run, Forecast Results, Recommendations,
-Reports, and Settings modules;
+**Deliberately not implemented:** Forecast Results, Recommendations, Reports, and
+Settings modules;
 any business API call; any production business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
@@ -286,3 +287,23 @@ Implemented:
 normal service makes no request and renders no fake sales. Sales History has
 component coverage only by roadmap; completed Modules 1–5 E2E suites remain part
 of full regression.
+
+## Current Forecast Run Scope
+
+Implemented:
+
+- Protected `/forecasts/runs` route using the existing Auth boundary and app shell
+- React Hook Form and Zod horizon selection limited to the inspected backend's
+  global 7-, 15-, and 30-day options
+- Explicit frontend action states and text-only `pending`, `running`,
+  `completed`, `failed`, and `cancelled` lifecycle presentation; no invented
+  percentage progress
+- Start, manual status refresh, safe failure feedback, and reset/start-another
+  behavior without Forecast Results UI
+- Typed no-network service boundary plus deterministic unit, component, and
+  Playwright lifecycle fixtures
+
+**Real Forecast Run API and ML pipeline integration are intentionally not
+enabled.** Normal builds create no local forecast run and make no request. The
+Playwright-only adapter is selected only by the managed E2E build and reads
+isolated session-scoped lifecycle data; it contains no production forecast data.
