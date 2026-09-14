@@ -82,9 +82,9 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results tests
+## Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations tests
 
-**381 unit and component tests across 45 files, plus 67 E2E tests. All passing.**
+**391 unit and component tests across 48 files, plus 76 E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
@@ -115,6 +115,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `forecast-run-api.test.ts`      | Unavailable normal service, deterministic session-scoped lifecycle adapter, and malformed-fixture safety                                                                                                                         |
 | `forecast-results-schemas.test.ts` | Result filter validation, date-range safety, search normalization, and UUID run-id validation                                                                                                                               |
 | `forecast-results-api.test.ts`  | Honest unavailable normal Forecast Results service boundary with no runtime request                                                                                                                                               |
+| `recommendations-schemas.test.ts` | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
+| `recommendations-api.test.ts`   | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                                |
 
 ### Component tests — `src/tests/components/`
 
@@ -136,6 +138,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `sales-history.test.tsx`   | Semantic transaction table, zero-value formatting, product/SKU/source/date filters, reset, pagination controls, quantity trend, loading, no-data, filtered-empty, and safe partial/error states    |
 | `forecast-run.test.tsx`    | Accessible horizon validation, pending/running/completed lifecycle, duplicate-start prevention, safe failures, refresh retry, and reset                                                            |
 | `forecast-results.test.tsx` | Run selection, loading, summary/metrics/table/chart rendering, zero/null distinction, filter validation, empty/not-ready/failed/error states, and safe adapter failures                            |
+| `recommendations.test.tsx` | Semantic risk table, Product/SKU context, decimal and zero quantity display, risk/search filters, pagination, loading, empty/filtered-empty, and safe adapter errors                             |
 
 ### E2E tests — `e2e/foundation.spec.ts`
 
@@ -269,6 +272,22 @@ and 375×667 overflow behavior. The suite uses session-scoped fixtures only unde
 `NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE=true`; it makes no FastAPI or ML
 pipeline request.
 
+### Recommendations tests
+
+Recommendations unit and component tests cover the exact inspected risk/status
+enumerations, normalized search/filter inputs, the unavailable normal service
+boundary, risk badge/table semantics, decimal and zero-valued reorder quantities,
+search/risk/status filtering, offset/limit pagination, loading, empty, filtered-empty,
+and safe-error states. They do not model a recommendation action or client-side
+calculation.
+
+`e2e/recommendations.spec.ts` covers protected-route redirect, authenticated
+page/table rendering, all user-facing list controls, populated risk/status/reorder
+display, risk/status and SKU search, dedicated empty/filtered-empty/error states,
+pagination boundaries, and 375×667 overflow behavior. Its nine scenarios use
+only session-scoped fixtures under `NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`;
+no FastAPI or recommendation calculation process is used.
+
 ### Coverage
 
 Measured with `npm run test:coverage`:
@@ -326,7 +345,7 @@ Per-module minimum, in addition to unit tests for any new `lib/` logic:
 | Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                      |
 | Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                            |
 | Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey  |
-| Recommendations  | component + E2E                    | Recommendation list, risk levels, acknowledge/dismiss; acknowledge journey                                                                           |
+| Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey |
 | Reports          | component                          | Report selection, rendering, CSV export trigger                                                                                                      |
 | Settings         | component                          | Preference forms, validation, save and reset feedback                                                                                                |
 | Shared UI        | unit + component                   | Every new primitive: rendering, accessibility, interaction, all states                                                                               |

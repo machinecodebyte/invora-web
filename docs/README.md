@@ -45,7 +45,8 @@ but are not supported by that toolchain yet.
 
 **Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
 COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED. Sales History:
-COMPLETED. Forecast Run: COMPLETED. Forecast Results: COMPLETED.** All remaining
+COMPLETED. Forecast Run: COMPLETED. Forecast Results: COMPLETED. Recommendations:
+COMPLETED.** All remaining
 business modules are **PENDING**. See [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
@@ -62,7 +63,12 @@ Run configuration and lifecycle-status surface with a no-network service boundar
 Module 8 adds a protected completed-run Forecast Results surface with a no-network
 result adapter, summary, allowed metrics, prediction list, filters, and an
 actual-versus-predicted aggregate chart. No real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, Sales
-Transaction, Forecast Run, Forecast Results, or ML API call is enabled.
+Transaction, Forecast Run, Forecast Results, Recommendations, or ML API call is enabled.
+
+Module 9 adds a protected, read-only Recommendations surface with backend-aligned
+five-level risk labels, read-only status display, Product/SKU search, risk/status filtering, backend-shaped
+offset/limit pagination, safe quantity display, and explicit safe states. Its
+normal adapter is unavailable-by-default and never makes an HTTP request.
 
 ## Auth module
 
@@ -147,6 +153,16 @@ HTTP/ML call. Playwright alone receives isolated session-scoped result fixtures.
 Real Forecast Results API and ML pipeline integration remain intentionally
 deferred.
 
+## Recommendations module
+
+`src/features/recommendations/` owns safe recommendation projections, risk/filter
+schemas, the no-network `RecommendationsService`, local list state, and the
+protected `/recommendations` composition. It displays only backend-generated
+recommendations; it neither calculates reorder quantities/risk nor implements
+acknowledge, dismiss, or other recommendation actions. The Playwright-managed
+build alone reads a validated, session-scoped test fixture. Real Recommendations
+API integration remains intentionally deferred.
+
 ## How modules will be structured
 
 Each future module is a vertical slice under `src/features/<feature>/`, owning its
@@ -160,10 +176,14 @@ Details and the full rule set: [`architecture.md`](architecture.md) and
 ## How testing works
 
 Unit tests cover `lib/`, `types/`, and feature schemas/adapter boundaries.
-Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results through their
+Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations through their
 accessible surface. Playwright covers whole-application behavior in a real
 browser. MSW backs every HTTP interaction in Vitest, configured to fail on
 unmocked requests.
+
+Recommendations adds schema/service unit tests, an accessible list component test,
+and deterministic protected-route Playwright coverage for populated, filter,
+pagination, empty, error, and mobile flows.
 
 Details: [`testing.md`](testing.md).
 

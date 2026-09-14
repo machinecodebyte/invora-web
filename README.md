@@ -20,8 +20,9 @@ recommendation system for small-business inventory management.
 
 **Frontend Module 7 — Forecast Run: COMPLETED.**
 **Frontend Module 8 — Forecast Results: COMPLETED.**
+**Frontend Module 9 — Recommendations: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results: the application
+The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
@@ -44,11 +45,20 @@ MAE/RMSE/MAPE, paginated prediction rows, and an accessible actual-versus-predic
 chart that preserves missing actual observations. Normal builds make no Forecast
 Results, backend, or ML request and contain no forecast result data.
 
-Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results use adapter boundaries and
+Module 9 adds a protected, read-only Recommendations route with backend-aligned
+five-level risk presentation, read-only status display, Product/SKU search, risk/status filtering, offset/limit
+pagination, reorder quantities that retain valid zeroes and up to three decimal
+places, and safe loading, empty, filtered-empty, and error states. Normal builds
+make no Reorder Recommendation request and contain no recommendation data.
+
+Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
 are **not** connected to the backend API yet. In normal builds Dashboard,
 Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results remain honest; test fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
+
+Recommendations follows the same no-network adapter boundary. Its deterministic
+session-scoped fixtures are selected only by the Playwright-managed test build.
 
 ## Technology stack
 
@@ -117,7 +127,7 @@ src/
   components/
     layout/     AppShell, Header, MainContent, PageContainer
     ui/         Button, Input, Label, Select, Textarea, Dialog, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
-  features/     Auth, Dashboard, Products, Inventory, and Sales vertical slices plus future-module placeholders
+  features/     Auth, Dashboard, Products, Inventory, Sales, Forecasting, and Recommendations vertical slices plus future-module placeholders
   hooks/        Shared hooks (use-auth, use-toast)
   lib/          api-client, api-error, query-client, auth, env, forms, logger, toast, constants, utils
   types/        Generic transport and utility types
@@ -133,8 +143,8 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-381 unit and component tests plus 67 Playwright tests cover the Foundation, Auth,
-Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results modules. Configured coverage exceeds the required 85%
+391 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
+Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
 ```bash
@@ -167,3 +177,7 @@ horizon/lifecycle semantics were aligned through read-only inspection, but no fr
 Dashboard, Products, Inventory, Sales Upload, Sales Transaction, Forecast Run, or Forecast Results request is made at runtime. API integration
 lands in a later integration phase. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
+
+Recommendations risk levels, list filters, response-safe fields, nullable reason,
+and three-decimal quantity semantics were also aligned through read-only backend
+inspection. The frontend does not call the Recommendations API at runtime.

@@ -36,4 +36,5 @@ export const ROUTES = {
   salesUpload: '/sales/upload',
   forecastRuns: '/forecasts/runs',
   forecastResults: '/forecasts/results',
+  recommendations: '/recommendations',
 } as const;

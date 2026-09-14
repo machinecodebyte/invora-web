@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results extend it without
+establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -19,6 +19,7 @@ src/app/
   inventory/page.tsx Protected Inventory route (Module 4)
   forecasts/runs/page.tsx Protected Forecast Run route (Module 7)
   forecasts/results/page.tsx Protected Forecast Results route (Module 8)
+  recommendations/page.tsx Protected Recommendations route (Module 9)
   sales/page.tsx     Protected Sales History route (Module 6)
   sales/upload/page.tsx Protected Sales Upload route (Module 5)
   loading.tsx       Route-level streaming fallback
@@ -477,8 +478,8 @@ serialized, test-supplied lifecycle fixtures from `sessionStorage`; normal build
 contain no forecast run, prediction, result, progress, or ML fixture data.
 
 > Module 7 is a Forecast Run configuration and status surface only. Forecast
-> results, predictions, metrics, charts, and recommendations remain future module
-> scope.
+> results, predictions, metrics, and charts belong to Module 8; reorder
+> recommendations belong to Module 9. They remain outside the Module 7 UI.
 
 **Frontend Forecast Run route protection and lifecycle presentation are UX only.
 Backend APIs must independently enforce authentication, authorization, ownership,
@@ -523,6 +524,54 @@ responses.
 > Frontend Forecast Results route protection, UUID validation, and filter UI are
 > user-experience controls only. Backend APIs must independently enforce
 > authentication, authorization, run ownership, result readiness, and filtering
+> when integration is enabled.
+
+## Recommendations architecture
+
+Module 9 adds its own read-only vertical slice without changing the existing
+Forecast Run or Forecast Results feature boundaries:
+
+```text
+features/recommendations/
+  api.ts        RecommendationsService boundary and Playwright-only fixture reader
+  hooks.ts      Local search, risk-filter, pagination, loading, ready, and error state
+  schemas.ts    Backend-aligned risk-filter validation
+  types.ts      Safe recommendation, forecast-run reference, query, and view types
+  components/   Risk badge, quantity display, toolbar, table, skeleton, and page view
+```
+
+`app/recommendations/page.tsx` remains a Server Component that composes the
+existing protected-route boundary, application shell, and client-side
+`RecommendationsView`. The view supports only the inspected list contract:
+Product/SKU search, the five backend risk levels (`low`, `medium`, `high`,
+`critical`, and `overstocked`), the read-only backend statuses (`open`,
+`acknowledged`, and `dismissed`), and `limit`/`offset` pagination ordered by the
+backend's generated timestamp. It presents backend-generated quantities with up
+to three fraction digits, preserving zero, and renders a nullable reason safely.
+
+`RecommendationsService` is transport-neutral. Its normal implementation never
+builds an endpoint, calls a backend, calculates risk, or persists data. A future
+HTTP adapter can map the backend list response and query fields at this boundary
+without rewriting the feature; that adapter can then be composed through the
+existing TanStack Query provider without introducing another cache or provider.
+Only the Playwright-managed build selects the
+validated, session-scoped fixture adapter through
+`NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`; it is not a production mock or
+storage strategy.
+
+There are deliberately no recommendation action controls, status updates,
+acknowledgement/dismissal behavior, thresholds, or client-side reorder/risk
+calculations in Module 9. Those remain backend-owned or future-scope concerns.
+The Dashboard high-risk summary remains an aggregate surface and was not changed;
+Recommendations is the detailed list. Forecast Results remains the separate
+prediction/metric/chart surface. Reports and Settings remain outside this module.
+
+> Module 9 implements Recommendations frontend UI and architecture only. Real
+> Reorder Recommendation API integration remains intentionally deferred.
+
+> Frontend Recommendations route protection and filter UI are user-experience
+> controls only. Backend APIs must independently enforce authentication,
+> authorization, tenancy/ownership, validation, and recommendation-action rules
 > when integration is enabled.
 
 ## Form validation strategy

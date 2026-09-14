@@ -12,7 +12,7 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
-Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results make no production API calls.
+Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations make no production API calls.
 
 ## Installation
 
@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (381 tests)
+npm run test              # unit + component (391 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -108,6 +108,7 @@ npx playwright test e2e/inventory.spec.ts  # Inventory suite only
 npx playwright test e2e/sales-upload.spec.ts # Sales Upload suite only
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run suite only
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results suite only
+npx playwright test e2e/recommendations.spec.ts # Recommendations suite only
 ```
 
 By default Playwright builds the app and serves the production output, so the
@@ -176,8 +177,7 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Recommendations, Reports, and
-Settings modules;
+**Deliberately not implemented:** Reports and Settings modules;
 any business API call; any production business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
@@ -326,3 +326,23 @@ Implemented:
 enabled.** Normal builds make no request and contain no forecast result data.
 Only the Playwright-managed test build reads isolated session-scoped fixtures;
 it never contacts FastAPI or stores production forecast data.
+
+## Current Recommendations Scope
+
+Implemented:
+
+- Protected `/recommendations` route using the existing Auth boundary and app shell
+- Read-only responsive risk/status table with Product/SKU search, exact backend
+  risk/status filters, and backend-shaped offset/limit pagination
+- Backend-generated reorder quantities shown with valid zeroes and up to three
+  decimal places; nullable reasons have a safe fallback
+- Loading, empty, filtered-empty, and safe error states with semantic table and
+  accessible controls
+- Typed no-network service contract plus deterministic unit/component and
+  Playwright fixtures
+
+**Real Recommendations API integration is intentionally not enabled.** Normal
+builds make no request, contain no recommendation data, and do not calculate
+risk/reorder quantities or perform recommendation actions. Only the
+Playwright-managed test build reads isolated session-scoped fixtures; it never
+contacts FastAPI or stores production recommendation data.

@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, or Forecast Results.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, or Recommendations.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (381 tests)
+npm run test              # both suites (391 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -180,6 +180,8 @@ npx playwright test e2e/products.spec.ts
 npx playwright test e2e/inventory.spec.ts
 npx playwright test e2e/sales-upload.spec.ts
 npx playwright test e2e/forecast-flow.spec.ts
+npx playwright test e2e/forecast-results.spec.ts
+npx playwright test e2e/recommendations.spec.ts
 ```
 
 Playwright builds and serves the production output by default, so the smoke test
@@ -269,6 +271,16 @@ not-ready, failed, and safe-error flows. It never connects to FastAPI or an ML
 pipeline. Actual chart observations remain nullable; the table does not invent
 actual-demand fields.
 
+### Recommendations E2E behavior
+
+`/recommendations` is the protected Module 9 read-only list surface. The normal
+`RecommendationsService` makes no request and exposes no local recommendation
+data. The Playwright-managed build alone sets
+`NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`; its adapter reads validated,
+test-supplied, isolated `sessionStorage` fixtures for populated, risk/status/search
+filter, pagination, empty, and safe-error flows. It neither calculates reorder
+quantities/risk nor contacts FastAPI.
+
 ## 12. Full verification
 
 ```bash
@@ -276,16 +288,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations:
 
 | Step            | Expected                                                                                                                    |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `lint`          | no errors, no warnings                                                                                                      |
 | `typecheck`     | no errors                                                                                                                   |
-| `test`          | 45 files, 381 tests passing                                                                                                 |
+| `test`          | 48 files, 391 tests passing                                                                                                 |
 | `test:coverage` | above all 85% thresholds                                                                                                    |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and protected routes |
-| `test:e2e`      | 67 tests passing in Chromium                                                                                                |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and protected routes |
+| `test:e2e`      | 76 tests passing in Chromium                                                                                                |
 
 ## 13. Troubleshooting
 
