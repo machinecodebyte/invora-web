@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports extend it without
+establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -21,6 +21,7 @@ src/app/
   forecasts/results/page.tsx Protected Forecast Results route (Module 8)
   recommendations/page.tsx Protected Recommendations route (Module 9)
   reports/page.tsx     Protected Reports route (Module 10)
+  settings/page.tsx    Protected Settings route (Module 11)
   sales/page.tsx     Protected Sales History route (Module 6)
   sales/upload/page.tsx Protected Sales Upload route (Module 5)
   loading.tsx       Route-level streaming fallback
@@ -726,3 +727,45 @@ calculations, background jobs, or Settings behavior.
 > Frontend Reports route protection controls user experience only. Backend APIs
 > must independently enforce authentication, authorization, ownership, report
 > filters, and export access when integration is enabled.
+
+## Settings architecture
+
+Module 11 is a narrowly scoped Settings slice:
+
+```text
+features/settings/
+  api.ts        SettingsService boundary, unavailable in normal runtime
+  hooks.ts      Loaded state and independently saved forecast/inventory categories
+  schemas.ts    RHF-native Zod values and Decimal-safe normalization
+  types.ts      Forecast Defaults, Safety Stock Defaults, and explicit load state
+  components/   Two forms, loading skeleton, and composed page view
+```
+
+`app/settings/page.tsx` remains a Server Component and composes the existing
+`ProtectedRoute`, `AppShell`, `PageContainer`, and client-side `SettingsView`.
+No provider, global Settings store, navigation guard, or alternate Auth mechanism
+was introduced.
+
+Read-only backend inspection found the user-scoped Settings contract. Forecast
+defaults have `7 | 15 | 30` horizon days, a 1-365-day history window,
+`random_forest | baseline`, and auto-processing. Inventory safety stock is an
+absolute Decimal from `0` through `99999999999.999`, with no more than three
+decimal places. Settings preserves safety-stock input as text through validation
+and mapping, avoiding JavaScript floating-point coercion. It intentionally does
+not model minimum stock, low-stock alerts, profile preferences, model tuning, or
+any client-side safety-stock/reorder calculation.
+
+The service expresses independently persisted forecast and inventory categories
+without embedding an endpoint path. The normal service rejects operations safely,
+so production does not display invented defaults, persist locally, or claim a
+remote save. Tests alone inject deterministic feature-scoped adapters. A future
+HTTP adapter can map the existing backend contract here and join the existing
+TanStack Query provider without architectural replacement.
+
+> Module 11 implements Settings frontend UI and architecture for Forecast
+> Defaults and Safety Stock Defaults. Real persistence/API integration remains
+> intentionally deferred unless an existing backend contract is connected during
+> the integration phase.
+
+> Frontend Settings route protection controls user experience only. Backend APIs
+> must independently enforce authentication, authorization, and user ownership.

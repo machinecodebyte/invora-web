@@ -82,9 +82,9 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation through Reports tests
+## Foundation through Settings tests
 
-**401 unit and component tests across 51 files, plus 76 existing E2E tests. All passing.**
+**413 unit and component tests across 54 files, plus 76 existing E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
@@ -119,6 +119,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `recommendations-api.test.ts`   | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                                |
 | `reports-schemas.test.ts`       | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                                |
 | `reports-api.test.ts`           | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
+| `settings-schemas.test.ts`      | Backend-aligned forecast choices/history window and zero-safe three-decimal absolute safety-stock validation                                                                                                                      |
+| `settings-api.test.ts`          | Honest unavailable normal Settings service boundary with no runtime request or persistence                                                                                                                                        |
 
 ### Component tests — `src/tests/components/`
 
@@ -142,6 +144,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `forecast-results.test.tsx` | Run selection, loading, summary/metrics/table/chart rendering, zero/null distinction, filter validation, empty/not-ready/failed/error states, and safe adapter failures                            |
 | `recommendations.test.tsx` | Semantic risk table, Product/SKU context, decimal and zero quantity display, risk/search filters, pagination, loading, empty/filtered-empty, and safe adapter errors                             |
 | `reports.test.tsx`         | Report selector, scoped filters, semantic table/summary, zero/null rendering, validation, loading, empty/filtered-empty/error states, and CSV pending/success/failure behavior             |
+| `settings.test.tsx`        | Forecast and safety-stock forms, labels, valid zero, validation, dirty/revert, safe save success/failure, duplicate prevention, and loading/error states                              |
 
 ### E2E tests — `e2e/foundation.spec.ts`
 
@@ -346,6 +349,25 @@ Playwright needs a one-time browser install: `npx playwright install chromium`.
 - Never weaken an assertion, skip a test, or delete a failing test to get green.
   Fix the cause.
 
+## Settings tests
+
+Settings unit and component tests cover only the Module 11 contract: the exact
+forecast horizon/model choices, 1-365-day history window, absolute non-negative
+three-decimal safety stock including zero, Decimal-text normalization, dirty and
+revert behavior, independent save feedback, duplicate prevention, loading, and
+safe failure presentation. They inject `src/tests/fixtures/settings.ts`; normal
+runtime makes no HTTP request and uses no persisted or fake Settings values. No
+Settings E2E suite was added because the approved test layer is component testing;
+all existing Playwright suites remain the regression gate.
+
+Settings test files:
+
+- `src/tests/unit/settings-schemas.test.ts` validates the backend-aligned form
+  contract and Decimal-safe mapping.
+- `src/tests/unit/settings-api.test.ts` verifies the honest unavailable service.
+- `src/tests/components/settings.test.tsx` verifies form accessibility and all
+  meaningful UI transitions.
+
 ## Future testing strategy
 
 Per-module minimum, in addition to unit tests for any new `lib/` logic:
@@ -362,7 +384,7 @@ Per-module minimum, in addition to unit tests for any new `lib/` logic:
 | Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey  |
 | Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey |
 | Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression         |
-| Settings         | component — pending                | Preference forms, validation, save and reset feedback                                                                                                |
+| Settings         | component — completed              | Forecast Defaults and absolute Safety Stock Defaults, validation, zero-safe decimal input, dirty/revert/save states, and safe loading/error UI       |
 | Shared UI        | unit + component                   | Every new primitive: rendering, accessibility, interaction, all states                                                                               |
 
 Each module adds MSW handlers for its own endpoints and updates this document

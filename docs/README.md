@@ -43,14 +43,20 @@ but are not supported by that toolchain yet.
 
 ## Current implementation status
 
+**Settings: COMPLETED.** Module 11 adds protected `/settings` Forecast Defaults
+and Safety Stock Defaults forms with component-tested UI state. Persistence/API
+integration remains intentionally deferred. All business modules 0-11 are now
+implemented; Shared UI / final frontend consolidation remains.
+
 **Reports: COMPLETED.** Module 10 adds the protected `/reports` frontend and
-component-tested export architecture; Settings remains pending.
+component-tested export architecture. Module 11 Settings is also completed.
 
 **Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
 COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED. Sales History:
 COMPLETED. Forecast Run: COMPLETED. Forecast Results: COMPLETED. Recommendations:
-COMPLETED.** All remaining
-business modules are **PENDING**. See [`progress.md`](progress.md).
+COMPLETED. Reports: COMPLETED. Settings: COMPLETED.** All planned business
+modules are implemented; Shared UI / final frontend consolidation remains. See
+[`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
 local logout, protected-route UX, and a test-only E2E adapter. No real backend
@@ -79,6 +85,17 @@ normal adapter is unavailable-by-default and never makes an HTTP request.
 redirect validation, and access boundaries. Public routes are `/login` and
 `/register`; `/dashboard` is the protected Dashboard route. Real backend
 authentication integration remains intentionally deferred.
+
+## Settings module
+
+`src/features/settings/` owns the protected `/settings` route, typed Forecast
+Defaults and Safety Stock Defaults projections, RHF/Zod forms, independent save
+and revert UI state, and an unavailable-by-default `SettingsService`. The
+read-only inspected backend contract provides 7/15/30-day forecast horizons,
+1-365 history days, `random_forest`/`baseline`, auto-processing, and absolute
+three-decimal safety stock. Normal builds make no Settings request, use no fake
+defaults, and persist nothing locally; component fixtures are injected only by
+tests. Backend connection remains intentionally deferred.
 
 ## Dashboard module
 

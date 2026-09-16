@@ -38,4 +38,5 @@ export const ROUTES = {
   forecastResults: '/forecasts/results',
   recommendations: '/recommendations',
   reports: '/reports',
+  settings: '/settings',
 } as const;

@@ -12,7 +12,7 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
-Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports make no production API calls.
+Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings make no production API calls.
 
 ## Installation
 
@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (401 tests)
+npm run test              # unit + component (413 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -177,7 +177,7 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Settings module;
+**Deliberately not implemented:** real Settings/default persistence;
 any business API call; any production business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
@@ -364,3 +364,25 @@ Implemented:
 normal service makes no report/export request and cannot manufacture data,
 files, or downloads. Module 10 requires component coverage only; existing
 Playwright suites remain part of full frontend regression.
+
+## Current Settings Scope
+
+Implemented:
+
+- Protected `/settings` route using the existing Auth boundary and app shell
+- Forecast Defaults: 7/15/30-day horizon, 1-365-day history window,
+  backend-supported model default, and auto-processing default
+- Safety Stock Defaults: absolute non-negative Decimal quantity with up to three
+  decimal places; zero remains valid
+- RHF + Zod validation, independent dirty, saving, safe success/failure, and
+  revert states, plus accessible loading/error states
+- Typed no-network Settings service boundary and deterministic component fixtures
+
+**Real Settings/default persistence integration is intentionally not enabled.**
+The normal service makes no request, stores nothing in local or session storage,
+and does not manufacture business defaults. No Settings E2E suite was added
+because Module 11 requires component testing; all existing Playwright suites are
+still rerun as the frontend regression gate.
+
+**Current project status:** Frontend business modules 0-11 are implemented.
+Module 12, Shared UI / final frontend consolidation, remains in progress.

@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, or Reports.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, or Settings.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (401 tests)
+npm run test              # both suites (413 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -291,6 +291,18 @@ CSV metadata; no Module 10 E2E suite was added because the approved test layer i
 component testing. Existing browser suites still provide complete regression
 coverage for the previously completed modules.
 
+### Settings component behavior
+
+`/settings` is the protected Module 11 route for Forecast Defaults and absolute
+Safety Stock Defaults only. The normal `SettingsService` composes no endpoint,
+makes no request, stores no data locally, and therefore does not display invented
+defaults. Component tests inject isolated data to cover validation, valid zero
+quantities, dirty/revert, save pending/success/failure, and initial load states.
+No Settings E2E suite is required by roadmap; existing browser suites remain part
+of the full regression. Read-only backend inspection identified the later mapping:
+7/15/30 day horizon, 1-365 history days, `random_forest`/`baseline`,
+auto-processing, and absolute 3-decimal safety stock.
+
 ## 12. Full verification
 
 ```bash
@@ -298,15 +310,15 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations + Reports:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations + Reports + Settings:
 
 | Step            | Expected                                                                                                                    |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `lint`          | no errors, no warnings                                                                                                      |
 | `typecheck`     | no errors                                                                                                                   |
-| `test`          | 51 files, 401 tests passing                                                                                                 |
+| `test`          | 54 files, 413 tests passing                                                                                                 |
 | `test:coverage` | above all 85% thresholds                                                                                                    |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and protected routes |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, Settings, and protected routes |
 | `test:e2e`      | 76 tests passing in Chromium                                                                                                |
 
 ## 13. Troubleshooting

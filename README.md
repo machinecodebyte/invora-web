@@ -7,6 +7,9 @@ recommendation system for small-business inventory management.
 
 ## Current status
 
+**Frontend Module 11 - Settings: COMPLETED.** All planned business modules 0-11
+are implemented; Module 12, Shared UI / final frontend consolidation, remains.
+
 **Frontend Module 10 — Reports: COMPLETED.**
 
 **Frontend Module 0 — Foundation: COMPLETED.**
@@ -24,7 +27,7 @@ recommendation system for small-business inventory management.
 **Frontend Module 8 — Forecast Results: COMPLETED.**
 **Frontend Module 9 — Recommendations: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports: the application
+The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
@@ -152,8 +155,11 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-401 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
-Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports modules. Configured coverage exceeds the required 85%
+Module 11 adds 12 focused unit/component tests. The complete frontend suite now
+contains 413 unit/component tests plus 76 Playwright tests.
+
+413 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
+Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
 ```bash
