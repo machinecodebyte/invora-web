@@ -3,7 +3,7 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, or Recommendations.**
+> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, or Reports.**
 > The API client infrastructure exists and is fully tested against mocks, but no
 > business endpoint is called. You do **not** need the backend, PostgreSQL, or
 > Redis running to work on the frontend today. Integration lands with each
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (391 tests)
+npm run test              # both suites (401 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -281,6 +281,16 @@ test-supplied, isolated `sessionStorage` fixtures for populated, risk/status/sea
 filter, pagination, empty, and safe-error flows. It neither calculates reorder
 quantities/risk nor contacts FastAPI.
 
+### Reports component behavior
+
+`/reports` is the protected Module 10 report-selector surface. It uses the
+normal unavailable `ReportsService`, which calls neither Reports nor export
+endpoints and creates no local report data, CSV, or browser download. Component
+tests inject isolated fixtures for the five backend report types and synchronous
+CSV metadata; no Module 10 E2E suite was added because the approved test layer is
+component testing. Existing browser suites still provide complete regression
+coverage for the previously completed modules.
+
 ## 12. Full verification
 
 ```bash
@@ -288,15 +298,15 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations + Reports:
 
 | Step            | Expected                                                                                                                    |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `lint`          | no errors, no warnings                                                                                                      |
 | `typecheck`     | no errors                                                                                                                   |
-| `test`          | 48 files, 391 tests passing                                                                                                 |
+| `test`          | 51 files, 401 tests passing                                                                                                 |
 | `test:coverage` | above all 85% thresholds                                                                                                    |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and protected routes |
+| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and protected routes |
 | `test:e2e`      | 76 tests passing in Chromium                                                                                                |
 
 ## 13. Troubleshooting

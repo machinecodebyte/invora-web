@@ -82,9 +82,9 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations tests
+## Foundation through Reports tests
 
-**391 unit and component tests across 48 files, plus 76 E2E tests. All passing.**
+**401 unit and component tests across 51 files, plus 76 existing E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
@@ -117,6 +117,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `forecast-results-api.test.ts`  | Honest unavailable normal Forecast Results service boundary with no runtime request                                                                                                                                               |
 | `recommendations-schemas.test.ts` | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
 | `recommendations-api.test.ts`   | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                                |
+| `reports-schemas.test.ts`       | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                                |
+| `reports-api.test.ts`           | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
 
 ### Component tests — `src/tests/components/`
 
@@ -139,6 +141,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `forecast-run.test.tsx`    | Accessible horizon validation, pending/running/completed lifecycle, duplicate-start prevention, safe failures, refresh retry, and reset                                                            |
 | `forecast-results.test.tsx` | Run selection, loading, summary/metrics/table/chart rendering, zero/null distinction, filter validation, empty/not-ready/failed/error states, and safe adapter failures                            |
 | `recommendations.test.tsx` | Semantic risk table, Product/SKU context, decimal and zero quantity display, risk/search filters, pagination, loading, empty/filtered-empty, and safe adapter errors                             |
+| `reports.test.tsx`         | Report selector, scoped filters, semantic table/summary, zero/null rendering, validation, loading, empty/filtered-empty/error states, and CSV pending/success/failure behavior             |
 
 ### E2E tests — `e2e/foundation.spec.ts`
 
@@ -288,6 +291,18 @@ pagination boundaries, and 375×667 overflow behavior. Its nine scenarios use
 only session-scoped fixtures under `NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`;
 no FastAPI or recommendation calculation process is used.
 
+### Reports tests
+
+Reports component tests inject only feature-scoped test adapters. They cover the
+five-report selector, the active report's semantic table and backend-provided
+summary values, valid zero and nullable cells, report-specific filters, required
+demand-forecast run validation, invalid date ranges, loading, empty,
+filtered-empty, normalized errors, and CSV export pending/duplicate prevention,
+safe metadata success, and failure. The normal `ReportsService` is separately
+tested to reject both report and export operations without making a request.
+There is no Module 10 E2E suite by roadmap; all existing E2E suites are rerun as
+the regression gate.
+
 ### Coverage
 
 Measured with `npm run test:coverage`:
@@ -346,8 +361,8 @@ Per-module minimum, in addition to unit tests for any new `lib/` logic:
 | Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                            |
 | Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey  |
 | Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey |
-| Reports          | component                          | Report selection, rendering, CSV export trigger                                                                                                      |
-| Settings         | component                          | Preference forms, validation, save and reset feedback                                                                                                |
+| Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression         |
+| Settings         | component — pending                | Preference forms, validation, save and reset feedback                                                                                                |
 | Shared UI        | unit + component                   | Every new primitive: rendering, accessibility, interaction, all states                                                                               |
 
 Each module adds MSW handlers for its own endpoints and updates this document

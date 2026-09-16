@@ -7,6 +7,8 @@ recommendation system for small-business inventory management.
 
 ## Current status
 
+**Frontend Module 10 — Reports: COMPLETED.**
+
 **Frontend Module 0 — Foundation: COMPLETED.**
 **Frontend Module 1 — Auth: COMPLETED.**
 **Frontend Module 2 — Dashboard: COMPLETED.**
@@ -22,7 +24,7 @@ recommendation system for small-business inventory management.
 **Frontend Module 8 — Forecast Results: COMPLETED.**
 **Frontend Module 9 — Recommendations: COMPLETED.**
 
-The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations: the application
+The frontend currently contains Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports: the application
 shell, shared primitives, API/client infrastructure, login and registration
 routes, local logout, protected-route UX, and a responsive Dashboard composed
 from typed KPIs, demand trend, reorder alerts, inventory risk, and explicit
@@ -59,6 +61,13 @@ infrastructure. See
 
 Recommendations follows the same no-network adapter boundary. Its deterministic
 session-scoped fixtures are selected only by the Playwright-managed test build.
+
+Module 10 adds the protected `/reports` route, one selector for the five
+backend-defined report views, report-specific filters, semantic report tables,
+backend-provided summary metrics, and a CSV-only export interaction boundary.
+The normal Reports service is unavailable by design: it makes no request and
+does not manufacture report rows, files, or downloads. Deterministic Reports
+fixtures exist only in the unit/component test infrastructure.
 
 ## Technology stack
 
@@ -127,7 +136,7 @@ src/
   components/
     layout/     AppShell, Header, MainContent, PageContainer
     ui/         Button, Input, Label, Select, Textarea, Dialog, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
-  features/     Auth, Dashboard, Products, Inventory, Sales, Forecasting, and Recommendations vertical slices plus future-module placeholders
+  features/     Auth, Dashboard, Products, Inventory, Sales, Forecasting, Recommendations, and Reports vertical slices plus future-module placeholders
   hooks/        Shared hooks (use-auth, use-toast)
   lib/          api-client, api-error, query-client, auth, env, forms, logger, toast, constants, utils
   types/        Generic transport and utility types
@@ -143,8 +152,8 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-391 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
-Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations modules. Configured coverage exceeds the required 85%
+401 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
+Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
 ```bash
@@ -181,3 +190,8 @@ lands in a later integration phase. See
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
 and three-decimal quantity semantics were also aligned through read-only backend
 inspection. The frontend does not call the Recommendations API at runtime.
+
+Reports contract inspection established model-performance, inventory-risk,
+reorder-summary, demand-forecast, and sales-summary views. The backend exposes
+synchronous `text/csv` attachments as its sole export format. The frontend does
+not call Reports or export endpoints at runtime.

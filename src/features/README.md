@@ -1,12 +1,15 @@
 # Features
 
 Business functionality lives here, one directory per frontend module. Modules 1,
-2, 3, 4, 5, 6, 7, 8, and 9 implement the Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations vertical slices. No other future
+2, 3, 4, 5, 6, 7, 8, 9, and 10 implement the Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports vertical slices. Settings is the only remaining future
 business scope is implemented. Forecast Results shares `forecasting/` while
 remaining separate from the Forecast Run configuration/status UI. Recommendations
 owns its own read-only vertical slice and does not calculate risk or reorder
 quantities. No normal-runtime module ships fake business data, placeholder
 business logic, or stub API calls.
+
+Reports owns only read-only report rendering and CSV export architecture. It
+does not duplicate Sales, Inventory, Forecast, or Recommendation workflows.
 
 ## Per-feature structure
 

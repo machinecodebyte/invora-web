@@ -43,6 +43,9 @@ but are not supported by that toolchain yet.
 
 ## Current implementation status
 
+**Reports: COMPLETED.** Module 10 adds the protected `/reports` frontend and
+component-tested export architecture; Settings remains pending.
+
 **Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
 COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED. Sales History:
 COMPLETED. Forecast Run: COMPLETED. Forecast Results: COMPLETED. Recommendations:
@@ -63,7 +66,7 @@ Run configuration and lifecycle-status surface with a no-network service boundar
 Module 8 adds a protected completed-run Forecast Results surface with a no-network
 result adapter, summary, allowed metrics, prediction list, filters, and an
 actual-versus-predicted aggregate chart. No real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, Sales
-Transaction, Forecast Run, Forecast Results, Recommendations, or ML API call is enabled.
+Transaction, Forecast Run, Forecast Results, Recommendations, Reports, or ML API call is enabled.
 
 Module 9 adds a protected, read-only Recommendations surface with backend-aligned
 five-level risk labels, read-only status display, Product/SKU search, risk/status filtering, backend-shaped
@@ -163,6 +166,18 @@ acknowledge, dismiss, or other recommendation actions. The Playwright-managed
 build alone reads a validated, session-scoped test fixture. Real Recommendations
 API integration remains intentionally deferred.
 
+## Reports module
+
+`src/features/reports/` owns the protected `/reports` composition, the five
+read-only backend report definitions, report-specific filter validation, safe
+table/summary projection, and CSV export state. Its report types are model
+performance, inventory risk, reorder summary, demand forecast, and sales
+summary. The normal `ReportsService` deliberately returns safe unavailability;
+it contains no report fixture, does not make a request, and cannot create a
+download. Test-only fixtures/adapters exercise deterministic report and export
+success/failure paths. Real Reports API and export integration remain
+intentionally deferred.
+
 ## How modules will be structured
 
 Each future module is a vertical slice under `src/features/<feature>/`, owning its
@@ -176,7 +191,7 @@ Details and the full rule set: [`architecture.md`](architecture.md) and
 ## How testing works
 
 Unit tests cover `lib/`, `types/`, and feature schemas/adapter boundaries.
-Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations through their
+Component tests cover shared controls plus Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports through their
 accessible surface. Playwright covers whole-application behavior in a real
 browser. MSW backs every HTTP interaction in Vitest, configured to fail on
 unmocked requests.

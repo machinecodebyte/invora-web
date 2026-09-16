@@ -136,7 +136,7 @@ Runs `src/tests/components/**`.
 npm run test
 ```
 
-Unit + component in one pass (currently 391 tests).
+Unit + component in one pass (currently 401 tests).
 
 Run the Auth-focused Vitest files without changing package scripts:
 
@@ -156,6 +156,7 @@ npx vitest run src/tests/unit/sales-history-schemas.test.ts src/tests/unit/sales
 npx vitest run src/tests/unit/forecast-run-schemas.test.ts src/tests/unit/forecast-run-api.test.ts src/tests/components/forecast-run.test.tsx
 npx vitest run src/tests/unit/forecast-results-schemas.test.ts src/tests/unit/forecast-results-api.test.ts src/tests/components/forecast-results.test.tsx
 npx vitest run src/tests/unit/recommendations-schemas.test.ts src/tests/unit/recommendations-api.test.ts src/tests/components/recommendations.test.tsx
+npx vitest run src/tests/unit/reports-schemas.test.ts src/tests/unit/reports-api.test.ts src/tests/components/reports.test.tsx
 ```
 
 ## Watch mode

@@ -12,7 +12,7 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
-Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations make no production API calls.
+Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports make no production API calls.
 
 ## Installation
 
@@ -78,7 +78,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (391 tests)
+npm run test              # unit + component (401 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -177,7 +177,7 @@ Implemented:
 - Logging abstraction with credential redaction
 - Vitest, React Testing Library, MSW, and Playwright harness
 
-**Deliberately not implemented:** Reports and Settings modules;
+**Deliberately not implemented:** Settings module;
 any business API call; any production business data, real or dummy.
 
 **Backend integration is intentionally NOT enabled in Foundation.** The API
@@ -346,3 +346,21 @@ builds make no request, contain no recommendation data, and do not calculate
 risk/reorder quantities or perform recommendation actions. Only the
 Playwright-managed test build reads isolated session-scoped fixtures; it never
 contacts FastAPI or stores production recommendation data.
+
+## Current Reports Scope
+
+Implemented:
+
+- Protected `/reports` route using the existing Auth boundary and app shell
+- Single report selector for model performance, inventory risk, reorder summary,
+  demand forecast, and sales summary output
+- Report-specific backend-supported filters, semantic table/summary rendering,
+  and loading, empty, filtered-empty, validation, and safe error states
+- CSV-only export action with pending, deterministic test-success, and safe
+  failure states; it prevents duplicate export and creates no production download
+- Typed no-network Reports/export service contract with isolated component fixtures
+
+**Real Reports API and export integration are intentionally not enabled.** The
+normal service makes no report/export request and cannot manufacture data,
+files, or downloads. Module 10 requires component coverage only; existing
+Playwright suites remain part of full frontend regression.

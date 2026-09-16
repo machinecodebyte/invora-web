@@ -3,7 +3,7 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations extend it without
+establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports extend it without
 changing its shared boundaries.
 
 ## Next.js App Router
@@ -20,6 +20,7 @@ src/app/
   forecasts/runs/page.tsx Protected Forecast Run route (Module 7)
   forecasts/results/page.tsx Protected Forecast Results route (Module 8)
   recommendations/page.tsx Protected Recommendations route (Module 9)
+  reports/page.tsx     Protected Reports route (Module 10)
   sales/page.tsx     Protected Sales History route (Module 6)
   sales/upload/page.tsx Protected Sales Upload route (Module 5)
   loading.tsx       Route-level streaming fallback
@@ -681,3 +682,47 @@ For each module, in order:
 The foundation is designed so none of these steps requires changing foundation
 code: the API client, error model, query client, auth store, and UI primitives are
 already the extension points.
+
+## Reports architecture
+
+Module 10 introduces a self-contained, read-only Reports slice:
+
+```text
+features/reports/
+  api.ts        ReportsService / CSV export boundary, unavailable in normal runtime
+  hooks.ts      Selected report, filter validation, loading/error, and export state
+  schemas.ts    Backend-aligned date, UUID, channel, and required-run validation
+  types.ts      Report types, selected-table projection, query, summary, and export types
+  components/   Filters, summary, table, CSV action, skeleton, and composed page view
+```
+
+`app/reports/page.tsx` is a Server Component that composes the existing
+`ProtectedRoute`, `AppShell`, `PageContainer`, and client-side `ReportsView`.
+The selector exposes only the inspected backend contracts: model performance,
+inventory risk, reorder summary, demand forecast, and sales summary. The filter
+surface changes by report type: dates and forecast run for model performance;
+category/stock status for inventory risk; run/risk/status for reorder summary;
+a required run plus product/category/dates for demand forecast; and dates,
+product/category, and channel for sales summary. Client validation prevents an
+invalid inclusive date range and a missing demand-forecast run ID.
+
+The service boundary contains no endpoint path and calls no HTTP client. A future
+HTTP adapter maps each backend response to the active report's `ReportData`
+projection and can join the existing TanStack Query provider without a new cache
+or provider. The current backend export is synchronous, produces a `text/csv`
+attachment, and supports CSV only; `ReportExportState` therefore models
+`idle`, `preparing`, `ready`, and `error`, not an invented job/polling flow. The
+normal service rejects unavailable report/export operations safely. Test-only
+component fixtures inject deterministic rows and export metadata but never create
+a browser download or become reachable from the production build.
+
+Reports is an aggregate presentation layer, not a duplicate Product, Inventory,
+Sales, Forecast, or Recommendation workflow. It includes no mutations,
+calculations, background jobs, or Settings behavior.
+
+> Module 10 implements Reports frontend UI and export architecture only. Real
+> Reports API and report export integration remain intentionally deferred.
+
+> Frontend Reports route protection controls user experience only. Backend APIs
+> must independently enforce authentication, authorization, ownership, report
+> filters, and export access when integration is enabled.

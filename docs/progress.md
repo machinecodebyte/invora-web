@@ -17,7 +17,7 @@ Implementation status of the Invora frontend, module by module.
 | Forecast Run     | **Completed**                            | Protected `/forecasts/runs` configuration/status route; backend-aligned 7/15/30-day horizon form; explicit lifecycle UI; typed no-network start/status boundary; deterministic test-only lifecycle adapter; 10 unit/component tests and 7 E2E tests. Real Forecast Run and ML integration remain disabled.                                                            |
 | Forecast Results | **Completed**                            | Protected `/forecasts/results` completed-run route; validated UUID selection; backend-aligned summary, MAE/RMSE/MAPE, product/SKU and date filters, offset/limit prediction list, nullable-actual SVG comparison, and explicit safe states; typed no-network boundary; deterministic test-only fixture adapter; 14 unit/component tests and 9 E2E tests. Real Forecast Results and ML integration remain disabled. |
 | Recommendations  | **Completed**                            | Protected read-only `/recommendations` route; backend-aligned five-level risk and read-only status labels, Product/SKU search, risk/status filters, offset/limit pagination, three-decimal-safe reorder display, and explicit safe states; typed no-network boundary; deterministic test-only fixture adapter; 10 unit/component tests and 9 E2E tests. Real Recommendations integration remains disabled. |
-| Reports          | Pending                                  | `src/features/reports/` created empty                                                                                                                                                                                                                                                                                                                                 |
+| Reports          | **Completed**                            | Protected read-only `/reports` route with the five inspected backend report types, report-specific filters, semantic tables, backend-provided summary projection, CSV-only export state, and deterministic component fixtures. Normal runtime makes no Report or export request and creates no file/download. |
 | Settings         | Pending                                  | `src/features/settings/` created empty                                                                                                                                                                                                                                                                                                                                |
 
 Remaining future feature directories contain no implementation, stub API calls,
@@ -41,13 +41,18 @@ Skeleton, EmptyState, and ErrorState primitives. Its risk badge, quantity displa
 and semantic table remain feature-local because they represent the backend-owned
 Recommendation contract.
 
+Module 10 reuses the same protected route, layout, Input, Select, Button, Card,
+Skeleton, EmptyState, and ErrorState primitives. Its report-specific table,
+summary, filters, and CSV export state remain feature-local because they map the
+Reports contract and do not create a new shared business abstraction.
+
 ## Backend integration
 
-**Not enabled.** Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations make no real backend
+**Not enabled.** Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, and Reports make no real backend
 request.
 The backend (`../backend`) was inspected read-only to align Auth fields,
 Dashboard Analytics summary semantics, Product Catalog validation/list semantics,
-and Inventory movement/low-stock semantics, Sales Upload CSV rules, Sales Transaction list/trend semantics, Forecast Run horizon/lifecycle semantics, Forecast Results overview/list/metrics/chart semantics, and Recommendations risk/list/quantity semantics, but the frontend uses unavailable or
+and Inventory movement/low-stock semantics, Sales Upload CSV rules, Sales Transaction list/trend semantics, Forecast Run horizon/lifecycle semantics, Forecast Results overview/list/metrics/chart semantics, Recommendations risk/list/quantity semantics, and Reports views/export semantics, but the frontend uses unavailable or
 no-data-by-default adapters until the API integration phase. Each feature module
 wires up endpoints only when that phase is enabled.
 
@@ -57,9 +62,9 @@ wires up endpoints only when that phase is enabled.
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run lint`          | Pass — no errors, no warnings                                                                                                                                    |
 | `npm run typecheck`     | Pass — no errors                                                                                                                                                 |
-| `npm run test`          | Pass — 48 files, 391 tests                                                                                                                                       |
+| `npm run test`          | Pass — 51 files, 401 tests                                                                                                                                       |
 | `npm run test:coverage` | Pass — 94.46% statements, 92.95% branches, 94.89% functions, 94.38% lines (85% thresholds)                                                                       |
-| `npm run build`         | Pass — `/`, `/dashboard`, `/forecasts/results`, `/forecasts/runs`, `/inventory`, `/products`, `/recommendations`, `/sales`, `/sales/upload`, `/login`, `/register`, and `/_not-found` compile successfully |
+| `npm run build`         | Pass — `/`, `/dashboard`, `/forecasts/results`, `/forecasts/runs`, `/inventory`, `/products`, `/recommendations`, `/reports`, `/sales`, `/sales/upload`, `/login`, `/register`, and `/_not-found` compile successfully |
 | `npm run start`         | Pass — verified via the Playwright managed production server                                                                                                     |
 | `npm run test:e2e`      | Pass — 76 tests in Chromium against a production build                                                                                                           |
 
@@ -67,13 +72,13 @@ wires up endpoints only when that phase is enabled.
 
 Deliberately not implemented, by scope:
 
-- Future business modules Reports and Settings
+- Future business module Settings
 - Any business API call
 - Any production business data — no fake products, sales, inventory, forecasts,
   recommendations, reports, KPIs, or users
 - Real authentication endpoints, backend session invalidation, token refresh,
   password reset, verification, MFA, or OAuth
-- Real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, Sales Transaction, Forecast Run, Forecast Results, Recommendations, or ML requests, or production fixture data
+- Real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, Sales Transaction, Forecast Run, Forecast Results, Recommendations, Reports, or ML requests, or production fixture data
 - Content-Security-Policy (requires per-request nonce plumbing; see
   [`architecture.md`](architecture.md))
 - External observability platform
