@@ -3,8 +3,10 @@
 ## Scope of this document
 
 How the Invora frontend is organized, why, and how modules plug in. Foundation
-establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings extend it without
-changing its shared boundaries.
+establishes the architecture; Auth, Dashboard, Products, Inventory, Sales Upload,
+Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and
+Settings extend it without changing its shared boundaries. Module 12 completes
+the shared-UI audit without changing feature ownership or integration boundaries.
 
 ## Next.js App Router
 
@@ -769,3 +771,40 @@ TanStack Query provider without architectural replacement.
 
 > Frontend Settings route protection controls user experience only. Backend APIs
 > must independently enforce authentication, authorization, and user ownership.
+
+## Shared UI / final consolidation architecture
+
+Module 12 retains `src/components/ui/` as a presentational layer with a single
+dependency direction:
+
+```text
+features/*  -> components/ui -> lib/utils
+app/*       -> features/* and components/*
+```
+
+`components/ui` must not import a feature, feature model, query hook, service,
+or API client. Features own their business vocabulary, row/column definitions,
+filtering, data-fetch state, and accessibility copy; they compose shared
+presentation primitives rather than exporting business abstractions sideways.
+
+The audit retained the canonical Button, Input, Label, Select, Textarea, Card,
+Dialog, Spinner, Skeleton, EmptyState, ErrorState, Toaster, and layout
+primitives unchanged. Two narrowly generic primitives were added:
+
+- `TableScrollArea` owns only responsive horizontal containment. Products,
+  Inventory, Sales History, Forecast Results, Recommendations, and Reports keep
+  their semantic `<table>`, captions, cells, column order, formatting, and data
+  contract inside the owning feature.
+- `Pagination` owns only page-position and previous/next controls. Sales
+  History, Forecast Results, and Recommendations retain their offset/limit
+  calculation and request state. Contextual navigation labels remain injectable
+  for feature-specific screen-reader wording.
+
+Status/risk badges have feature-specific semantic mappings, Sales Upload's
+native `<progress>` represents a real upload percentage, Forecast Run exposes
+lifecycle state rather than percentage progress, and chart/form composition has
+no proven generic contract. Those concerns intentionally remain feature-local.
+
+This consolidation did not introduce a new provider, store, API adapter,
+navigation mechanism, authentication model, token storage strategy, or backend
+request. It is presentation reuse only.

@@ -1,5 +1,6 @@
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
+import { TableScrollArea } from '@/components/ui/table-scroll-area';
 import type {
   SalesHistoryPage,
   SalesTransaction,
@@ -91,34 +92,17 @@ function SalesHistoryPagination({ page, onPageChange }: SalesHistoryTableProps) 
   }
 
   return (
-    <nav
-      aria-label="Sales history pagination"
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3"
-    >
-      <p className="text-sm text-foreground-muted">
-        Page {currentPage} of {pageCount}
-      </p>
-      <div className="flex gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={!canGoPrevious}
-          aria-label="Previous sales history page"
-          onClick={() => onPageChange(Math.max(page.offset - page.limit, 0))}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={!canGoNext}
-          aria-label="Next sales history page"
-          onClick={() => onPageChange(page.offset + page.limit)}
-        >
-          Next
-        </Button>
-      </div>
-    </nav>
+    <Pagination
+      ariaLabel="Sales history pagination"
+      currentPage={currentPage}
+      pageCount={pageCount}
+      canGoPrevious={canGoPrevious}
+      canGoNext={canGoNext}
+      previousAriaLabel="Previous sales history page"
+      nextAriaLabel="Next sales history page"
+      onPrevious={() => onPageChange(Math.max(page.offset - page.limit, 0))}
+      onNext={() => onPageChange(page.offset + page.limit)}
+    />
   );
 }
 
@@ -135,7 +119,7 @@ export function SalesHistoryTable({ page, onPageChange }: SalesHistoryTableProps
         </p>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        <TableScrollArea>
           <table
             className="min-w-[760px] w-full border-collapse"
             aria-label="Sales history"
@@ -192,7 +176,7 @@ export function SalesHistoryTable({ page, onPageChange }: SalesHistoryTableProps
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScrollArea>
         <SalesHistoryPagination page={page} onPageChange={onPageChange} />
       </CardContent>
     </Card>

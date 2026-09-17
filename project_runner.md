@@ -167,7 +167,8 @@ Implemented:
 - App Router shell with metadata, viewport, error/not-found/loading routes
 - Tailwind CSS 4 design tokens with light and dark palettes
 - Accessible UI primitives: Button, Input, Label, Select, Textarea, Dialog,
-  Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
+  Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster, TableScrollArea,
+  Pagination
 - Layout primitives: AppShell, Header, MainContent, PageContainer
 - Typed API client: timeouts, cancellation, envelope unwrapping, normalized errors
 - `ApiError` model with status, code, validation details, and correlation id
@@ -384,5 +385,23 @@ and does not manufacture business defaults. No Settings E2E suite was added
 because Module 11 requires component testing; all existing Playwright suites are
 still rerun as the frontend regression gate.
 
-**Current project status:** Frontend business modules 0-11 are implemented.
-Module 12, Shared UI / final frontend consolidation, remains in progress.
+## Current Shared UI / Final Consolidation Scope
+
+Implemented:
+
+- Completed non-destructive audit of shared Button, Input, Label, Select,
+  Textarea, Card, Dialog, Spinner, Skeleton, EmptyState, ErrorState, Toaster,
+  and layout primitives
+- `TableScrollArea` for generic responsive horizontal containment around
+  feature-owned semantic tables
+- `Pagination` for accessible, presentation-only previous/next controls while
+  features retain offset/limit calculations and query state
+- Focused component coverage plus the full existing Chromium regression suite
+
+Feature-specific badges, native upload progress, forecast lifecycle state,
+charts, and form layouts remain in the owning feature because they have no safe
+generic contract. Module 12 adds no route, provider, store, API call, backend
+connection, or business data.
+
+**Current project status:** Frontend implementation modules 0-12 are complete.
+Frontend-to-backend API integration remains the next separate phase.

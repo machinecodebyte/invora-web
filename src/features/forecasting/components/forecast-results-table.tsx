@@ -1,5 +1,6 @@
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
+import { TableScrollArea } from '@/components/ui/table-scroll-area';
 import {
   formatForecastDate,
   formatForecastValue,
@@ -27,7 +28,7 @@ export function ForecastResultsTable({ page, onPageChange }: ForecastResultsTabl
         </p>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        <TableScrollArea>
           <table className="min-w-[720px] w-full border-collapse" aria-label="Forecast predictions">
             <thead className="bg-surface-muted text-left">
               <tr>
@@ -52,15 +53,17 @@ export function ForecastResultsTable({ page, onPageChange }: ForecastResultsTabl
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScrollArea>
         {page.total <= page.limit ? null : (
-          <nav aria-label="Forecast Results pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
-            <p className="text-sm text-foreground-muted">Page {currentPage} of {pageCount}</p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" disabled={!previousEnabled} onClick={() => onPageChange(Math.max(page.offset - page.limit, 0))}>Previous</Button>
-              <Button size="sm" variant="secondary" disabled={!nextEnabled} onClick={() => onPageChange(page.offset + page.limit)}>Next</Button>
-            </div>
-          </nav>
+          <Pagination
+            ariaLabel="Forecast Results pagination"
+            currentPage={currentPage}
+            pageCount={pageCount}
+            canGoPrevious={previousEnabled}
+            canGoNext={nextEnabled}
+            onPrevious={() => onPageChange(Math.max(page.offset - page.limit, 0))}
+            onNext={() => onPageChange(page.offset + page.limit)}
+          />
         )}
       </CardContent>
     </Card>

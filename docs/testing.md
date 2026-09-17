@@ -82,69 +82,69 @@ environment configuration.
 Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 `PLAYWRIGHT_PORT`.
 
-## Foundation through Settings tests
+## Foundation through Shared UI consolidation tests
 
-**413 unit and component tests across 54 files, plus 76 existing E2E tests. All passing.**
+**416 unit and component tests across 55 files, plus 76 existing E2E tests. All passing.**
 
 ### Unit tests — `src/tests/unit/`
 
-| File                            | Covers                                                                                                                                                                                                                           |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `utils.test.ts`                 | `cn` conflict resolution, number/date formatting incl. invalid input, URL joining                                                                                                                                                |
-| `constants.test.ts`             | Brand strings, `API_V1_PREFIX` matching the backend contract, timeout sanity                                                                                                                                                     |
-| `env.test.ts`                   | Env validation: missing/empty/relative/non-http URLs, trailing-slash stripping, environment enum, non-throwing probe                                                                                                             |
-| `api-error.test.ts`             | Envelope parsing, safe status fallbacks, **no leakage of HTML/traceback bodies**, message truncation, detail normalization, correlation id, type guards                                                                          |
-| `api-client.test.ts`            | Query serialization, envelope unwrapping, JSON vs FormData bodies, all verbs, 204/empty bodies, text/blob/void formats, auth headers, header precedence, HTTP/network/parse errors, timeout vs caller abort, base-URL resolution |
-| `auth.test.ts`                  | Expiry maths, memory storage, store lifecycle, subscribe/unsubscribe, snapshot stability, injected storage, instance isolation                                                                                                   |
-| `query-client.test.ts`          | Retry policy per status class, backoff and cap, client defaults, no mutation retries, per-call independence                                                                                                                      |
-| `toast.test.ts`                 | Queueing, dismissal, auto-dismiss timing, timer cancellation, notification semantics, snapshot stability                                                                                                                         |
-| `forms.test.ts`                 | API validation errors mapped to fields, unknown/field-less issues routed to form level, non-`ApiError` inputs ignored                                                                                                            |
-| `logger.test.ts`                | Redaction (incl. nested and case-insensitive), level gating in production, behavior when env is misconfigured                                                                                                                    |
-| `pagination.test.ts`            | `hasMorePages`, `currentPageNumber`, `totalPageCount`, divide-by-zero guards                                                                                                                                                     |
-| `auth-schemas.test.ts`          | Backend-aligned email normalization, login requirements, registration password rules, confirmation mismatch, and UI-only confirmation omission                                                                                   |
-| `auth-api.test.ts`              | Unavailable default adapter, deterministic E2E adapter, and test-state cleanup                                                                                                                                                   |
-| `auth-redirects.test.ts`        | Internal return paths, external/protocol-relative/backslash rejection, malformed/default fallback                                                                                                                                |
-| `dashboard-api.test.ts`         | Unavailable default service, isolated Playwright fixture state, safe fixture failure, and malformed-state fallback                                                                                                               |
-| `inventory-schemas.test.ts`     | Backend-aligned stock-in/out, absolute adjustment, signed correction, zero/negative, decimal precision, size, and reason normalization rules                                                                                     |
-| `inventory-api.test.ts`         | Unavailable default service, explicit low-stock projection, deterministic test-only movement semantics, insufficient-stock safety, and malformed fixture fallback                                                                |
-| `sales-upload-schemas.test.ts`  | CSV extension, MIME, empty/5 MiB limit, normalized headers, missing/duplicate-column preflight behavior                                                                                                                          |
-| `sales-upload-api.test.ts`      | Unavailable normal service, deterministic progress/result fixture, safe missing-fixture failure                                                                                                                                  |
-| `sales-history-schemas.test.ts` | Inclusive same-day date validation, cleared dates, malformed dates, and start-after-end rejection                                                                                                                                |
-| `sales-history-api.test.ts`     | Honest unavailable Sales Transaction list/trend service boundary with no runtime request                                                                                                                                         |
-| `forecast-run-schemas.test.ts`  | Backend-supported 7/15/30-day horizons, missing/unsupported rejection, and native-select request normalization                                                                                                                   |
-| `forecast-run-api.test.ts`      | Unavailable normal service, deterministic session-scoped lifecycle adapter, and malformed-fixture safety                                                                                                                         |
-| `forecast-results-schemas.test.ts` | Result filter validation, date-range safety, search normalization, and UUID run-id validation                                                                                                                               |
-| `forecast-results-api.test.ts`  | Honest unavailable normal Forecast Results service boundary with no runtime request                                                                                                                                               |
-| `recommendations-schemas.test.ts` | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
-| `recommendations-api.test.ts`   | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                                |
-| `reports-schemas.test.ts`       | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                                |
-| `reports-api.test.ts`           | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
-| `settings-schemas.test.ts`      | Backend-aligned forecast choices/history window and zero-safe three-decimal absolute safety-stock validation                                                                                                                      |
-| `settings-api.test.ts`          | Honest unavailable normal Settings service boundary with no runtime request or persistence                                                                                                                                        |
+| File                               | Covers                                                                                                                                                                                                                           |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `utils.test.ts`                    | `cn` conflict resolution, number/date formatting incl. invalid input, URL joining                                                                                                                                                |
+| `constants.test.ts`                | Brand strings, `API_V1_PREFIX` matching the backend contract, timeout sanity                                                                                                                                                     |
+| `env.test.ts`                      | Env validation: missing/empty/relative/non-http URLs, trailing-slash stripping, environment enum, non-throwing probe                                                                                                             |
+| `api-error.test.ts`                | Envelope parsing, safe status fallbacks, **no leakage of HTML/traceback bodies**, message truncation, detail normalization, correlation id, type guards                                                                          |
+| `api-client.test.ts`               | Query serialization, envelope unwrapping, JSON vs FormData bodies, all verbs, 204/empty bodies, text/blob/void formats, auth headers, header precedence, HTTP/network/parse errors, timeout vs caller abort, base-URL resolution |
+| `auth.test.ts`                     | Expiry maths, memory storage, store lifecycle, subscribe/unsubscribe, snapshot stability, injected storage, instance isolation                                                                                                   |
+| `query-client.test.ts`             | Retry policy per status class, backoff and cap, client defaults, no mutation retries, per-call independence                                                                                                                      |
+| `toast.test.ts`                    | Queueing, dismissal, auto-dismiss timing, timer cancellation, notification semantics, snapshot stability                                                                                                                         |
+| `forms.test.ts`                    | API validation errors mapped to fields, unknown/field-less issues routed to form level, non-`ApiError` inputs ignored                                                                                                            |
+| `logger.test.ts`                   | Redaction (incl. nested and case-insensitive), level gating in production, behavior when env is misconfigured                                                                                                                    |
+| `pagination.test.ts`               | `hasMorePages`, `currentPageNumber`, `totalPageCount`, divide-by-zero guards                                                                                                                                                     |
+| `auth-schemas.test.ts`             | Backend-aligned email normalization, login requirements, registration password rules, confirmation mismatch, and UI-only confirmation omission                                                                                   |
+| `auth-api.test.ts`                 | Unavailable default adapter, deterministic E2E adapter, and test-state cleanup                                                                                                                                                   |
+| `auth-redirects.test.ts`           | Internal return paths, external/protocol-relative/backslash rejection, malformed/default fallback                                                                                                                                |
+| `dashboard-api.test.ts`            | Unavailable default service, isolated Playwright fixture state, safe fixture failure, and malformed-state fallback                                                                                                               |
+| `inventory-schemas.test.ts`        | Backend-aligned stock-in/out, absolute adjustment, signed correction, zero/negative, decimal precision, size, and reason normalization rules                                                                                     |
+| `inventory-api.test.ts`            | Unavailable default service, explicit low-stock projection, deterministic test-only movement semantics, insufficient-stock safety, and malformed fixture fallback                                                                |
+| `sales-upload-schemas.test.ts`     | CSV extension, MIME, empty/5 MiB limit, normalized headers, missing/duplicate-column preflight behavior                                                                                                                          |
+| `sales-upload-api.test.ts`         | Unavailable normal service, deterministic progress/result fixture, safe missing-fixture failure                                                                                                                                  |
+| `sales-history-schemas.test.ts`    | Inclusive same-day date validation, cleared dates, malformed dates, and start-after-end rejection                                                                                                                                |
+| `sales-history-api.test.ts`        | Honest unavailable Sales Transaction list/trend service boundary with no runtime request                                                                                                                                         |
+| `forecast-run-schemas.test.ts`     | Backend-supported 7/15/30-day horizons, missing/unsupported rejection, and native-select request normalization                                                                                                                   |
+| `forecast-run-api.test.ts`         | Unavailable normal service, deterministic session-scoped lifecycle adapter, and malformed-fixture safety                                                                                                                         |
+| `forecast-results-schemas.test.ts` | Result filter validation, date-range safety, search normalization, and UUID run-id validation                                                                                                                                    |
+| `forecast-results-api.test.ts`     | Honest unavailable normal Forecast Results service boundary with no runtime request                                                                                                                                              |
+| `recommendations-schemas.test.ts`  | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
+| `recommendations-api.test.ts`      | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                               |
+| `reports-schemas.test.ts`          | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                               |
+| `reports-api.test.ts`              | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
+| `settings-schemas.test.ts`         | Backend-aligned forecast choices/history window and zero-safe three-decimal absolute safety-stock validation                                                                                                                     |
+| `settings-api.test.ts`             | Honest unavailable normal Settings service boundary with no runtime request or persistence                                                                                                                                       |
 
 ### Component tests — `src/tests/components/`
 
-| File                       | Covers                                                                                                                                                                                             |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `button.test.tsx`          | Rendering, default `type="button"`, pointer and keyboard activation, disabled, loading (`aria-busy`, blocked clicks, visible label, status region), variants, class override, attribute forwarding |
-| `input.test.tsx`           | Label association, typing, `aria-invalid` present only when invalid, `aria-describedby` error wiring, disabled, `ref` as a plain prop, required marker excluded from the accessible name           |
-| `card.test.tsx`            | Composed card regions, heading level control, attribute forwarding; `Spinner` status role and labels; `Skeleton` hidden from assistive tech                                                        |
-| `states.test.tsx`          | `EmptyState` defaults/actions/decorative icon and absence of an alert role; `ErrorState` `role="alert"`, conditional retry, custom label, keyboard operation                                       |
-| `layout.test.tsx`          | Banner/main/contentinfo landmarks, branding, skip link target and focus order, navigation landmark only when navigation exists, `PageContainer` single `h1`                                        |
-| `toaster.test.tsx`         | Hook-raised toasts, `role="alert"` for errors vs `role="status"` otherwise, labelled dismiss control, clear-all, stacking                                                                          |
-| `providers.test.tsx`       | TanStack Query provider works end to end (provider → hook → API client → MSW) and surfaces a normalized, display-safe error                                                                        |
-| `use-auth.test.tsx`        | Unauthenticated default, sign-in/sign-out transitions, external store updates, and that the **access token never reaches the render tree**                                                         |
-| `auth-forms.test.tsx`      | Login and registration labels, validation, credential normalization, safe errors, adapter inputs, and success redirects                                                                            |
-| `auth-boundaries.test.tsx` | Protected-route redirect/render behavior and logout state cleanup/navigation                                                                                                                       |
-| `dashboard.test.tsx`       | KPI values/unavailable state, demand chart data/empty/loading states, alert and inventory-risk summaries, and composed Dashboard loading/ready/empty/error states                                  |
-| `inventory.test.tsx`       | Accessible movement form, field-level validation, safe mutation failure, pending controls, status text, semantic table, and composed loading/ready/empty/filtered-empty/low-stock/error states     |
-| `sales-upload.test.tsx`    | Native file input, preflight feedback, selected-file reset, semantic progress, duplicate prevention, safe errors/retry, result summary, and rejected-row table                                     |
-| `sales-history.test.tsx`   | Semantic transaction table, zero-value formatting, product/SKU/source/date filters, reset, pagination controls, quantity trend, loading, no-data, filtered-empty, and safe partial/error states    |
-| `forecast-run.test.tsx`    | Accessible horizon validation, pending/running/completed lifecycle, duplicate-start prevention, safe failures, refresh retry, and reset                                                            |
+| File                        | Covers                                                                                                                                                                                             |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `button.test.tsx`           | Rendering, default `type="button"`, pointer and keyboard activation, disabled, loading (`aria-busy`, blocked clicks, visible label, status region), variants, class override, attribute forwarding |
+| `input.test.tsx`            | Label association, typing, `aria-invalid` present only when invalid, `aria-describedby` error wiring, disabled, `ref` as a plain prop, required marker excluded from the accessible name           |
+| `card.test.tsx`             | Composed card regions, heading level control, attribute forwarding; `Spinner` status role and labels; `Skeleton` hidden from assistive tech                                                        |
+| `states.test.tsx`           | `EmptyState` defaults/actions/decorative icon and absence of an alert role; `ErrorState` `role="alert"`, conditional retry, custom label, keyboard operation                                       |
+| `layout.test.tsx`           | Banner/main/contentinfo landmarks, branding, skip link target and focus order, navigation landmark only when navigation exists, `PageContainer` single `h1`                                        |
+| `toaster.test.tsx`          | Hook-raised toasts, `role="alert"` for errors vs `role="status"` otherwise, labelled dismiss control, clear-all, stacking                                                                          |
+| `providers.test.tsx`        | TanStack Query provider works end to end (provider → hook → API client → MSW) and surfaces a normalized, display-safe error                                                                        |
+| `use-auth.test.tsx`         | Unauthenticated default, sign-in/sign-out transitions, external store updates, and that the **access token never reaches the render tree**                                                         |
+| `auth-forms.test.tsx`       | Login and registration labels, validation, credential normalization, safe errors, adapter inputs, and success redirects                                                                            |
+| `auth-boundaries.test.tsx`  | Protected-route redirect/render behavior and logout state cleanup/navigation                                                                                                                       |
+| `dashboard.test.tsx`        | KPI values/unavailable state, demand chart data/empty/loading states, alert and inventory-risk summaries, and composed Dashboard loading/ready/empty/error states                                  |
+| `inventory.test.tsx`        | Accessible movement form, field-level validation, safe mutation failure, pending controls, status text, semantic table, and composed loading/ready/empty/filtered-empty/low-stock/error states     |
+| `sales-upload.test.tsx`     | Native file input, preflight feedback, selected-file reset, semantic progress, duplicate prevention, safe errors/retry, result summary, and rejected-row table                                     |
+| `sales-history.test.tsx`    | Semantic transaction table, zero-value formatting, product/SKU/source/date filters, reset, pagination controls, quantity trend, loading, no-data, filtered-empty, and safe partial/error states    |
+| `forecast-run.test.tsx`     | Accessible horizon validation, pending/running/completed lifecycle, duplicate-start prevention, safe failures, refresh retry, and reset                                                            |
 | `forecast-results.test.tsx` | Run selection, loading, summary/metrics/table/chart rendering, zero/null distinction, filter validation, empty/not-ready/failed/error states, and safe adapter failures                            |
-| `recommendations.test.tsx` | Semantic risk table, Product/SKU context, decimal and zero quantity display, risk/search filters, pagination, loading, empty/filtered-empty, and safe adapter errors                             |
-| `reports.test.tsx`         | Report selector, scoped filters, semantic table/summary, zero/null rendering, validation, loading, empty/filtered-empty/error states, and CSV pending/success/failure behavior             |
-| `settings.test.tsx`        | Forecast and safety-stock forms, labels, valid zero, validation, dirty/revert, safe save success/failure, duplicate prevention, and loading/error states                              |
+| `recommendations.test.tsx`  | Semantic risk table, Product/SKU context, decimal and zero quantity display, risk/search filters, pagination, loading, empty/filtered-empty, and safe adapter errors                               |
+| `reports.test.tsx`          | Report selector, scoped filters, semantic table/summary, zero/null rendering, validation, loading, empty/filtered-empty/error states, and CSV pending/success/failure behavior                     |
+| `settings.test.tsx`         | Forecast and safety-stock forms, labels, valid zero, validation, dirty/revert, safe save success/failure, duplicate prevention, and loading/error states                                           |
 
 ### E2E tests — `e2e/foundation.spec.ts`
 
@@ -368,24 +368,36 @@ Settings test files:
 - `src/tests/components/settings.test.tsx` verifies form accessibility and all
   meaningful UI transitions.
 
+## Shared UI consolidation tests
+
+Module 12 adds `src/tests/components/table-pagination.test.tsx`. It verifies
+that `TableScrollArea` preserves a feature-owned semantic table inside a
+responsive horizontal boundary, and that `Pagination` exposes an accessible
+navigation landmark, reports the current page, delegates only navigation intent,
+retains contextual accessible labels, and blocks disabled boundary actions.
+
+Feature tests continue to verify their own table semantics and offset/limit
+mapping. Module 12 adds no new E2E scenario because it introduces no user
+workflow; all 76 existing Chromium tests remain the browser regression gate.
+
 ## Future testing strategy
 
 Per-module minimum, in addition to unit tests for any new `lib/` logic:
 
-| Module           | Required test layers               | Focus                                                                                                                                                |
-| ---------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys                                       |
-| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow                                      |
-| Products         | unit + component + E2E — completed | Schemas, no-network adapter, forms, list/search/status states, protected route, deterministic create/edit, and mobile browser flow                   |
-| Inventory        | unit + component + E2E — completed | Movement schemas, unavailable/test-only adapter, stock update form, table/search/status/low-stock states, protected flow, and mobile browser journey |
-| Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                    |
-| Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                      |
-| Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                            |
-| Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey  |
+| Module           | Required test layers               | Focus                                                                                                                                                                   |
+| ---------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys                                                          |
+| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow                                                         |
+| Products         | unit + component + E2E — completed | Schemas, no-network adapter, forms, list/search/status states, protected route, deterministic create/edit, and mobile browser flow                                      |
+| Inventory        | unit + component + E2E — completed | Movement schemas, unavailable/test-only adapter, stock update form, table/search/status/low-stock states, protected flow, and mobile browser journey                    |
+| Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                                       |
+| Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                                         |
+| Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                                               |
+| Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey                        |
 | Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey |
-| Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression         |
-| Settings         | component — completed              | Forecast Defaults and absolute Safety Stock Defaults, validation, zero-safe decimal input, dirty/revert/save states, and safe loading/error UI       |
-| Shared UI        | unit + component                   | Every new primitive: rendering, accessibility, interaction, all states                                                                               |
+| Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression                              |
+| Settings         | component — completed              | Forecast Defaults and absolute Safety Stock Defaults, validation, zero-safe decimal input, dirty/revert/save states, and safe loading/error UI                          |
+| Shared UI        | unit + component — completed       | Canonical primitive regressions plus responsive table containment, accessible pagination, and full browser regression                                                   |
 
 Each module adds MSW handlers for its own endpoints and updates this document
 with the tests it introduced.

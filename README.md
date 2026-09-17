@@ -7,8 +7,9 @@ recommendation system for small-business inventory management.
 
 ## Current status
 
-**Frontend Module 11 - Settings: COMPLETED.** All planned business modules 0-11
-are implemented; Module 12, Shared UI / final frontend consolidation, remains.
+**Frontend Module 12 - Shared UI / final frontend consolidation: COMPLETED.**
+All frontend implementation modules 0-12 are complete. Frontend-to-backend API
+integration remains the next separate phase.
 
 **Frontend Module 10 — Reports: COMPLETED.**
 
@@ -71,6 +72,14 @@ backend-provided summary metrics, and a CSV-only export interaction boundary.
 The normal Reports service is unavailable by design: it makes no request and
 does not manufacture report rows, files, or downloads. Deterministic Reports
 fixtures exist only in the unit/component test infrastructure.
+
+Module 12 completes a non-destructive Shared UI audit. The existing Button,
+Input, Label, Select, Card, Dialog, Spinner, Skeleton, EmptyState, ErrorState,
+and Toaster primitives remain canonical. `TableScrollArea` now owns only the
+responsive horizontal boundary around feature-owned semantic tables, and
+`Pagination` owns only generic previous/next presentation. Product, Inventory,
+Sales, Forecast Results, Recommendations, and Reports retain their table
+columns, formatting, query state, and business semantics.
 
 ## Technology stack
 
@@ -138,7 +147,7 @@ src/
   app/          Routes, layouts, providers (App Router)
   components/
     layout/     AppShell, Header, MainContent, PageContainer
-    ui/         Button, Input, Label, Select, Textarea, Dialog, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster
+    ui/         Button, Input, Label, Select, Textarea, Dialog, Card, Spinner, Skeleton, EmptyState, ErrorState, Toaster, TableScrollArea, Pagination
   features/     Auth, Dashboard, Products, Inventory, Sales, Forecasting, Recommendations, and Reports vertical slices plus future-module placeholders
   hooks/        Shared hooks (use-auth, use-toast)
   lib/          api-client, api-error, query-client, auth, env, forms, logger, toast, constants, utils
@@ -155,10 +164,11 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 
 ## Testing
 
-Module 11 adds 12 focused unit/component tests. The complete frontend suite now
-contains 413 unit/component tests plus 76 Playwright tests.
+Module 12 adds focused coverage for the responsive table boundary and generic
+pagination controls. The complete frontend suite now contains 416
+unit/component tests plus 76 Playwright tests.
 
-413 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
+416 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
 Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 

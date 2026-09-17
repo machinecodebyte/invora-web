@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { TableScrollArea } from '@/components/ui/table-scroll-area';
 import { ProductStatusBadge } from '@/features/products/components/product-status-badge';
 import type { Product } from '@/features/products/types';
 
@@ -27,7 +28,7 @@ function formatUpdatedAt(value: string): string {
 /** Semantic, horizontally scrollable Product Catalog table. */
 export function ProductsTable({ products, onEdit }: ProductsTableProps) {
   return (
-    <div className="w-full max-w-full overflow-x-auto rounded-lg border border-border bg-surface">
+    <TableScrollArea className="rounded-lg border border-border bg-surface">
       <table className="w-full table-fixed text-left text-sm">
         <caption className="sr-only">Products</caption>
         <thead className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-foreground-muted">
@@ -92,6 +93,6 @@ export function ProductsTable({ products, onEdit }: ProductsTableProps) {
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScrollArea>
   );
 }

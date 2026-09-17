@@ -303,6 +303,22 @@ of the full regression. Read-only backend inspection identified the later mappin
 7/15/30 day horizon, 1-365 history days, `random_forest`/`baseline`,
 auto-processing, and absolute 3-decimal safety stock.
 
+### Shared UI / final consolidation behavior
+
+Module 12 adds no route, business workflow, service, or backend request. It
+preserves the established primitives and adds `TableScrollArea` for responsive
+containment of feature-owned tables plus `Pagination` for presentation-only
+previous/next controls. The feature owns table semantics and pagination query
+math; the shared layer never imports feature types or API clients. Run its focused
+coverage with:
+
+```bash
+npx vitest run src/tests/components/table-pagination.test.tsx
+```
+
+The full `npm run test:e2e` suite remains required because Module 12 is a
+cross-feature presentation consolidation.
+
 ## 12. Full verification
 
 ```bash
@@ -310,16 +326,16 @@ npm run verify   # lint → typecheck → test → build
 npm run test:e2e # separate: performs its own build
 ```
 
-Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations + Reports + Settings:
+Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations + Reports + Settings + Shared UI consolidation:
 
-| Step            | Expected                                                                                                                    |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `lint`          | no errors, no warnings                                                                                                      |
-| `typecheck`     | no errors                                                                                                                   |
-| `test`          | 54 files, 413 tests passing                                                                                                 |
-| `test:coverage` | above all 85% thresholds                                                                                                    |
-| `build`         | compiles; Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, Settings, and protected routes |
-| `test:e2e`      | 76 tests passing in Chromium                                                                                                |
+| Step            | Expected                                                       |
+| --------------- | -------------------------------------------------------------- |
+| `lint`          | no errors, no warnings                                         |
+| `typecheck`     | no errors                                                      |
+| `test`          | 55 files, 416 tests passing                                    |
+| `test:coverage` | above all 85% thresholds                                       |
+| `build`         | compiles; all completed routes and the shared-UI consolidation |
+| `test:e2e`      | 76 tests passing in Chromium                                   |
 
 ## 13. Troubleshooting
 

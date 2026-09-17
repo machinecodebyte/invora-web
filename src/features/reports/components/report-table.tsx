@@ -1,4 +1,5 @@
 import { formatDate, formatNumber } from '@/lib/utils';
+import { TableScrollArea } from '@/components/ui/table-scroll-area';
 import type { ReportColumn, ReportValue } from '@/features/reports/types';
 import type { ReportData } from '@/features/reports/types';
 
@@ -27,7 +28,7 @@ export interface ReportTableProps {
 /** Semantic, horizontally scrollable table for the active backend report schema. */
 export function ReportTable({ report }: ReportTableProps) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <TableScrollArea className="rounded-lg border border-border">
       <table className="min-w-full divide-y divide-border text-left text-sm" aria-label={report.title}>
         <thead className="bg-surface-muted text-xs uppercase tracking-wide text-foreground-muted">
           <tr>
@@ -50,6 +51,6 @@ export function ReportTable({ report }: ReportTableProps) {
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScrollArea>
   );
 }

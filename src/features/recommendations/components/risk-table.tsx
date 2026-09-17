@@ -1,4 +1,5 @@
-import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
+import { TableScrollArea } from '@/components/ui/table-scroll-area';
 import { ReorderQuantity } from '@/features/recommendations/components/reorder-quantity';
 import { RiskBadge } from '@/features/recommendations/components/risk-badge';
 import type {
@@ -30,7 +31,7 @@ export function RiskTable({ page, onPageChange }: RiskTableProps) {
   const canGoNext = page.offset + page.limit < page.total;
 
   return (
-    <div className="w-full max-w-full overflow-x-auto rounded-lg border border-border bg-surface">
+    <TableScrollArea className="rounded-lg border border-border bg-surface">
       <table className="w-full min-w-[1080px] text-left text-sm">
         <caption className="sr-only">Reorder recommendations</caption>
         <thead className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-foreground-muted">
@@ -78,31 +79,16 @@ export function RiskTable({ page, onPageChange }: RiskTableProps) {
         </tbody>
       </table>
       {page.total <= page.limit ? null : (
-        <nav
-          aria-label="Recommendations pagination"
-          className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3"
-        >
-          <p className="text-sm text-foreground-muted">Page {currentPage} of {pageCount}</p>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!canGoPrevious}
-              onClick={() => onPageChange(Math.max(page.offset - page.limit, 0))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!canGoNext}
-              onClick={() => onPageChange(page.offset + page.limit)}
-            >
-              Next
-            </Button>
-          </div>
-        </nav>
+        <Pagination
+          ariaLabel="Recommendations pagination"
+          currentPage={currentPage}
+          pageCount={pageCount}
+          canGoPrevious={canGoPrevious}
+          canGoNext={canGoNext}
+          onPrevious={() => onPageChange(Math.max(page.offset - page.limit, 0))}
+          onNext={() => onPageChange(page.offset + page.limit)}
+        />
       )}
-    </div>
+    </TableScrollArea>
   );
 }

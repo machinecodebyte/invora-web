@@ -16,6 +16,11 @@ Settings owns only Forecast Defaults and Safety Stock Defaults. It has no
 production persistence, and it does not duplicate Forecast Run, Inventory, or
 Recommendation business logic.
 
+Module 12 leaves feature ownership intact. `@/components/ui/TableScrollArea`
+and `Pagination` are generic presentation primitives only; features continue to
+own semantic table columns, labels, offset/limit calculations, and business
+state.
+
 ## Per-feature structure
 
 Each feature owns its full vertical slice:

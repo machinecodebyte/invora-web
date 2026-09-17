@@ -43,10 +43,15 @@ but are not supported by that toolchain yet.
 
 ## Current implementation status
 
+**Shared UI / final frontend consolidation: COMPLETED.** Module 12 preserved
+the existing primitives, added narrowly scoped `TableScrollArea` and `Pagination`
+primitives, and adopted them only where generic duplication was verified. All
+frontend implementation modules 0-12 are now complete; frontend-to-backend API
+integration remains intentionally deferred as the next separate phase.
+
 **Settings: COMPLETED.** Module 11 adds protected `/settings` Forecast Defaults
 and Safety Stock Defaults forms with component-tested UI state. Persistence/API
-integration remains intentionally deferred. All business modules 0-11 are now
-implemented; Shared UI / final frontend consolidation remains.
+integration remains intentionally deferred.
 
 **Reports: COMPLETED.** Module 10 adds the protected `/reports` frontend and
 component-tested export architecture. Module 11 Settings is also completed.
@@ -54,8 +59,8 @@ component-tested export architecture. Module 11 Settings is also completed.
 **Foundation: COMPLETED. Auth: COMPLETED. Dashboard: COMPLETED. Products:
 COMPLETED. Inventory: COMPLETED. Sales Upload: COMPLETED. Sales History:
 COMPLETED. Forecast Run: COMPLETED. Forecast Results: COMPLETED. Recommendations:
-COMPLETED. Reports: COMPLETED. Settings: COMPLETED.** All planned business
-modules are implemented; Shared UI / final frontend consolidation remains. See
+COMPLETED. Reports: COMPLETED. Settings: COMPLETED. Shared UI: COMPLETED.** All
+frontend implementation modules are complete. See
 [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
@@ -96,6 +101,24 @@ read-only inspected backend contract provides 7/15/30-day forecast horizons,
 three-decimal safety stock. Normal builds make no Settings request, use no fake
 defaults, and persist nothing locally; component fixtures are injected only by
 tests. Backend connection remains intentionally deferred.
+
+## Shared UI / final consolidation
+
+`src/components/ui/` remains a dependency-free presentational layer: it imports
+only generic utilities, never a feature, API adapter, query hook, or business
+model. Module 12 found two reusable presentation concerns without redesigning
+the established primitives:
+
+- `TableScrollArea` provides responsive horizontal containment while each
+  feature retains its own semantic table, columns, caption, cell formatting, and
+  data contract.
+- `Pagination` presents page position and previous/next intent while the owning
+  feature retains its cursor/offset calculation, request state, and labels.
+
+Feature-owned status/risk badges, upload progress, forecast lifecycle state,
+charts, and form layouts remain local because their semantics are not generic.
+No business API call, token storage behavior, mock production data, or backend
+integration was added.
 
 ## Dashboard module
 

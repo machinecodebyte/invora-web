@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { TableScrollArea } from '@/components/ui/table-scroll-area';
 import { InventoryStatusBadge } from '@/features/inventory/components/inventory-status-badge';
 import type { InventoryItem } from '@/features/inventory/types';
 
@@ -30,7 +31,7 @@ export interface InventoryTableProps {
 /** Semantic Inventory table with a contained horizontal overflow boundary. */
 export function InventoryTable({ items, onUpdateStock }: InventoryTableProps) {
   return (
-    <div className="w-full max-w-full overflow-x-auto rounded-lg border border-border bg-surface">
+    <TableScrollArea className="rounded-lg border border-border bg-surface">
       <table className="w-full table-fixed text-left text-sm">
         <caption className="sr-only">Inventory</caption>
         <thead className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-foreground-muted">
@@ -97,6 +98,6 @@ export function InventoryTable({ items, onUpdateStock }: InventoryTableProps) {
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScrollArea>
   );
 }
