@@ -25,6 +25,17 @@ export interface RequestConfig {
   responseFormat?: ResponseFormat;
   /** Set to `false` to send the request without the bearer token. */
   withAuth?: boolean;
+  /**
+   * Send browser credentials with this request. This is reserved for the
+   * HttpOnly refresh-session boundary; feature code must never read or attach
+   * refresh-token values itself.
+   */
+  withCredentials?: boolean;
+  /**
+   * Disables bounded access-token recovery for this request. Auth endpoints
+   * set this to false to prevent recursive refresh attempts.
+   */
+  retryOnAuthenticationFailure?: boolean;
 }
 
 /** Request bodies passed straight to `fetch` without JSON encoding. */
@@ -47,7 +58,43 @@ export interface ApiClientOptions {
   getAccessToken?: () => string | null;
   fetchImpl?: FetchLike;
   defaultHeaders?: Record<string, string>;
+  /**
+   * Obtains a fresh in-memory access token after a qualifying 401 response.
+   * The shared client resolves this lazily from the Auth provider.
+   */
+  refreshAccessToken?: () => Promise<void>;
 }
+
+export type AuthRefreshHandler = () => Promise<void>;
+
+let registeredAuthRefreshHandler: AuthRefreshHandler | null = null;
+
+/**
+ * Register the single Auth-owned refresh coordinator used by the shared
+ * transport. The cleanup guard prevents an unmounted provider from clearing a
+ * newer provider registration.
+ */
+export function registerAuthRefreshHandler(handler: AuthRefreshHandler): () => void {
+  registeredAuthRefreshHandler = handler;
+
+  return () => {
+    if (registeredAuthRefreshHandler === handler) {
+      registeredAuthRefreshHandler = null;
+    }
+  };
+}
+
+function refreshFromRegisteredHandler(): Promise<void> {
+  if (registeredAuthRefreshHandler === null) {
+    return Promise.reject(new Error('Auth refresh is not initialized.'));
+  }
+  return registeredAuthRefreshHandler();
+}
+
+const RECOVERABLE_AUTH_ERROR_CODES = new Set([
+  'invalid_access_token',
+  'expired_access_token',
+]);
 
 function isPassthroughBody(body: unknown): body is PassthroughBody {
   return (
@@ -113,6 +160,8 @@ export class ApiClient {
   private readonly readAccessToken: () => string | null;
   private readonly fetchImpl: FetchLike | undefined;
   private readonly defaultHeaders: Readonly<Record<string, string>>;
+  private readonly refreshAccessToken: () => Promise<void>;
+  private activeRefresh: Promise<void> | null = null;
 
   constructor(options: ApiClientOptions = {}) {
     this.baseUrl = options.baseUrl ?? getApiBaseUrl;
@@ -120,6 +169,8 @@ export class ApiClient {
     this.readAccessToken = options.getAccessToken ?? getAccessToken;
     this.fetchImpl = options.fetchImpl;
     this.defaultHeaders = options.defaultHeaders ?? {};
+    this.refreshAccessToken =
+      options.refreshAccessToken ?? refreshFromRegisteredHandler;
   }
 
   get<TResponse>(path: string, config?: RequestConfig): Promise<TResponse> {
@@ -174,15 +225,80 @@ export class ApiClient {
     const timeoutMs = config.timeoutMs ?? this.defaultTimeoutMs;
     const responseFormat = config.responseFormat ?? 'json';
 
+    return this.requestOnce<TResponse>(
+      url,
+      method,
+      config,
+      body,
+      timeoutMs,
+      responseFormat,
+      false,
+    );
+  }
+
+  private async requestOnce<TResponse>(
+    url: string,
+    method: HttpMethod,
+    config: RequestConfig,
+    body: RequestBody | undefined,
+    timeoutMs: number,
+    responseFormat: ResponseFormat,
+    hasRetriedAfterRefresh: boolean,
+  ): Promise<TResponse> {
     const response = await this.executeFetch(url, method, config, body, timeoutMs);
 
     if (!response.ok) {
-      throw ApiError.fromResponse(response, await readBodySafely(response));
+      const error = ApiError.fromResponse(response, await readBodySafely(response));
+
+      if (this.shouldRecoverAuthentication(error, config, hasRetriedAfterRefresh)) {
+        try {
+          await this.coalesceRefresh();
+        } catch {
+          // Preserve the original protected-request failure. The Auth provider
+          // has already cleared its session and auth-scoped cache.
+          throw error;
+        }
+
+        return this.requestOnce<TResponse>(
+          url,
+          method,
+          config,
+          body,
+          timeoutMs,
+          responseFormat,
+          true,
+        );
+      }
+
+      throw error;
     }
 
     // Single cast boundary: the transport cannot verify the caller's declared
     // payload type, so decoding is done as `unknown` and asserted once here.
     return (await this.decode(response, responseFormat)) as TResponse;
+  }
+
+  private shouldRecoverAuthentication(
+    error: ApiError,
+    config: RequestConfig,
+    hasRetriedAfterRefresh: boolean,
+  ): boolean {
+    return (
+      !hasRetriedAfterRefresh &&
+      config.withAuth !== false &&
+      config.retryOnAuthenticationFailure !== false &&
+      error.status === 401 &&
+      RECOVERABLE_AUTH_ERROR_CODES.has(error.code)
+    );
+  }
+
+  private coalesceRefresh(): Promise<void> {
+    if (this.activeRefresh === null) {
+      this.activeRefresh = this.refreshAccessToken().finally(() => {
+        this.activeRefresh = null;
+      });
+    }
+    return this.activeRefresh;
   }
 
   private buildUrl(path: string, query: QueryParams | undefined): string {
@@ -255,6 +371,7 @@ export class ApiClient {
       method,
       headers: this.buildHeaders(config, body, config.responseFormat ?? 'json'),
       signal: controller.signal,
+      ...(config.withCredentials === true ? { credentials: 'include' } : {}),
     };
 
     if (body !== undefined && body !== null) {

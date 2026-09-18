@@ -256,3 +256,17 @@ npm run build
 npx playwright install --with-deps chromium
 npm run test:e2e
 ```
+
+## Live Auth browser contract
+
+The default Auth browser suite uses its deterministic test-only adapter. To
+exercise the real FastAPI Auth cookie flow, start the backend and its configured
+database first, then use PowerShell:
+
+    $env:PLAYWRIGHT_AUTH_REAL_BACKEND='true'
+    $env:NEXT_PUBLIC_API_BASE_URL='http://localhost:8000'
+    npx playwright test e2e/auth.real.spec.ts
+
+This opt-in run creates an isolated browser-test account, verifies refresh-cookie
+session restoration after reload, and verifies logout revocation. It does not
+enable any business-module adapter.

@@ -3,11 +3,10 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Backend integration is intentionally NOT enabled in Foundation, Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, or Settings.**
-> The API client infrastructure exists and is fully tested against mocks, but no
-> business endpoint is called. You do **not** need the backend, PostgreSQL, or
-> Redis running to work on the frontend today. Integration lands with each
-> feature module.
+> **Integration Phase 1 enables Foundation transport and Auth only.**
+> Normal Auth login, registration, refresh, and logout require the backend
+> service. No business endpoint is enabled, and the deterministic frontend test
+> suite still needs no backend, PostgreSQL, or Redis service.
 
 ## 1. Prerequisites
 
@@ -20,7 +19,8 @@ For the condensed version see [`../project_runner.md`](../project_runner.md).
 Disk: roughly 500 MB for `node_modules` plus about 150 MB for the Playwright
 Chromium build.
 
-No database, cache, or backend service is required.
+No database, cache, or backend service is required for deterministic frontend
+tests. Normal Auth usage requires the backend described in Section 16.
 
 ## 2. Environment setup
 
@@ -159,7 +159,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (413 tests)
+npm run test              # both suites (426 tests)
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -409,3 +409,17 @@ Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sale
 - **ESLint 9.x** — npm prints an end-of-support notice for 9.x. The pin is
   deliberate (see the peer-range note above) and can be lifted when
   `eslint-config-next` ships `typescript-eslint` v9+.
+
+## 16. Integration Phase 1 Auth setup
+
+Auth now requires a reachable FastAPI service at the configured frontend API
+origin for normal login, registration, initialization, refresh, and logout.
+Use matching local origins in backend CORS configuration, for example frontend
+http://localhost:3000 and backend http://localhost:8000. The backend defaults
+to a host-only HttpOnly refresh cookie scoped to Auth routes; production enforces
+Secure cookies. Do not put tokens in frontend environment variables or browser
+storage.
+
+All feature adapters other than Auth remain no-network. The standard browser
+suite deliberately keeps its deterministic Auth adapter; use the documented
+live Auth browser command only when the backend stack is running.

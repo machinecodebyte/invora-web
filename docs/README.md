@@ -46,8 +46,9 @@ but are not supported by that toolchain yet.
 **Shared UI / final frontend consolidation: COMPLETED.** Module 12 preserved
 the existing primitives, added narrowly scoped `TableScrollArea` and `Pagination`
 primitives, and adopted them only where generic duplication was verified. All
-frontend implementation modules 0-12 are now complete; frontend-to-backend API
-integration remains intentionally deferred as the next separate phase.
+frontend implementation modules 0-12 are now complete. Integration Phase 1
+connects Foundation transport and Auth only; business-module integration remains
+the next separate phase.
 
 **Settings: COMPLETED.** Module 11 adds protected `/settings` Forecast Defaults
 and Safety Stock Defaults forms with component-tested UI state. Persistence/API
@@ -64,8 +65,8 @@ frontend implementation modules are complete. See
 [`progress.md`](progress.md).
 
 Foundation establishes shared infrastructure. Module 1 adds login, registration,
-local logout, protected-route UX, and a test-only E2E adapter. No real backend
-Auth request is enabled. Module 2 adds the protected Dashboard UI, typed summary
+logout, protected-route UX, a test-only E2E adapter, and the real backend Auth
+adapter. Module 2 adds the protected Dashboard UI, typed summary
 projections, and explicit loading/empty/error states. Module 3 adds a protected
 Product Catalog with backend-aligned validation, list filters, create/edit UI,
 and a no-network service boundary. Module 4 adds protected Inventory stock
@@ -89,7 +90,18 @@ normal adapter is unavailable-by-default and never makes an HTTP request.
 `src/features/auth/` owns the Auth adapter contract, provider, schemas, forms,
 redirect validation, and access boundaries. Public routes are `/login` and
 `/register`; `/dashboard` is the protected Dashboard route. Real backend
-authentication integration remains intentionally deferred.
+authentication integration is enabled through the shared client and secure
+cookie-session boundary; business adapters remain deferred.
+
+### Integration Phase 1
+
+Auth is the only live feature integration. The browser holds only an in-memory
+access token. The backend refresh token is an HttpOnly cookie scoped to Auth
+routes, and is used only for browser refresh/logout transport. The shared client
+performs one coalesced invalid-access-token recovery and one replay. Frontend
+route protection remains a user-experience boundary; the FastAPI backend remains
+the authorization authority. Dashboard through Settings remain no-network
+feature adapters.
 
 ## Settings module
 

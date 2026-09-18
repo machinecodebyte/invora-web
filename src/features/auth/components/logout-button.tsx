@@ -13,8 +13,13 @@ export function LogoutButton() {
   const isPending = pendingAction === 'logout';
 
   const handleLogout = async (): Promise<void> => {
-    await logout();
-    router.replace(ROUTES.login);
+    try {
+      await logout();
+    } finally {
+      // The local memory session is cleared even when server invalidation is
+      // unavailable, so returning to the public Auth route remains safe.
+      router.replace(ROUTES.login);
+    }
   };
 
   return (

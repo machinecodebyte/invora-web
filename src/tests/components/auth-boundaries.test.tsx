@@ -26,6 +26,7 @@ const SESSION: AuthSession = {
 
 const service: AuthService = {
   getSession: () => Promise.resolve(null),
+  refreshSession: () => Promise.resolve(SESSION),
   login: () => Promise.resolve(SESSION),
   register: () => Promise.resolve(SESSION),
   logout: () => Promise.resolve(),
@@ -61,7 +62,9 @@ describe('ProtectedRoute', () => {
   it('renders protected content for an authenticated session', async () => {
     authStore.setSession(SESSION);
     render(
-      <AuthProvider service={service}>
+      <AuthProvider
+        service={{ ...service, getSession: () => Promise.resolve(SESSION) }}
+      >
         <ProtectedRoute>
           <p>Protected content</p>
         </ProtectedRoute>

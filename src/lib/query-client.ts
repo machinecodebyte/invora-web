@@ -2,6 +2,9 @@ import { QueryClient } from '@tanstack/react-query';
 
 import { isApiError } from '@/lib/api-error';
 
+export const AUTHENTICATED_QUERY_META_KEY = 'authScope';
+export const AUTHENTICATED_QUERY_META_VALUE = 'protected';
+
 /** Maximum automatic retries for a failed query. */
 const MAX_QUERY_RETRIES = 2;
 
@@ -69,5 +72,19 @@ export function createQueryClient(): QueryClient {
         retry: false,
       },
     },
+  });
+}
+
+/**
+ * Remove only user-scoped cached data after local authentication is lost.
+ * Feature modules opt in by setting authScope metadata on protected queries.
+ */
+export function clearProtectedQueryCache(queryClient: QueryClient | undefined): void {
+  if (queryClient === undefined) {
+    return;
+  }
+  queryClient.removeQueries({
+    predicate: (query) =>
+      query.meta?.[AUTHENTICATED_QUERY_META_KEY] === AUTHENTICATED_QUERY_META_VALUE,
   });
 }

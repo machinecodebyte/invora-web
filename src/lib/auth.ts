@@ -4,14 +4,14 @@
  * SCOPE: this is foundation-only plumbing. It holds session state and hands the
  * access token to the API client. It performs no network calls and knows no
  * auth endpoints - login, registration, refresh, and logout requests belong to
- * the Auth feature module (`src/features/auth`), which will drive this store.
+ * the Auth feature module (src/features/auth), which drives this store.
  *
  * SECURITY: sessions live in memory by default, so tokens are never written to
  * `localStorage` or `sessionStorage` by the foundation and cannot be read by
- * injected scripts or survive a tab reload. The backend contract returns the
- * refresh token in the response body, which means the Auth module must choose a
- * persistence strategy; {@link AuthSessionStorage} is the seam for that decision
- * and keeps it out of the foundation.
+ * injected scripts or survive a tab reload. The backend refresh token is an
+ * HttpOnly cookie and is never represented in this store or application state.
+ * Reload recovery is performed by the Auth feature through the cookie-only
+ * refresh endpoint, then this store receives the new memory-only access token.
  */
 
 /** Minimal identity fields shared across the app. The Auth module owns the full profile. */

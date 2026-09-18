@@ -8,8 +8,9 @@ recommendation system for small-business inventory management.
 ## Current status
 
 **Frontend Module 12 - Shared UI / final frontend consolidation: COMPLETED.**
-All frontend implementation modules 0-12 are complete. Frontend-to-backend API
-integration remains the next separate phase.
+All frontend implementation modules 0-12 are complete. Integration Phase 1
+connects Foundation transport and Auth only; business-module integration remains
+the next separate phase.
 
 **Frontend Module 10 — Reports: COMPLETED.**
 
@@ -57,8 +58,9 @@ pagination, reorder quantities that retain valid zeroes and up to three decimal
 places, and safe loading, empty, filtered-empty, and error states. Normal builds
 make no Reorder Recommendation request and contain no recommendation data.
 
-Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
-are **not** connected to the backend API yet. In normal builds Dashboard,
+Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
+are **not** connected to the backend API yet. Auth is connected through the
+shared API client and the backend's HttpOnly refresh-cookie contract. In normal builds Dashboard,
 Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results remain honest; test fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
@@ -168,7 +170,7 @@ Module 12 adds focused coverage for the responsive table boundary and generic
 pagination controls. The complete frontend suite now contains 416
 unit/component tests plus 76 Playwright tests.
 
-416 unit and component tests plus 76 Playwright tests cover the Foundation, Auth,
+426 unit and component tests plus 76 deterministic Playwright tests cover the Foundation, Auth,
 Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings modules. Configured coverage exceeds the required 85%
 threshold for every measured metric.
 
@@ -198,9 +200,10 @@ The backend is a separate FastAPI modular monolith in `../backend` and is alread
 complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
 CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
-horizon/lifecycle semantics were aligned through read-only inspection, but no frontend Auth,
-Dashboard, Products, Inventory, Sales Upload, Sales Transaction, Forecast Run, or Forecast Results request is made at runtime. API integration
-lands in a later integration phase. See
+horizon/lifecycle semantics were aligned through read-only inspection. Frontend
+Auth now uses the real Auth endpoints; Dashboard, Products, Inventory, Sales
+Upload, Sales Transaction, Forecast Run, and Forecast Results still make no
+runtime API request. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
 
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
@@ -211,3 +214,20 @@ Reports contract inspection established model-performance, inventory-risk,
 reorder-summary, demand-forecast, and sales-summary views. The backend exposes
 synchronous `text/csv` attachments as its sole export format. The frontend does
 not call Reports or export endpoints at runtime.
+
+## Integration Phase 1 - Foundation transport and Auth
+
+The normal Auth adapter now calls the FastAPI Auth contract through the existing
+shared API client. Access tokens remain in browser memory only. The backend
+sets, rotates, and clears an HttpOnly refresh cookie scoped to the Auth API
+prefix; the browser sends it only on refresh and logout requests using browser
+credentials.
+
+On initialization the Auth provider refreshes first, then verifies the current
+user, so protected routes wait for that result. A protected request retries once
+only after the backend signals an invalid or expired access token, and concurrent
+recoveries are coalesced. Logout and unrecoverable recovery clear only
+auth-scoped TanStack Query entries, not public/static cache entries.
+
+The test-only E2E adapter remains opt-in. All business feature adapters,
+including Dashboard through Settings, remain unintegrated.

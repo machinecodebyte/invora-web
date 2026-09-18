@@ -11,8 +11,11 @@ Quick start for running the Invora frontend locally. For the long-form version
 - Git
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
-No database, Redis, or backend service is required: Foundation, Auth, Dashboard,
-Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings make no production API calls.
+No database, Redis, or backend service is required for the deterministic
+frontend test suite. Normal Auth usage now requires the configured FastAPI
+service; Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast
+Run, Forecast Results, Recommendations, Reports, and Settings still make no
+production API calls.
 
 ## Installation
 
@@ -78,7 +81,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (413 tests)
+npm run test              # unit + component (426 tests)
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -197,10 +200,15 @@ Implemented:
 - Unit, component, and Playwright Auth tests with a deterministic test-only
   adapter
 
-**Real backend Auth integration is intentionally not enabled.** The normal
-adapter makes no HTTP request and cannot authenticate a production user. The
-Playwright-only adapter is selected only for the managed E2E build and persists
-only a test email, never a token.
+**Real backend Auth integration is enabled.** The normal adapter uses the
+shared client, memory-only access token, and HttpOnly refresh-cookie contract.
+The Playwright-only adapter remains selected only for its managed deterministic
+E2E build and persists only a test email, never a token.
+
+For the optional live browser contract run, start the backend/database, set
+PLAYWRIGHT_AUTH_REAL_BACKEND to true and NEXT_PUBLIC_API_BASE_URL to the backend
+origin, then run the Auth live spec. This is the only real frontend integration;
+all business modules remain disabled.
 
 ## Current Dashboard Scope
 
@@ -404,4 +412,4 @@ generic contract. Module 12 adds no route, provider, store, API call, backend
 connection, or business data.
 
 **Current project status:** Frontend implementation modules 0-12 are complete.
-Frontend-to-backend API integration remains the next separate phase.
+Integration Phase 1 is complete for Foundation transport and Auth & Identity. Business-module integration remains the next separate phase.

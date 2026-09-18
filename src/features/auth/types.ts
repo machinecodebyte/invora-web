@@ -23,6 +23,8 @@ export interface AuthError {
     | 'authentication_unavailable'
     | 'invalid_credentials'
     | 'registration_failed'
+    | 'session_recovery_failed'
+    | 'logout_failed'
     | 'unexpected';
   message: string;
 }

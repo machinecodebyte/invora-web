@@ -808,3 +808,22 @@ no proven generic contract. Those concerns intentionally remain feature-local.
 This consolidation did not introduce a new provider, store, API adapter,
 navigation mechanism, authentication model, token storage strategy, or backend
 request. It is presentation reuse only.
+
+## Integration Phase 1 - live Auth architecture
+
+Phase 1 changes only Foundation transport and Auth. The shared API client remains
+the sole HTTP client. It supports explicit browser credentials for Auth requests
+and performs at most one coalesced recovery for backend invalid-access-token or
+expired-access-token responses. It never refreshes Auth endpoints and never
+retries a forbidden response.
+
+The Auth provider owns initialization: refresh through the HttpOnly browser
+cookie, retrieve the current safe user, then resolve protected-route rendering.
+Access tokens and safe public-user data remain memory-only. The backend-issued
+refresh token is never in React state, storage, URLs, logs, or feature types.
+Logout and unrecoverable recovery remove only queries whose metadata declares
+them protected.
+
+Frontend route protection remains a UX boundary only. FastAPI independently
+authenticates every protected endpoint and enforces ownership. Dashboard through
+Settings retain their existing no-network adapters until their separate phases.

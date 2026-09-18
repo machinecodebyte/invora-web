@@ -23,6 +23,7 @@ const SESSION: AuthSession = {
 function createService(overrides: Partial<AuthService> = {}): AuthService {
   return {
     getSession: () => Promise.resolve(null),
+    refreshSession: () => Promise.resolve(SESSION),
     login: () => Promise.resolve(SESSION),
     register: () => Promise.resolve(SESSION),
     logout: () => Promise.resolve(),
@@ -101,6 +102,38 @@ describe('LoginForm', () => {
     resolveLogin(SESSION);
     await waitFor(() => {
       expect(routerReplace).toHaveBeenCalledWith('/dashboard');
+    });
+  });
+
+  it('keeps a completed login when stale initialization resolves unauthenticated', async () => {
+    let resolveInitialSession: ((session: AuthSession | null) => void) | undefined;
+    const login = vi.fn(() => Promise.resolve(SESSION));
+    const service = createService({
+      getSession: () =>
+        new Promise<AuthSession | null>((resolve) => {
+          resolveInitialSession = resolve;
+        }),
+      login,
+    });
+
+    render(
+      <AuthProvider service={service}>
+        <LoginForm redirectTo="/dashboard" />
+      </AuthProvider>,
+    );
+
+    await userEvent.type(screen.getByLabelText(/^Email/), 'test@example.com');
+    await userEvent.type(screen.getByLabelText(/^Password/), 'StrongPass1!');
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    await waitFor(() => {
+      expect(authStore.isAuthenticated()).toBe(true);
+    });
+    expect(resolveInitialSession).toBeDefined();
+    resolveInitialSession?.(null);
+
+    await waitFor(() => {
+      expect(authStore.isAuthenticated()).toBe(true);
     });
   });
 

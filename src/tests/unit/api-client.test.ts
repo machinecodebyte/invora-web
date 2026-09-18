@@ -270,7 +270,154 @@ describe('ApiClient headers', () => {
 
     expect(clientHeader).toBe('web');
   });
+
+  it('includes browser credentials only when a request explicitly requires them', async () => {
+    const observedCredentials: (RequestCredentials | undefined)[] = [];
+    const client = new ApiClient({
+      baseUrl: TEST_API_BASE_URL,
+      getAccessToken: () => null,
+      fetchImpl: async (_input, init) => {
+        observedCredentials.push(init.credentials);
+        return HttpResponse.json({ success: true, data: { ok: true } });
+      },
+    });
+
+    await client.post('/api/v1/auth/refresh', undefined, {
+      withAuth: false,
+      withCredentials: true,
+      retryOnAuthenticationFailure: false,
+    });
+    await client.get('/public');
+
+    expect(observedCredentials).toEqual(['include', undefined]);
+  });
 });
+
+describe('ApiClient access-token recovery', () => {
+  it('refreshes once and replays a qualifying protected request', async () => {
+    let token = 'expired-token';
+    const refreshAccessToken = vi.fn(async () => {
+      token = 'fresh-token';
+    });
+    const authorizations: string[] = [];
+    const client = new ApiClient({
+      baseUrl: TEST_API_BASE_URL,
+      getAccessToken: () => token,
+      refreshAccessToken,
+      fetchImpl: async (_input, init) => {
+        authorizations.push(new Headers(init.headers).get('authorization') ?? '');
+        if (token === 'expired-token') {
+          return HttpResponse.json(
+            errorEnvelope('expired_access_token', 'Access token has expired.'),
+            { status: 401 },
+          );
+        }
+        return HttpResponse.json({ success: true, data: { ok: true } });
+      },
+    });
+
+    await expect(client.get('/protected')).resolves.toEqual({ ok: true });
+
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(authorizations).toEqual(['Bearer expired-token', 'Bearer fresh-token']);
+  });
+
+  it('coalesces simultaneous refreshes from the same shared client', async () => {
+    let token = 'expired-token';
+    let releaseRefresh: (() => void) | undefined;
+    const refreshAccessToken = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseRefresh = () => {
+            token = 'fresh-token';
+            resolve();
+          };
+        }),
+    );
+    const client = new ApiClient({
+      baseUrl: TEST_API_BASE_URL,
+      getAccessToken: () => token,
+      refreshAccessToken,
+      fetchImpl: async () =>
+        token === 'expired-token'
+          ? HttpResponse.json(
+              errorEnvelope('invalid_access_token', 'Invalid access token.'),
+              { status: 401 },
+            )
+          : HttpResponse.json({ success: true, data: { ok: true } }),
+    });
+
+    const first = client.get('/protected');
+    const second = client.get('/protected');
+    await waitForRefreshCall(refreshAccessToken);
+    releaseRefresh?.();
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { ok: true },
+      { ok: true },
+    ]);
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not recover forbidden responses or disabled Auth requests', async () => {
+    const refreshAccessToken = vi.fn(async () => undefined);
+    const client = new ApiClient({
+      baseUrl: TEST_API_BASE_URL,
+      getAccessToken: () => 'expired-token',
+      refreshAccessToken,
+      fetchImpl: async (input) =>
+        String(input).endsWith('/forbidden')
+          ? HttpResponse.json(errorEnvelope('forbidden', 'Not allowed.'), {
+              status: 403,
+            })
+          : HttpResponse.json(
+              errorEnvelope('invalid_access_token', 'Invalid access token.'),
+              { status: 401 },
+            ),
+    });
+
+    await expect(client.get('/forbidden')).rejects.toMatchObject({ status: 403 });
+    await expect(
+      client.post('/api/v1/auth/refresh', undefined, {
+        withAuth: false,
+        withCredentials: true,
+        retryOnAuthenticationFailure: false,
+      }),
+    ).rejects.toMatchObject({ status: 401 });
+
+    expect(refreshAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('retries a protected request at most once after successful recovery', async () => {
+    const refreshAccessToken = vi.fn(async () => undefined);
+    const fetchImpl = vi.fn(async () =>
+      HttpResponse.json(
+        errorEnvelope('expired_access_token', 'Access token has expired.'),
+        { status: 401 },
+      ),
+    );
+    const client = new ApiClient({
+      baseUrl: TEST_API_BASE_URL,
+      getAccessToken: () => 'expired-token',
+      refreshAccessToken,
+      fetchImpl,
+    });
+
+    await expect(client.get('/protected')).rejects.toMatchObject({
+      code: 'expired_access_token',
+    });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+});
+
+async function waitForRefreshCall(
+  refreshAccessToken: ReturnType<typeof vi.fn>,
+): Promise<void> {
+  await vi.waitFor(() => {
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+  });
+}
 
 describe('ApiClient error handling', () => {
   it('throws a normalized ApiError for an error envelope', async () => {

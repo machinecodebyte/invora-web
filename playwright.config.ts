@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
+const useRealAuthBackend = process.env.PLAYWRIGHT_AUTH_REAL_BACKEND === 'true';
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${port}`;
 
@@ -48,8 +49,9 @@ export default defineConfig({
       NEXT_PUBLIC_API_BASE_URL:
         process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000',
       NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV ?? 'local',
-      // Enables the deterministic adapter only in the Playwright-managed build.
-      NEXT_PUBLIC_AUTH_E2E_TEST_MODE: 'true',
+      // The deterministic adapter remains the default E2E fixture. Set
+      // PLAYWRIGHT_AUTH_REAL_BACKEND=true to exercise the real cookie contract.
+      NEXT_PUBLIC_AUTH_E2E_TEST_MODE: useRealAuthBackend ? 'false' : 'true',
       // Enables the fixture reader only in the Playwright-managed build.
       NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE: 'true',
       // Enables the Product Catalog fixture adapter only in E2E builds.

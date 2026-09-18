@@ -84,7 +84,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 
 ## Foundation through Shared UI consolidation tests
 
-**416 unit and component tests across 55 files, plus 76 existing E2E tests. All passing.**
+**426 unit and component tests across 55 files, plus 76 deterministic E2E tests.**
 
 ### Unit tests — `src/tests/unit/`
 
@@ -401,3 +401,19 @@ Per-module minimum, in addition to unit tests for any new `lib/` logic:
 
 Each module adds MSW handlers for its own endpoints and updates this document
 with the tests it introduced.
+
+## Integration Phase 1 Auth transport tests
+
+Phase 1 adds Auth contract coverage without enabling any business endpoint.
+Frontend unit tests cover explicit credential transport, eligible 401 recovery,
+single replay, refresh coalescing, no recovery for Auth endpoints or 403, the
+real Auth adapter request mapping, refresh-plus-current-user restoration, and
+the isolated E2E adapter. Component regression tests cover provider
+initialization, forms, protected routes, and logout.
+
+Backend integration tests cover registration/login cookies, access-only JSON
+responses, refresh rotation, prior-token replay rejection, missing-cookie safe
+failure, logout revocation/idempotence, password-change revocation, and
+credentialed CORS preflight. The optional live Auth browser spec is skipped
+unless PLAYWRIGHT_AUTH_REAL_BACKEND is explicitly enabled with a configured
+FastAPI service and database.
