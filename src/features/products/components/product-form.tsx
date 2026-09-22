@@ -18,12 +18,17 @@ import {
 } from '@/features/products/schemas';
 import {
   PRODUCT_UNITS,
+  type ProductCategory,
   type Product,
   type ProductCreateData,
+  type ProductUnit,
   type ProductUpdateData,
 } from '@/features/products/types';
 
-type ProductFormProps =
+type ProductFormProps = {
+  readonly categories?: readonly ProductCategory[];
+  readonly units?: readonly ProductUnit[];
+} & (
   | {
       readonly mode: 'create';
       readonly isSubmitting: boolean;
@@ -36,18 +41,26 @@ type ProductFormProps =
       readonly isSubmitting: boolean;
       readonly onCancel: () => void;
       readonly onSubmit: (input: ProductUpdateData) => Promise<void>;
-    };
+    }
+);
 
 function toFormValues(
   mode: ProductFormProps['mode'],
   product?: Product,
+  units: readonly ProductUnit[] = PRODUCT_UNITS,
 ): ProductFormValues {
+  const initialUnit =
+    mode === 'edit' && product !== undefined && units.includes(product.unit)
+      ? product.unit
+      : (units[0] ?? PRODUCT_UNITS[0]);
+
   if (mode === 'edit' && product !== undefined) {
     return {
+      categoryId: product.categoryId ?? '',
       name: product.name,
       sku: product.sku,
       description: product.description ?? '',
-      unit: product.unit,
+      unit: initialUnit,
       sellingPrice: String(product.sellingPrice),
       costPrice: product.costPrice === null ? '' : String(product.costPrice),
       status: product.isActive ? 'active' : 'inactive',
@@ -55,10 +68,11 @@ function toFormValues(
   }
 
   return {
+    categoryId: '',
     name: '',
     sku: '',
     description: '',
-    unit: 'pcs',
+    unit: initialUnit,
     sellingPrice: '0',
     costPrice: '',
     status: 'active',
@@ -79,6 +93,8 @@ export function ProductForm(props: ProductFormProps) {
   const { mode, isSubmitting, onCancel } = props;
   const [submitError, setSubmitError] = useState<string | null>(null);
   const product = mode === 'edit' ? props.product : undefined;
+  const categories = props.categories ?? [];
+  const units = props.units ?? PRODUCT_UNITS;
   const {
     register,
     handleSubmit,
@@ -86,7 +102,7 @@ export function ProductForm(props: ProductFormProps) {
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     mode: 'onBlur',
-    defaultValues: toFormValues(mode, product),
+    defaultValues: toFormValues(mode, product, units),
   });
 
   const onSubmit = async (values: ProductFormValues): Promise<void> => {
@@ -162,6 +178,26 @@ export function ProductForm(props: ProductFormProps) {
       </div>
 
       <div>
+        <Label htmlFor="product-category">Category</Label>
+        <Select
+          id="product-category"
+          disabled={isSubmitting}
+          className="mt-1.5"
+          {...register('categoryId')}
+        >
+          <option value="">No category</option>
+          {categories
+            .filter(
+              (category) => category.isActive || category.id === product?.categoryId,
+            )
+            .map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+        </Select>
+      </div>
+      <div>
         <Label htmlFor="product-description">Description</Label>
         <Textarea
           id="product-description"
@@ -196,7 +232,7 @@ export function ProductForm(props: ProductFormProps) {
             className="mt-1.5"
             {...register('unit')}
           >
-            {PRODUCT_UNITS.map((unit) => (
+            {units.map((unit) => (
               <option key={unit} value={unit}>
                 {unit}
               </option>

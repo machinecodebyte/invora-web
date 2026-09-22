@@ -37,6 +37,7 @@ export interface Product {
 
 /** Data accepted by the future Product Catalog create adapter. */
 export interface ProductCreateData {
+  readonly categoryId?: string | null;
   readonly name: string;
   readonly sku: string;
   readonly description: string | null;
@@ -48,6 +49,28 @@ export interface ProductCreateData {
 /** Data accepted by the future Product Catalog update adapter. */
 export interface ProductUpdateData extends ProductCreateData {
   readonly isActive: boolean;
+}
+
+export interface ProductCategory {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly isActive: boolean;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface ProductCategoryData {
+  readonly name: string;
+  readonly description: string | null;
+  readonly isActive?: boolean;
+}
+
+export interface ProductCategoryListResult {
+  readonly categories: readonly ProductCategory[];
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
 }
 
 export interface ProductListFilters {

@@ -201,9 +201,9 @@ complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
 CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
 horizon/lifecycle semantics were aligned through read-only inspection. Frontend
-Auth now uses the real Auth endpoints; Dashboard, Products, Inventory, Sales
-Upload, Sales Transaction, Forecast Run, and Forecast Results still make no
-runtime API request. See
+Auth and Products now use the real FastAPI endpoints; Dashboard, Inventory,
+Sales Upload, Sales Transaction, Forecast Run, and Forecast Results still make
+no runtime API request. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
 
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
@@ -229,5 +229,37 @@ only after the backend signals an invalid or expired access token, and concurren
 recoveries are coalesced. Logout and unrecoverable recovery clear only
 auth-scoped TanStack Query entries, not public/static cache entries.
 
-The test-only E2E adapter remains opt-in. All business feature adapters,
-including Dashboard through Settings, remain unintegrated.
+The test-only E2E adapter remains opt-in. Products is the only integrated
+business feature; Dashboard, Inventory, Sales, Forecasting, Recommendations,
+Reports, and Settings remain unintegrated.
+
+## Integration Validation
+
+Phase 1 — Foundation + Auth: validated.
+
+Phase 2 — Product Catalog: validated.
+
+Phase 2B — Product Extended: validated. Product detail and archive, category
+create/list/update/archive, and backend-driven Product units now use the shared
+authenticated Product adapter. Product browser E2E coverage remains
+deterministic and test-only; normal application builds use the FastAPI adapter.
+
+Pending: Inventory, Sales Upload, Sales History, Dashboard, Forecast Run,
+Forecast Results, Recommendations, Reports, and Settings.
+
+Next: Inventory Integration.
+
+## Latest Integration Audit Status
+
+Phase 1 (Foundation transport + Auth) and Phase 2 (Product Catalog core) were
+revalidated against the current checkout. The normal frontend completed a real
+Auth registration, refresh-cookie session restoration, Product create/update,
+and logout flow against an isolated current backend instance. Auth and Product
+unit/component suites, backend contract tests, Chromium E2E coverage, lint,
+strict TypeScript, and the normal production build passed.
+
+The local backend process at `http://localhost:8000` was found to be stale: it
+omitted the Auth refresh cookie even though the current checked-out backend
+source correctly emits it. Restart that local process from the current backend
+checkout before manual frontend integration testing. No application source or
+backend files were changed by this audit.

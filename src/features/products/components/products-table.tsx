@@ -6,6 +6,8 @@ import type { Product } from '@/features/products/types';
 export interface ProductsTableProps {
   products: readonly Product[];
   onEdit: (product: Product) => void;
+  onView: (product: Product) => void;
+  onArchive: (product: Product) => void;
 }
 
 const priceFormatter = new Intl.NumberFormat(undefined, {
@@ -26,7 +28,12 @@ function formatUpdatedAt(value: string): string {
 }
 
 /** Semantic, horizontally scrollable Product Catalog table. */
-export function ProductsTable({ products, onEdit }: ProductsTableProps) {
+export function ProductsTable({
+  products,
+  onEdit,
+  onView,
+  onArchive,
+}: ProductsTableProps) {
   return (
     <TableScrollArea className="rounded-lg border border-border bg-surface">
       <table className="w-full table-fixed text-left text-sm">
@@ -87,6 +94,22 @@ export function ProductsTable({ products, onEdit }: ProductsTableProps) {
                   onClick={() => onEdit(product)}
                 >
                   Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={'View ' + product.name}
+                  onClick={() => onView(product)}
+                >
+                  View
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={'Archive ' + product.name}
+                  onClick={() => onArchive(product)}
+                >
+                  Archive
                 </Button>
               </td>
             </tr>

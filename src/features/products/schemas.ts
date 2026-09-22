@@ -113,6 +113,7 @@ const priceSchema = z.string().superRefine(validatePrice);
 
 /** Backend-aligned validation for the shared create/edit Product form. */
 export const productFormSchema = z.object({
+  categoryId: z.string(),
   name: productNameSchema,
   sku: skuSchema,
   description: descriptionSchema,
@@ -132,6 +133,7 @@ function toPrice(value: string, fallback: number | null): number | null {
 function toBaseProductData(values: ProductFormValues): ProductCreateData {
   const description = normalizeProductText(values.description);
   return {
+    categoryId: values.categoryId.trim() || null,
     name: normalizeProductText(values.name),
     sku: normalizeProductSku(values.sku),
     description: description === '' ? null : description,

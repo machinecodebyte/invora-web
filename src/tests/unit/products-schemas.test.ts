@@ -9,6 +9,7 @@ import {
 } from '@/features/products/schemas';
 
 const VALID_PRODUCT = {
+  categoryId: '',
   name: '  Widget   Cable ',
   sku: ' wgt cable 01 ',
   description: '  Durable   cable  ',
@@ -27,6 +28,7 @@ describe('Product form schema', () => {
     }
 
     expect(toProductCreateData(result.data)).toEqual({
+      categoryId: null,
       name: 'Widget Cable',
       sku: 'WGT-CABLE-01',
       description: 'Durable cable',
@@ -81,6 +83,7 @@ describe('Product form schema', () => {
     });
 
     expect(toProductUpdateData(result)).toEqual({
+      categoryId: null,
       name: 'Widget Cable',
       sku: 'WGT-CABLE-01',
       description: 'Durable cable',

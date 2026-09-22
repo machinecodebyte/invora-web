@@ -1,6 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { PRODUCTS_E2E_STORAGE_KEY } from '../src/features/products/api';
+import {
+  PRODUCT_CATEGORIES_E2E_STORAGE_KEY,
+  PRODUCTS_E2E_STORAGE_KEY,
+} from '../src/features/products/api';
 import {
   EMPTY_PRODUCTS_FIXTURE,
   PRODUCTS_FIXTURE,
@@ -15,6 +18,27 @@ type ProductsE2EFixture =
   | { readonly state: 'empty' }
   | { readonly state: 'error' };
 
+const CATEGORIES_FIXTURE = {
+  categories: [
+    {
+      id: 'category-cables-1',
+      name: 'Cables',
+      description: 'Connectivity products',
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    },
+  ],
+  total: 1,
+  limit: 200,
+  offset: 0,
+} as const;
+
+type CategoriesE2EFixture =
+  | { readonly state: 'ready'; readonly data: typeof CATEGORIES_FIXTURE }
+  | { readonly state: 'empty' }
+  | { readonly state: 'error' };
+
 async function setProductsFixture(
   page: Page,
   fixture: ProductsE2EFixture,
@@ -24,6 +48,18 @@ async function setProductsFixture(
       window.sessionStorage.setItem(storageKey, JSON.stringify(testFixture));
     },
     { storageKey: PRODUCTS_E2E_STORAGE_KEY, testFixture: fixture },
+  );
+}
+
+async function setCategoriesFixture(
+  page: Page,
+  fixture: CategoriesE2EFixture,
+): Promise<void> {
+  await page.addInitScript(
+    ({ storageKey, testFixture }) => {
+      window.sessionStorage.setItem(storageKey, JSON.stringify(testFixture));
+    },
+    { storageKey: PRODUCT_CATEGORIES_E2E_STORAGE_KEY, testFixture: fixture },
   );
 }
 
@@ -120,6 +156,48 @@ test.describe('Products', () => {
     await expect(page.getByRole('dialog', { name: 'Edit product' })).not.toBeVisible();
     const cableRow = page.getByRole('row', { name: /Widget Cable/ });
     await expect(cableRow).toContainText('Inactive');
+  });
+
+  test('shows Product details and archives a Product through the deterministic adapter', async ({
+    page,
+  }) => {
+    await signIn(page, { state: 'ready', data: PRODUCTS_FIXTURE });
+
+    await page.getByRole('button', { name: 'View Widget Cable' }).click();
+    await expect(page.getByRole('dialog', { name: 'Product details' })).toContainText(
+      'WGT-CBL-01',
+    );
+    await page.getByRole('button', { name: 'Close Product details' }).click();
+
+    await page.getByRole('button', { name: 'Archive Widget Cable' }).click();
+    await expect(page.getByRole('dialog', { name: 'Archive product' })).toBeVisible();
+    await page.getByRole('button', { name: 'Archive product', exact: true }).click();
+    await expect(page.getByRole('row', { name: /Widget Cable/ })).toContainText(
+      'Inactive',
+    );
+  });
+
+  test('manages categories through the deterministic adapter', async ({ page }) => {
+    await setCategoriesFixture(page, { state: 'ready', data: CATEGORIES_FIXTURE });
+    await signIn(page, { state: 'ready', data: PRODUCTS_FIXTURE });
+
+    await page.getByRole('button', { name: 'Manage categories' }).click();
+    await expect(page.getByRole('dialog', { name: 'Manage categories' })).toContainText(
+      'Cables',
+    );
+    await page.getByLabel('Category name').fill('Dairy');
+    await page.getByRole('button', { name: 'Create category' }).click();
+    await expect(page.getByText('Dairy')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit Cables' }).click();
+    await page.getByLabel('Category name').fill('Cables supplies');
+    await page.getByRole('button', { name: 'Save category' }).click();
+    await expect(page.getByText('Cables supplies')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Archive Cables supplies' }).click();
+    await expect(page.getByLabel('Archive category confirmation')).toBeVisible();
+    await page.getByRole('button', { name: 'Archive category' }).click();
+    await expect(page.getByText('Cables supplies (Archived)')).toBeVisible();
   });
 
   test('renders honest empty and safe error Product Catalog states', async ({
