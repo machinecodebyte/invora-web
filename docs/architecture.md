@@ -399,10 +399,13 @@ and all persistence to the backend.
 `hooks.ts` owns a mutually exclusive `idle`, `validating`, `ready`, `uploading`,
 `success`, `validation_error`, or `error` state. The backend completes upload
 work synchronously, so the UI deliberately has no processing or polling state.
-`api.ts` declares `SalesUploadService` without endpoint composition or a runtime
-request; the normal adapter reports availability truthfully. A future HTTP
-adapter will submit the file and retrieve the backend's paginated rejected-row
-projection before resolving the safe UI submission model.
+`api.ts` implements the normal `SalesUploadService` with `POST
+/api/v1/sales/uploads`, browser `FormData`, and the exact `file` field. The
+shared client deliberately omits multipart `Content-Type`, leaving the browser to
+generate its boundary. Fetch provides no portable upload-byte progress, so normal
+runtime uses an indeterminate submitting state rather than fabricated
+server-processing percentages. The final unwrapped `{ upload }` response maps to
+the safe UI batch result; rejected-row exploration remains out of scope.
 
 `app/sales/upload/page.tsx` reuses `ProtectedRoute`, `AppShell`,
 `PageContainer`, and `LogoutButton`. The view uses a native file input, semantic
@@ -424,24 +427,29 @@ minimal Sales Transaction product reference and safe transaction projection: the
 table does not model customers, notes, deleted metadata, or Product Catalog edit
 state.
 
-`SalesHistoryService` defines separate list and trend methods because the
-inspected Sales Transaction contract exposes independent endpoints. The normal
-adapter returns no data and composes no URL or network request. Its future HTTP
-adapter will preserve the backend's inclusive ISO date filters, source/search
-semantics, `limit`/`offset` pagination (limit 1–200), and default `sale_date`
-descending sort. The UI intentionally offers product/SKU search rather than a
-Product Catalog lookup before integration; it does not invent client-side server
-pagination or transaction mutations.
+`SalesHistoryService` defines separate list and trend methods because the Sales
+Transaction contract exposes independent endpoints. The normal adapter uses
+`GET /api/v1/sales/transactions` and `GET /api/v1/sales/transactions/trends`
+through the shared authenticated client. It maps camelCase filters to the
+backend's `date_from`, `date_to`, `sort_by`, and `sort_order` names and preserves
+server-provided `limit`/`offset`/`total`. It requests the UI's daily interval and
+maps Decimal-compatible fields only at the API boundary. `sale_date` and
+`period_start` remain `YYYY-MM-DD` calendar strings, without timezone conversion.
+The UI intentionally offers product/SKU search rather than a Product Catalog
+lookup; it does not invent client-side pagination, trend aggregation, or
+transaction mutations.
 
 `useSalesHistory` keeps list and chart states independent so an available table
 is not hidden by a trend failure. `salesHistoryFiltersSchema` validates calendar
-date input and rejects start-after-end ranges before a future request. The
+date input and rejects start-after-end ranges before a request. The
 semantic table has responsible horizontal containment, and the lightweight SVG
 quantity trend reuses the Dashboard chart pattern. Currency symbols are omitted
 until application currency configuration exists. Deterministic transaction and
 trend values live only in `src/tests/fixtures/sales-history.ts`.
 
-> Module 6 implements Sales History frontend UI and architecture only. Real Sales Transaction API integration remains intentionally deferred.
+> Module 6 uses the real read-only Sales Transaction list and trends contracts.
+> Transaction mutation, upload history, rejected-row exploration, summaries, and
+> by-product analytics remain intentionally deferred.
 
 **Frontend Sales History filtering and route protection are UX controls. Backend
 APIs remain responsible for authorization, ownership checks, and authoritative

@@ -10,6 +10,7 @@ import {
   type SalesHistoryService,
   type SalesUploadService,
 } from '@/features/sales/api';
+import { toDisplayMessage } from '@/lib/api-error';
 import {
   getSalesUploadFileMetadata,
   validateSalesHistoryFilters,
@@ -20,6 +21,7 @@ import type {
   SalesHistoryFilters,
   SalesHistoryListState,
   SalesHistoryQuery,
+  SalesTrendInterval,
   SalesUploadProgress,
   SalesUploadViewState,
 } from '@/features/sales/types';
@@ -29,7 +31,7 @@ const GENERIC_UPLOAD_ERROR = 'Unable to upload the sales file.';
 function toSafeErrorMessage(error: unknown): string {
   return error instanceof SalesUploadServiceError
     ? error.message
-    : GENERIC_UPLOAD_ERROR;
+    : toDisplayMessage(error, GENERIC_UPLOAD_ERROR);
 }
 
 export interface UseSalesUploadResult {
@@ -98,7 +100,7 @@ export function useSalesUpload(
         status: 'uploading',
         file,
         metadata,
-        progress: { percent: 0, label: 'Uploading sales CSV' },
+        progress: { percent: null, label: 'Submitting sales CSV' },
       });
 
       try {
@@ -136,6 +138,9 @@ export function useSalesUpload(
 const GENERIC_SALES_HISTORY_ERROR = 'Unable to load sales history.';
 const GENERIC_SALES_CHART_ERROR = 'Unable to load sales chart.';
 
+/** The existing trend UI has no interval control, so it requests daily API aggregates. */
+export const SALES_HISTORY_TREND_INTERVAL: SalesTrendInterval = 'day';
+
 export const DEFAULT_SALES_HISTORY_FILTERS: SalesHistoryFilters = {
   search: '',
   dateFrom: '',
@@ -147,7 +152,9 @@ export const DEFAULT_SALES_HISTORY_FILTERS: SalesHistoryFilters = {
 export const SALES_HISTORY_DEFAULT_LIMIT = 50;
 
 function toSafeSalesHistoryErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof SalesHistoryServiceError ? error.message : fallback;
+  return error instanceof SalesHistoryServiceError
+    ? error.message
+    : toDisplayMessage(error, fallback);
 }
 
 function createSalesHistoryQuery(
@@ -239,7 +246,7 @@ export function useSalesHistory(
       });
 
     void service
-      .getSalesTrend(query)
+      .getSalesTrend(query, SALES_HISTORY_TREND_INTERVAL)
       .then((points) => {
         if (!active) {
           return;

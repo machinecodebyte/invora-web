@@ -21,7 +21,7 @@ export interface SalesHistoryViewProps {
 /**
  * Read-only Sales History composition. List and trend states stay independent
  * so a chart failure never prevents an available transaction table from being
- * read, while normal builds remain honest until backend integration arrives.
+ * read.
  */
 export function SalesHistoryView({ service }: SalesHistoryViewProps) {
   const {

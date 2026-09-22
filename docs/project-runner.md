@@ -238,20 +238,23 @@ normal builds, and requires no FastAPI process. The separate opt-in
 ### Sales Upload E2E behavior
 
 `/sales/upload` is the protected Module 5 CSV upload route. The normal
-`SalesUploadService` never composes an endpoint or sends a file. The
-Playwright-managed build alone sets `NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE=true`;
-its deterministic, session-scoped fixture adapter supplies progress, completed
-batch summaries, safe row errors, or a safe failure. It is not a mock backend,
-never persists file contents, and requires no FastAPI process.
+`SalesUploadService` posts browser `FormData` to the real backend with the exact
+`file` field; the shared client leaves the multipart boundary browser-generated.
+Fetch progress is indeterminate so no server-processing percentage is fabricated.
+The Playwright-managed deterministic build alone sets
+`NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE=true`; its session-scoped fixture adapter
+supplies deterministic progress, batch summaries, safe row errors, or a failure.
+It is never selected by normal builds and requires no FastAPI process.
 
 ### Sales History component behavior
 
 `/sales` is the protected Module 6 read-only Sales History route. Its normal
-`SalesHistoryService` composes no endpoint and resolves to no data; it has no
-Playwright fixture mode or Module 6 E2E suite. Unit/component tests inject
-isolated transaction and trend fixtures to verify the table, filters, pagination,
-quantity trend, and safe states without a FastAPI process. `/sales/upload`
-remains the separate Module 5 upload workflow.
+`SalesHistoryService` requests the real transaction-list and Trends endpoints;
+it has no deterministic fixture mode. Unit/component tests inject isolated
+transaction and trend fixtures to verify the table, filters, pagination, quantity
+trend, and safe states. The opt-in `sales.real.spec.ts` uses
+`PLAYWRIGHT_SALES_REAL_BACKEND=true` with controlled data to validate real upload
+reconciliation. `/sales/upload` remains the separate Module 5 upload workflow.
 
 ### Forecast Run E2E behavior
 

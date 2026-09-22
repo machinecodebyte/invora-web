@@ -76,8 +76,8 @@ function selectedFileStatus(state: SalesUploadViewState): string {
 }
 
 /**
- * Protected Sales Upload screen content. It remains truthful in normal builds:
- * valid files can be selected, but no upload is persisted until API integration.
+ * Protected Sales Upload screen content. It performs one explicit historical
+ * demand upload and never presents upload as an Inventory stock mutation.
  */
 export function SalesUploadView({ service }: SalesUploadViewProps) {
   const { state, selectFile, upload, retry, reset } = useSalesUpload(service);

@@ -6,6 +6,19 @@ export interface SalesUploadProgressProps {
 
 /** Semantic, text-backed progress for the client-to-service upload step. */
 export function SalesUploadProgress({ progress }: SalesUploadProgressProps) {
+  if (progress.percent === null) {
+    return (
+      <section aria-label="Upload progress" className="space-y-2">
+        <p role="status" className="text-sm font-medium text-foreground">
+          {progress.label}
+        </p>
+        <p className="text-sm text-foreground-muted">
+          Waiting for the upload result. Processing progress is not available.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section aria-label="Upload progress" className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">

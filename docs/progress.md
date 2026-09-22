@@ -12,8 +12,8 @@ Implementation status of the Invora frontend, module by module.
 | Dashboard        | **Completed**                            | Protected responsive Dashboard with backend-aligned KPI, demand-trend, reorder-alert, and inventory-risk view projections; typed no-request service boundary; loading/empty/error states; 12 unit/component tests and 6 E2E tests. Real Dashboard Analytics integration remains disabled.                                                                                                                          |
 | Products         | **Completed**                            | Protected Product Catalog list with search and active-status filters; React Hook Form + Zod create/edit form; loading/empty/error/pending states; typed no-request service boundary; deterministic test-only E2E fixture adapter; 20 Product-specific unit/component tests and 7 E2E tests. Real Product Catalog API integration remains disabled.                                                                 |
 | Inventory        | **Completed + Phase 3 integrated**       | Protected Inventory table with backend-aligned stock status, search/status filters, dedicated low-stock view, and immutable stock-movement form; loading/empty/error/pending states; real shared-client list, low-stock, and movement adapter; Inventory-scoped query invalidation; deterministic fixture adapter plus opt-in real-backend E2E coverage.                                                           |
-| Sales Upload     | **Completed**                            | Protected single-CSV selection, backend-aligned preflight (`.csv`, 5 MiB, MIME, normalized required headers), explicit upload state, semantic progress, safe summary/rejected rows, no-network service boundary, test-only E2E adapter, 11 unit/component tests, and 11 E2E tests. Real Sales Upload integration remains disabled.                                                                                 |
-| Sales History    | **Completed**                            | Protected read-only Sales Transaction table with Product/SKU search, source and inclusive date filters, offset/limit pagination infrastructure, an accessible quantity trend, independent loading/empty/filtered-empty/error states, an honest no-network service boundary, and 12 unit/component tests. Real Sales Transaction API integration remains disabled.                                                  |
+| Sales Upload     | **Completed + Phase 4 integrated**       | Protected CSV upload with backend-aligned preflight and live `POST /api/v1/sales/uploads` through the shared authenticated client. The normal runtime uses browser-owned multipart boundaries and reports final server results without invented processing progress; the deterministic test-only adapter remains explicitly gated. |
+| Sales History    | **Completed + Phase 4 integrated**       | Protected read-only Sales Transaction table and day trend now use live `GET /api/v1/sales/transactions` and `GET /api/v1/sales/transactions/trends` adapters, with explicit snake_case query mapping, date-only preservation, decimal boundary mapping, and independent safe states. |
 | Forecast Run     | **Completed**                            | Protected `/forecasts/runs` configuration/status route; backend-aligned 7/15/30-day horizon form; explicit lifecycle UI; typed no-network start/status boundary; deterministic test-only lifecycle adapter; 10 unit/component tests and 7 E2E tests. Real Forecast Run and ML integration remain disabled.                                                                                                         |
 | Forecast Results | **Completed**                            | Protected `/forecasts/results` completed-run route; validated UUID selection; backend-aligned summary, MAE/RMSE/MAPE, product/SKU and date filters, offset/limit prediction list, nullable-actual SVG comparison, and explicit safe states; typed no-network boundary; deterministic test-only fixture adapter; 14 unit/component tests and 9 E2E tests. Real Forecast Results and ML integration remain disabled. |
 | Recommendations  | **Completed**                            | Protected read-only `/recommendations` route; backend-aligned five-level risk and read-only status labels, Product/SKU search, risk/status filters, offset/limit pagination, three-decimal-safe reorder display, and explicit safe states; typed no-network boundary; deterministic test-only fixture adapter; 10 unit/component tests and 9 E2E tests. Real Recommendations integration remains disabled.         |
@@ -67,12 +67,13 @@ feature and browser tests protect the business behavior they compose around.
 
 ## Backend integration
 
-**Auth, Products, and Inventory are enabled.** Foundation transport and Auth use
+**Auth, Products, Inventory, Sales Upload, and Sales History are enabled.** Foundation transport and Auth use
 the real backend contract. Products use the shared authenticated client for their
 approved Phase 2/2B endpoints. Inventory uses it for item listing, the dedicated
-low-stock projection, and immutable movements. Dashboard, Sales Upload, Sales
-History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings
-make no real backend request.
+low-stock projection, and immutable movements. Sales uses it for multipart CSV
+upload, read-only transaction history, and backend-owned trends. Dashboard,
+Forecast Run, Forecast Results, Recommendations, Reports, and Settings make no
+real backend request.
 The backend (`../backend`) was inspected read-only to align Auth fields,
 Dashboard Analytics summary semantics, Product Catalog validation/list semantics,
 and Inventory movement/low-stock semantics, Sales Upload CSV rules, Sales Transaction list/trend semantics, Forecast Run horizon/lifecycle semantics, Forecast Results overview/list/metrics/chart semantics, Recommendations risk/list/quantity semantics, and Reports views/export semantics, but the frontend uses unavailable or
@@ -130,16 +131,36 @@ table above records the final consolidated frontend suite.
 The real contract used a temporary isolated backend instance and uniquely named
 test records. It did not modify backend source or use production credentials.
 
+## Integration Phase 4 verification
+
+| Check                                      | Result                                                                                         |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Sales adapter, schema, MSW, component tests | Pass — 31 focused tests                                                                        |
+| full Vitest coverage suite                 | Pass — 56 files, 447 tests; 94.41% statements, 93.28% branches, 95.94% functions, 94.33% lines |
+| deterministic Sales Upload Chromium E2E    | Pass — 11 fixture-only scenarios                                                               |
+| opt-in real Sales Chromium contract        | Pass — real Auth, CSV upload, History reconciliation, daily trend, and no Inventory request    |
+| full deterministic Chromium regression     | Pass — 78 tests; 3 opt-in live specs skipped                                                   |
+| backend Sales contract regression          | Pass — 25 focused Sales Upload/Transaction tests                                                |
+| frontend lint/typecheck/normal build       | Pass                                                                                           |
+
+Phase 4 replaces only normal-runtime Sales Upload and Sales History placeholders.
+The upload adapter uses the shared authenticated client with browser-generated
+multipart `FormData` (`file` field); the list/trend adapter maps backend wire
+data, Decimal-compatible values, pagination, and date-only values at the Sales
+boundary. No Product or Inventory cache/service is mutated after upload. The real
+browser contract used a temporary local backend and unique controlled user/Product
+data; no backend source or production credential was changed.
+
 ## Foundation exclusions
 
 Deliberately not implemented, by scope:
 
-- Any business API call outside the integrated Product Catalog and Inventory scope
+- Any business API call outside the integrated Product Catalog, Inventory, and Sales scope
 - Any production business data — no fake products, sales, inventory, forecasts,
   recommendations, reports, KPIs, or users
 - Password reset, verification, MFA, OAuth, or any Auth feature beyond the
   implemented login/register/refresh/logout contract
-- Real Dashboard Analytics, Sales Upload, Sales Transaction, Forecast Run, Forecast Results, Recommendations, Reports, Settings, or ML requests, or production fixture data
+- Real Dashboard Analytics, Forecast Run, Forecast Results, Recommendations, Reports, Settings, or ML requests, or production fixture data
 - Content-Security-Policy (requires per-request nonce plumbing; see
   [`architecture.md`](architecture.md))
 - External observability platform

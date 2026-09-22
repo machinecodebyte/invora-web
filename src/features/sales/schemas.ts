@@ -218,7 +218,7 @@ const optionalSalesHistoryDateSchema = z
 
 /**
  * Browser-side validation for backend-supported list filters. Date strings are
- * intentionally left as ISO calendar dates so a future adapter can preserve
+ * intentionally left as ISO calendar dates so the adapter can preserve
  * the API's inclusive date semantics without timezone conversion.
  */
 export const salesHistoryFiltersSchema = z

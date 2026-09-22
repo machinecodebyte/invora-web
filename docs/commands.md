@@ -208,6 +208,7 @@ npx playwright test e2e/products.spec.ts      # Products E2E suite
 npx playwright test e2e/inventory.spec.ts     # Inventory E2E suite
 npx playwright test e2e/inventory.real.spec.ts # opt-in real Inventory contract
 npx playwright test e2e/sales-upload.spec.ts  # Sales Upload E2E suite
+npx playwright test e2e/sales.real.spec.ts    # opt-in real Sales contract
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run E2E suite
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results E2E suite
 npx playwright test e2e/recommendations.spec.ts # Recommendations E2E suite
@@ -245,6 +246,7 @@ E2E is excluded from `verify` because it performs its own build; run
 | `PLAYWRIGHT_BASE_URL`           | Playwright     | Target an external server                             |
 | `PLAYWRIGHT_PORT`               | Playwright     | Managed server port                                   |
 | `PLAYWRIGHT_WEB_SERVER_COMMAND` | Playwright     | Override the managed server command                   |
+| `PLAYWRIGHT_SALES_REAL_BACKEND`  | Playwright     | Enables the opt-in live Sales Upload/History contract |
 
 ## Suggested CI order
 

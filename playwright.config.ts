@@ -1,10 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
+const useRealSalesBackend = process.env.PLAYWRIGHT_SALES_REAL_BACKEND === 'true';
 const useRealInventoryBackend =
   process.env.PLAYWRIGHT_INVENTORY_REAL_BACKEND === 'true';
 const useRealAuthBackend =
-  process.env.PLAYWRIGHT_AUTH_REAL_BACKEND === 'true' || useRealInventoryBackend;
+  process.env.PLAYWRIGHT_AUTH_REAL_BACKEND === 'true' ||
+  useRealInventoryBackend ||
+  useRealSalesBackend;
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${port}`;
 
@@ -62,8 +65,9 @@ export default defineConfig({
       // The fixture is the default E2E adapter. The explicit real Inventory
       // contract disables it while leaving every unrelated feature fixture intact.
       NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE: useRealInventoryBackend ? 'false' : 'true',
-      // Enables the Sales Upload fixture adapter only in E2E builds.
-      NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE: 'true',
+      // The Sales fixture is default deterministic E2E behavior. The explicit
+      // real Sales contract disables it and keeps every unrelated fixture intact.
+      NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE: useRealSalesBackend ? 'false' : 'true',
       // Enables the Forecast Run fixture adapter only in E2E builds.
       NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE: 'true',
       // Enables the Forecast Results fixture adapter only in E2E builds.

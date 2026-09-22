@@ -41,6 +41,18 @@ describe('SalesUploadProgress', () => {
     expect(screen.getByText('Uploading sales CSV')).toBeVisible();
     expect(screen.getAllByText('50%')).toHaveLength(2);
   });
+
+  it('uses an indeterminate status instead of inventing server-processing progress', () => {
+    render(
+      <SalesUploadProgress
+        progress={{ percent: null, label: 'Submitting sales CSV' }}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Submitting sales CSV');
+    expect(screen.getByText(/Processing progress is not available/)).toBeVisible();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
 });
 
 describe('SalesUploadView', () => {

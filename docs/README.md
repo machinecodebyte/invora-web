@@ -167,10 +167,12 @@ settings, and movement history are outside this module.
 
 `src/features/sales/` owns the protected `/sales/upload` route, single CSV file
 selection, client preflight, explicit upload state, and safe batch-result and
-rejected-row projections. Its inspected contract is `.csv`, up to 5 MiB, with
-`sale_date`, `product_sku`, and `quantity` headers. The normal service never sends
-the file; Playwright alone selects a session-scoped deterministic adapter. Sales
-History, transaction management, and Inventory updates remain outside Module 5.
+rejected-row projections. Its contract is `.csv`, up to 5 MiB, with `sale_date`,
+`product_sku`, and `quantity` headers. The normal service submits `FormData`
+using the exact `file` field through the shared authenticated client; Playwright
+alone selects a session-scoped deterministic adapter. Sales History reads the
+new backend state through its separate adapter; transaction management and
+Inventory updates remain outside Module 5.
 
 ## Sales History module
 
@@ -178,9 +180,10 @@ History, transaction management, and Inventory updates remain outside Module 5.
 route. It renders a semantic historical transaction table, product/SKU search,
 source and inclusive date filters, backend-aligned offset/limit pagination
 infrastructure, and an accessible quantity-trend chart. The normal
-`SalesHistoryService` returns no data and makes no network request; deterministic
-transaction/trend fixtures exist only in unit and component test infrastructure.
-Real Sales Transaction API integration remains intentionally deferred.
+`SalesHistoryService` requests the real transaction-list and trend endpoints
+through the shared authenticated client; deterministic transaction/trend fixtures
+remain isolated to unit and component test infrastructure. The adapter preserves
+backend Decimal-compatible values and date-only calendar strings at its boundary.
 
 ## Forecast Run module
 

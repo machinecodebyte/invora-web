@@ -25,8 +25,8 @@ function hasActiveFilters(filters: SalesHistoryFilters): boolean {
 
 /**
  * Backend-aligned Sales Transaction filters. Product and SKU discovery use the
- * inspected API's supported text-search semantics; a Product Catalog request
- * is deliberately not made before the integration phase.
+ * inspected API's supported text-search semantics; Product Catalog requests
+ * remain unnecessary because the backend owns SKU matching and search.
  */
 export function SalesHistoryToolbar({
   filters,

@@ -8,9 +8,9 @@ recommendation system for small-business inventory management.
 ## Current status
 
 **Frontend Module 12 - Shared UI / final frontend consolidation: COMPLETED.**
-All frontend implementation modules 0-12 are complete. Integration Phase 1
-connects Foundation transport and Auth only; business-module integration remains
-the next separate phase.
+All frontend implementation modules 0-12 are complete. Integration Phases 1,
+2/2B, 3, and 4 connect Foundation/Auth, Product Catalog, Inventory, and Sales
+Upload/Sales History respectively; later business integrations remain separate.
 
 **Frontend Module 10 — Reports: COMPLETED.**
 
@@ -38,12 +38,12 @@ create/edit forms, backend-aligned list filters, and explicit loading, empty, an
 error states. Module 4 adds protected Inventory monitoring with backend-aligned
 stock status, search/status filters, a dedicated low-stock view, and immutable
 stock-movement updates validated with React Hook Form and Zod. Module 5 adds a
-protected CSV selection and preflight experience with upload progress, safe result
-summaries, and rejected-row feedback. Normal builds make no Sales Upload request
-or persistent local write. Module 6 adds a protected read-only Sales History table,
+protected CSV selection and preflight experience with truthful upload state, safe
+result summaries, and rejected-row feedback. Normal builds submit the selected
+file through the real Sales Upload contract. Module 6 adds a protected read-only Sales History table,
 backend-aligned product/SKU search, source and inclusive date filters, offset/limit
-pagination infrastructure, and a quantity-trend chart. Normal builds make no Sales
-Transaction request and do not contain sales records. Module 7 adds a protected
+pagination infrastructure, and a quantity-trend chart. Normal builds retrieve
+Sales Transactions and backend-owned trends through the shared authenticated client. Module 7 adds a protected
 Forecast Run form with backend-aligned 7-, 15-, and 30-day horizons, explicit
 pending/running/completed/failed lifecycle presentation, and manual status refresh.
 Normal builds make no Forecast Run or ML request and do not contain forecast data.
@@ -58,10 +58,10 @@ pagination, reorder quantities that retain valid zeroes and up to three decimal
 places, and safe loading, empty, filtered-empty, and error states. Normal builds
 make no Reorder Recommendation request and contain no recommendation data.
 
-Dashboard, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
-are **not** connected to the backend API yet. Auth, Products, and Inventory are connected through the
+Dashboard, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
+are **not** connected to the backend API yet. Auth, Products, Inventory, Sales Upload, and Sales History are connected through the
 shared API client and the backend's HttpOnly refresh-cookie contract. In normal builds Dashboard,
-Sales Upload, Sales History, Forecast Run, and Forecast Results remain honest; test fixtures are isolated to component and Playwright
+Forecast Run, and Forecast Results remain honest; Sales fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
@@ -201,9 +201,9 @@ complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
 CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
 horizon/lifecycle semantics were aligned through read-only inspection. Frontend
-Auth, Products, and Inventory now use the real FastAPI endpoints; Dashboard,
-Sales Upload, Sales Transaction, Forecast Run, and Forecast Results still make
-no runtime API request. See
+Auth, Products, Inventory, Sales Upload, and Sales History now use the real FastAPI
+endpoints; Dashboard, Forecast Run, and Forecast Results still make no runtime API
+request. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
 
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
@@ -229,9 +229,9 @@ only after the backend signals an invalid or expired access token, and concurren
 recoveries are coalesced. Logout and unrecoverable recovery clear only
 auth-scoped TanStack Query entries, not public/static cache entries.
 
-The test-only E2E adapters remain opt-in. Products and Inventory are the
-integrated business features; Dashboard, Sales, Forecasting, Recommendations,
-Reports, and Settings remain unintegrated.
+The test-only E2E adapters remain opt-in. Products, Inventory, and Sales are the
+integrated business features; Dashboard, Forecasting, Recommendations, Reports,
+and Settings remain unintegrated.
 
 ## Integration Validation
 
@@ -253,10 +253,15 @@ movements through the shared authenticated client. Successful movements
 invalidate only Inventory query keys; the normal UI never calculates stock or
 low-stock state locally.
 
-Pending: Sales Upload, Sales History, Dashboard, Forecast Run, Forecast
-Results, Recommendations, Reports, and Settings.
+Phase 4 â€” Sales Upload + Sales History: validated. Normal builds use the
+shared authenticated client for multipart CSV upload, transaction list, and
+backend-owned daily trends. The live adapter maps Decimal-compatible fields and
+calendar-date strings at the Sales boundary; it never calls Inventory APIs.
 
-Next: Sales Upload Integration.
+Pending: Dashboard, Forecast Run, Forecast Results, Recommendations, Reports,
+and Settings.
+
+Next: Dashboard integration.
 
 ## Latest Integration Audit Status
 

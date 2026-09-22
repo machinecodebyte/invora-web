@@ -279,12 +279,14 @@ Implemented:
 - Explicit validating, ready, uploading, success, validation-error, and safe
   failure states; semantic progress; reset and retry controls
 - Safe upload-batch summary and bounded rejected-row feedback without raw CSV data
-- Typed no-network service contract plus deterministic component and Playwright tests
+- Typed real shared-client adapter plus deterministic component and Playwright tests
 
-**Real Sales Upload API integration is intentionally not enabled.** The normal
-service never sends or persists a file. Only the Playwright-managed build selects
-a test-only session fixture adapter; it does not contact FastAPI or retain file
-contents after the browser test.
+**Real Sales Upload API integration is enabled.** The normal service sends the
+selected CSV as browser `FormData` using the exact `file` field and preserves the
+browser-generated multipart boundary. Fetch exposes no portable upload-byte
+progress, so the UI uses an indeterminate submitting state rather than fabricated
+server-processing progress. Only the Playwright-managed deterministic build
+selects a session fixture adapter; normal builds never fall back to it.
 
 ## Current Sales History Scope
 
@@ -295,12 +297,14 @@ Implemented:
 - Product/SKU search, source and inclusive date filters with date-range feedback
 - Backend-aligned offset/limit pagination infrastructure and accessible quantity trend
 - Independent table/chart loading, empty, filtered-empty, and safe error states
-- Typed no-network service boundary with deterministic unit/component fixtures
+- Typed real shared-client list/trend adapter with deterministic unit/component fixtures
 
-**Real Sales Transaction API integration is intentionally not enabled.** The
-normal service makes no request and renders no fake sales. Sales History has
-component coverage only by roadmap; completed Modules 1–5 E2E suites remain part
-of full regression.
+**Real Sales Transaction API integration is enabled.** The normal service uses
+the backend list and trends contracts, preserves `YYYY-MM-DD` date-only values,
+and renders backend pagination/aggregate data without client-side trend
+calculation. Deterministic component fixtures remain isolated. Set
+`PLAYWRIGHT_SALES_REAL_BACKEND=true` with a controlled backend and
+`NEXT_PUBLIC_API_BASE_URL` to run the optional real browser contract.
 
 ## Current Forecast Run Scope
 

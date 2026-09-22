@@ -245,6 +245,15 @@ and oversized files, and mobile overflow. Its 11 scenarios use only
 session-scoped fixtures under `NEXT_PUBLIC_SALES_UPLOAD_E2E_TEST_MODE=true`; no
 FastAPI service, real upload, or production sales data is involved.
 
+Phase 4 adds normal-runtime HTTP adapter tests for `POST /api/v1/sales/uploads`,
+including the exact `file` FormData field, authenticated
+shared-client header, browser-owned multipart `Content-Type`, final upload-batch
+mapping, duplicate-upload safe error, and truthful indeterminate fetch state.
+`sales-api-contract.test.ts` uses MSW routes matching the upload, transaction,
+and trend FastAPI paths; its focused FormData assertion remains in the injected
+ApiClient test because JSDOM `File` values are not compatible with Node's
+multipart parser.
+
 ### Sales History tests
 
 Sales History tests use only `src/tests/fixtures/sales-history.ts` and injected
@@ -252,8 +261,16 @@ test services. They cover Sales Transaction-shaped table rows, Product/SKU searc
 source and inclusive date filters, date-range validation and reset, offset/limit
 pagination controls, zero-value formatting, the accessible quantity trend,
 loading, no-data, filtered-empty, and independent table/chart error behavior.
-No Sales History E2E suite was added: Module 6 requires component testing, while
-the completed Modules 1–5 E2E suites remain part of full regression.
+No deterministic Sales History E2E suite was added: Module 6's fixture coverage
+remains component-focused, while the completed Modules 1–5 E2E suites remain
+part of full regression.
+
+Phase 4 adds real list/trend adapter coverage for query-name mapping, omission
+of empty filters, pagination metadata, Decimal-compatible values, and a direct
+date-only regression. `e2e/sales.real.spec.ts` is opt-in through
+`PLAYWRIGHT_SALES_REAL_BACKEND=true`; it uses unique controlled account/Product
+data to prove real CSV upload, history reconciliation, trend rendering, and no
+frontend Inventory request. It is separate from deterministic fixture coverage.
 
 ### Forecast Run tests
 

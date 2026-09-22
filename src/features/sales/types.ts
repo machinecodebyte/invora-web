@@ -31,9 +31,12 @@ export interface SalesUploadFileMetadata {
   readonly type: string;
 }
 
-/** Coarse transport progress, not a model of server-side processing. */
+/**
+ * Transport progress only. Fetch does not expose upload byte progress, so the
+ * real HTTP adapter uses `null` while it waits for the final server response.
+ */
 export interface SalesUploadProgress {
-  readonly percent: number;
+  readonly percent: number | null;
   readonly label: string;
 }
 
@@ -50,14 +53,14 @@ export interface SalesUploadResult {
   readonly failureReason: string | null;
 }
 
-/** Safe paginated rejected-row projection. `raw_data` is intentionally omitted. */
+/** Reserved safe rejected-row projection. `raw_data` is intentionally omitted. */
 export interface SalesUploadRowError {
   readonly rowNumber: number;
   readonly errorCode: string;
   readonly errorMessage: string;
 }
 
-/** Result composed by a future service adapter after retrieving row errors. */
+/** Final upload result; the current HTTP adapter exposes only backend counts. */
 export interface SalesUploadSubmission {
   readonly result: SalesUploadResult;
   readonly rowErrors: readonly SalesUploadRowError[];
@@ -150,7 +153,7 @@ export interface SalesTransaction {
   readonly createdAt: string;
 }
 
-/** Supported server-side sort fields kept ready for the future HTTP adapter. */
+/** Supported server-side sort fields. */
 export type SalesTransactionSortField =
   | 'sale_date'
   | 'quantity'
@@ -165,7 +168,12 @@ export type SalesTransactionSortField =
 
 export type SalesSortOrder = 'asc' | 'desc';
 
-/** UI-controlled filters supported by the future transaction list endpoint. */
+/** Backend-supported aggregation intervals for the Sales Trends endpoint. */
+export const SALES_TREND_INTERVALS = ['day', 'week', 'month'] as const;
+
+export type SalesTrendInterval = (typeof SALES_TREND_INTERVALS)[number];
+
+/** UI-controlled filters supported by the transaction list endpoint. */
 export interface SalesHistoryFilters {
   readonly search: string;
   readonly dateFrom: string;
@@ -174,7 +182,7 @@ export interface SalesHistoryFilters {
 }
 
 /**
- * Future list request projection. Pagination follows the backend's offset /
+ * List request projection. Pagination follows the backend's offset /
  * limit model rather than inventing page-number semantics.
  */
 export interface SalesHistoryQuery {
