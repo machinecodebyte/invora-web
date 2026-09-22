@@ -1,4 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -13,6 +15,13 @@ import {
   INVENTORY_FIXTURE,
   LOW_STOCK_INVENTORY_FIXTURE,
 } from '@/tests/fixtures/inventory';
+import { createQueryClient } from '@/lib/query-client';
+
+function renderInventoryView(ui: ReactElement) {
+  return render(
+    <QueryClientProvider client={createQueryClient()}>{ui}</QueryClientProvider>,
+  );
+}
 
 function applyFilters(
   source: InventoryListResult,
@@ -139,11 +148,11 @@ describe('InventoryView', () => {
       listLowStock: () => new Promise(() => undefined),
       createStockMovement: vi.fn(),
     };
-    const { unmount } = render(<InventoryView service={pendingService} />);
+    const { unmount } = renderInventoryView(<InventoryView service={pendingService} />);
     expect(screen.getByRole('status', { name: 'Loading inventory' })).toBeVisible();
 
     unmount();
-    const { rerender } = render(
+    const readyView = renderInventoryView(
       <InventoryView service={serviceFor(INVENTORY_FIXTURE)} />,
     );
     expect(await screen.findByRole('table', { name: 'Inventory' })).toBeVisible();
@@ -157,15 +166,20 @@ describe('InventoryView', () => {
     await userEvent.selectOptions(screen.getByLabelText('Inventory view'), 'low_stock');
     expect(await screen.findByText('Widget Powder')).toBeVisible();
 
-    rerender(<InventoryView service={serviceFor(null)} />);
+    readyView.unmount();
+    const lowStockEmptyView = renderInventoryView(
+      <InventoryView service={serviceFor(null)} />,
+    );
+    await userEvent.selectOptions(screen.getByLabelText('Inventory view'), 'low_stock');
     expect(await screen.findByText('No low-stock items available.')).toBeVisible();
 
-    rerender(<InventoryView key="empty" service={serviceFor(null)} />);
+    lowStockEmptyView.unmount();
+    renderInventoryView(<InventoryView service={serviceFor(null)} />);
     expect(await screen.findByText('No inventory records available.')).toBeVisible();
   });
 
   it('normalizes Inventory service errors to safe UI messaging', async () => {
-    render(
+    renderInventoryView(
       <InventoryView
         service={{
           listInventory: () =>
@@ -184,5 +198,33 @@ describe('InventoryView', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Unable to load inventory.',
     );
+  });
+
+  it('reconciles Inventory data by invalidating only Inventory queries after a movement', async () => {
+    const user = userEvent.setup();
+    const listInventory = vi.fn().mockResolvedValue(INVENTORY_FIXTURE);
+    const createStockMovement = vi.fn().mockResolvedValue({
+      productId: 'product-cable-1',
+      quantityAfter: 27,
+    });
+    renderInventoryView(
+      <InventoryView
+        service={{
+          listInventory,
+          listLowStock: vi.fn().mockResolvedValue(LOW_STOCK_INVENTORY_FIXTURE),
+          createStockMovement,
+        }}
+      />,
+    );
+
+    await screen.findByRole('table', { name: 'Inventory' });
+    await user.click(
+      screen.getByRole('button', { name: 'Update stock for Widget Cable' }),
+    );
+    await user.type(screen.getByLabelText(/^Quantity/), '3');
+    await user.click(screen.getByRole('button', { name: 'Update stock' }));
+
+    await waitFor(() => expect(createStockMovement).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(listInventory).toHaveBeenCalledTimes(2));
   });
 });

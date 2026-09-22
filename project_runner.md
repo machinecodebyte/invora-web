@@ -12,8 +12,8 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required for the deterministic
-frontend test suite. Normal Auth usage now requires the configured FastAPI
-service; Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast
+frontend test suite. Normal Auth, Product Catalog, and Inventory usage require
+the configured FastAPI service; Dashboard, Sales Upload, Sales History, Forecast
 Run, Forecast Results, Recommendations, Reports, and Settings still make no
 production API calls.
 
@@ -108,6 +108,7 @@ npx playwright test e2e/auth.spec.ts  # Auth suite only
 npx playwright test e2e/dashboard.spec.ts  # Dashboard suite only
 npx playwright test e2e/products.spec.ts   # Products suite only
 npx playwright test e2e/inventory.spec.ts  # Inventory suite only
+npx playwright test e2e/inventory.real.spec.ts # opt-in live Inventory contract
 npx playwright test e2e/sales-upload.spec.ts # Sales Upload suite only
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run suite only
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results suite only
@@ -257,13 +258,16 @@ Implemented:
   quantity rules
 - Loading, empty, filtered-empty, low-stock empty, safe error, and update-pending
   states with accessible field/form feedback
-- Typed no-network Inventory service contract and deterministic test-only
-  Playwright fixture adapter with component and browser tests
+- Typed real Inventory service adapter plus deterministic test-only Playwright
+  fixture adapter with component and browser tests
 
-**Real Inventory API integration is intentionally not enabled.** Normal builds
-make no Inventory request and do not persist local stock writes. The
-Playwright-only adapter is selected only by the managed E2E build and uses
-isolated session-scoped fixture state, never a token or production Inventory data.
+**Real Inventory API integration is enabled.** Normal builds use the shared
+authenticated client for Inventory listing, backend-authoritative low-stock
+listing, and immutable movements; successful movements refetch only
+Inventory-scoped data. The Playwright-only adapter is selected only by the
+managed E2E build and uses isolated session-scoped fixture state, never a token
+or production Inventory data. Set `PLAYWRIGHT_INVENTORY_REAL_BACKEND=true` with
+the backend running to execute the opt-in live contract spec.
 
 ## Current Sales Upload Scope
 
@@ -412,4 +416,5 @@ generic contract. Module 12 adds no route, provider, store, API call, backend
 connection, or business data.
 
 **Current project status:** Frontend implementation modules 0-12 are complete.
-Integration Phase 1 is complete for Foundation transport and Auth & Identity. Business-module integration remains the next separate phase.
+Integration Phases 1, 2/2B, and 3 are complete for Foundation/Auth, Products,
+and Inventory. Remaining business-module integrations remain separate phases.

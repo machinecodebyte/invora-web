@@ -3,10 +3,10 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Integration Phase 1 enables Foundation transport and Auth only.**
-> Normal Auth login, registration, refresh, and logout require the backend
-> service. No business endpoint is enabled, and the deterministic frontend test
-> suite still needs no backend, PostgreSQL, or Redis service.
+> **Integration Phases 1, 2/2B, and 3 enable Auth, Products, and Inventory.**
+> Normal Auth, Product Catalog, and Inventory flows require the backend service.
+> The deterministic frontend test suite still needs no backend, PostgreSQL, or
+> Redis service.
 
 ## 1. Prerequisites
 
@@ -217,7 +217,7 @@ process is needed.
 ### Products E2E behavior
 
 /products is the protected Module 3 Product Catalog route. The normal Product
-service returns an honest unavailable state and never makes a request. The
+service uses the shared authenticated client for its approved Product endpoints. The
 Playwright-managed build alone sets the Products E2E test-mode variable; its
 fixture adapter reads and mutates isolated browser session storage for
 deterministic list, filter, create, and edit coverage. No production Product data
@@ -226,11 +226,14 @@ or FastAPI process is used.
 ### Inventory E2E behavior
 
 `/inventory` is the protected Module 4 Inventory route. The normal Inventory
-service never composes an endpoint or makes a request. The Playwright-managed
+service uses the shared authenticated client for item listing, the dedicated
+low-stock projection, and immutable stock movements. The Playwright-managed
 build alone sets `NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE=true`; its deterministic
 adapter reads and mutates isolated browser `sessionStorage` fixture state for
 stock-movement flows. It never stores credentials or tokens, is not selected by
-normal builds, and requires no FastAPI process.
+normal builds, and requires no FastAPI process. The separate opt-in
+`inventory.real.spec.ts` validates the real flow when
+`PLAYWRIGHT_INVENTORY_REAL_BACKEND=true` is explicitly set.
 
 ### Sales Upload E2E behavior
 
@@ -420,6 +423,6 @@ to a host-only HttpOnly refresh cookie scoped to Auth routes; production enforce
 Secure cookies. Do not put tokens in frontend environment variables or browser
 storage.
 
-All feature adapters other than Auth remain no-network. The standard browser
-suite deliberately keeps its deterministic Auth adapter; use the documented
-live Auth browser command only when the backend stack is running.
+Only the integrated Auth, Product Catalog, and Inventory adapters make normal
+requests. The standard browser suite deliberately keeps deterministic adapters;
+use an opt-in live browser contract only when the backend stack is running.

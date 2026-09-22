@@ -46,9 +46,9 @@ but are not supported by that toolchain yet.
 **Shared UI / final frontend consolidation: COMPLETED.** Module 12 preserved
 the existing primitives, added narrowly scoped `TableScrollArea` and `Pagination`
 primitives, and adopted them only where generic duplication was verified. All
-frontend implementation modules 0-12 are now complete. Integration Phase 1
-connects Foundation transport and Auth only; business-module integration remains
-the next separate phase.
+frontend implementation modules 0-12 are now complete. Integration Phases 1,
+2/2B, and 3 connect Foundation/Auth, Product Catalog, and Inventory
+respectively; the remaining business integrations stay separate phases.
 
 **Settings: COMPLETED.** Module 11 adds protected `/settings` Forecast Defaults
 and Safety Stock Defaults forms with component-tested UI state. Persistence/API
@@ -69,15 +69,15 @@ logout, protected-route UX, a test-only E2E adapter, and the real backend Auth
 adapter. Module 2 adds the protected Dashboard UI, typed summary
 projections, and explicit loading/empty/error states. Module 3 adds a protected
 Product Catalog with backend-aligned validation, list filters, create/edit UI,
-and a no-network service boundary. Module 4 adds protected Inventory stock
-monitoring, movement validation, and low-stock handling through a no-network
-service boundary. Module 5 adds protected CSV file selection, backend-aligned
+and its real shared-client adapter. Module 4 adds protected Inventory stock
+monitoring, movement validation, backend-authoritative low-stock handling, and
+its real shared-client adapter. Module 5 adds protected CSV file selection, backend-aligned
 preflight, upload-state UX, safe batch results, and rejected-row presentation
 through a no-network service boundary. Module 7 adds a protected global Forecast
 Run configuration and lifecycle-status surface with a no-network service boundary.
 Module 8 adds a protected completed-run Forecast Results surface with a no-network
 result adapter, summary, allowed metrics, prediction list, filters, and an
-actual-versus-predicted aggregate chart. No real Dashboard Analytics, Product Catalog, Inventory, Sales Upload, Sales
+actual-versus-predicted aggregate chart. No real Dashboard Analytics, Sales Upload, Sales
 Transaction, Forecast Run, Forecast Results, Recommendations, Reports, or ML API call is enabled.
 
 Module 9 adds a protected, read-only Recommendations surface with backend-aligned
@@ -91,11 +91,11 @@ normal adapter is unavailable-by-default and never makes an HTTP request.
 redirect validation, and access boundaries. Public routes are `/login` and
 `/register`; `/dashboard` is the protected Dashboard route. Real backend
 authentication integration is enabled through the shared client and secure
-cookie-session boundary; business adapters remain deferred.
+cookie-session boundary; remaining business adapters remain deferred.
 
 ### Integration Phase 1
 
-Auth is the only live feature integration. The browser holds only an in-memory
+Auth, Products, and Inventory are the live integrations. The browser holds only an in-memory
 access token. The backend refresh token is an HttpOnly cookie scoped to Auth
 routes, and is used only for browser refresh/logout transport. The shared client
 performs one coalesced invalid-access-token recovery and one replay. Frontend
@@ -152,16 +152,16 @@ remain outside Module 3.
 
 ## Inventory module
 
-`src/features/inventory/` owns safe public Inventory projections, the
-unavailable-by-default `InventoryService`, list/movement state, Zod stock-movement
+`src/features/inventory/` owns safe public Inventory projections, the real
+shared-client `InventoryService`, list/movement state, Zod stock-movement
 schemas, and the protected `/inventory` UI. The UI models the inspected backend
 semantics: stock changes are immutable movements; stock-in/out use positive
 quantities, adjustment sets an absolute non-negative quantity, correction is a
 non-zero signed delta, and low stock is the backend endpoint projection of active
 items at or below minimum stock. The Playwright-only adapter reads isolated
-session-scoped fixtures; normal builds contain no inventory records and make no
-request. Product CRUD, threshold settings, and movement history are outside this
-module.
+session-scoped fixtures; normal builds request only the integrated Inventory
+endpoints and retain no local stock persistence. Product CRUD, threshold
+settings, and movement history are outside this module.
 
 ## Sales Upload module
 

@@ -58,10 +58,10 @@ pagination, reorder quantities that retain valid zeroes and up to three decimal
 places, and safe loading, empty, filtered-empty, and error states. Normal builds
 make no Reorder Recommendation request and contain no recommendation data.
 
-Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
-are **not** connected to the backend API yet. Auth is connected through the
+Dashboard, Sales Upload, Sales History, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
+are **not** connected to the backend API yet. Auth, Products, and Inventory are connected through the
 shared API client and the backend's HttpOnly refresh-cookie contract. In normal builds Dashboard,
-Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast Results remain honest; test fixtures are isolated to component and Playwright
+Sales Upload, Sales History, Forecast Run, and Forecast Results remain honest; test fixtures are isolated to component and Playwright
 infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
@@ -201,7 +201,7 @@ complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
 CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
 horizon/lifecycle semantics were aligned through read-only inspection. Frontend
-Auth and Products now use the real FastAPI endpoints; Dashboard, Inventory,
+Auth, Products, and Inventory now use the real FastAPI endpoints; Dashboard,
 Sales Upload, Sales Transaction, Forecast Run, and Forecast Results still make
 no runtime API request. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
@@ -229,8 +229,8 @@ only after the backend signals an invalid or expired access token, and concurren
 recoveries are coalesced. Logout and unrecoverable recovery clear only
 auth-scoped TanStack Query entries, not public/static cache entries.
 
-The test-only E2E adapter remains opt-in. Products is the only integrated
-business feature; Dashboard, Inventory, Sales, Forecasting, Recommendations,
+The test-only E2E adapters remain opt-in. Products and Inventory are the
+integrated business features; Dashboard, Sales, Forecasting, Recommendations,
 Reports, and Settings remain unintegrated.
 
 ## Integration Validation
@@ -247,7 +247,16 @@ deterministic and test-only; normal application builds use the FastAPI adapter.
 Pending: Inventory, Sales Upload, Sales History, Dashboard, Forecast Run,
 Forecast Results, Recommendations, Reports, and Settings.
 
-Next: Inventory Integration.
+Phase 3 — Inventory: validated. The normal Inventory adapter lists
+backend-owned inventory and low-stock projections and records immutable stock
+movements through the shared authenticated client. Successful movements
+invalidate only Inventory query keys; the normal UI never calculates stock or
+low-stock state locally.
+
+Pending: Sales Upload, Sales History, Dashboard, Forecast Run, Forecast
+Results, Recommendations, Reports, and Settings.
+
+Next: Sales Upload Integration.
 
 ## Latest Integration Audit Status
 

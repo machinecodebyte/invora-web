@@ -11,9 +11,14 @@ import {
   INVENTORY_STOCK_STATUSES,
   STOCK_MOVEMENT_TYPES,
 } from '@/features/inventory/types';
+import { isApiError } from '@/lib/api-error';
+import { apiClient, type ApiClient } from '@/lib/api-client';
 
 export type InventoryServiceErrorCode =
-  'inventory_unavailable' | 'inventory_item_not_found' | 'insufficient_stock';
+  | 'inventory_unavailable'
+  | 'inventory_item_not_found'
+  | 'inventory_product_not_found'
+  | 'insufficient_stock';
 
 /** Safe Inventory error for presentation and test boundaries. */
 export class InventoryServiceError extends Error {
@@ -39,8 +44,241 @@ export interface InventoryService {
   createStockMovement(input: StockMovementData): Promise<StockMovementResult>;
 }
 
+type InventoryProductWire = {
+  readonly id: string;
+  readonly name: string;
+  readonly sku: string;
+  readonly category_id: string | null;
+  readonly unit: string;
+  readonly is_active: boolean;
+};
+
+type InventoryItemWire = {
+  readonly id: string;
+  readonly product_id: string;
+  readonly product: InventoryProductWire;
+  readonly current_stock: number | string;
+  readonly minimum_stock: number | string;
+  readonly safety_stock: number | string;
+  readonly stock_status: string;
+  readonly is_active: boolean;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+type StockMovementWire = {
+  readonly product_id: string;
+  readonly quantity_after: number | string;
+};
+
+function invalidInventoryResponse(): InventoryServiceError {
+  return new InventoryServiceError(
+    'inventory_unavailable',
+    'The server returned an unexpected inventory response.',
+  );
+}
+
+function isInventoryProductWire(value: unknown): value is InventoryProductWire {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.sku === 'string' &&
+    (value.category_id === null || typeof value.category_id === 'string') &&
+    typeof value.unit === 'string' &&
+    typeof value.is_active === 'boolean'
+  );
+}
+
+function isInventoryItemWire(value: unknown): value is InventoryItemWire {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.product_id === 'string' &&
+    isInventoryProductWire(value.product) &&
+    (typeof value.current_stock === 'number' ||
+      typeof value.current_stock === 'string') &&
+    (typeof value.minimum_stock === 'number' ||
+      typeof value.minimum_stock === 'string') &&
+    (typeof value.safety_stock === 'number' ||
+      typeof value.safety_stock === 'string') &&
+    typeof value.stock_status === 'string' &&
+    typeof value.is_active === 'boolean' &&
+    typeof value.created_at === 'string' &&
+    typeof value.updated_at === 'string'
+  );
+}
+
+function isStockMovementWire(value: unknown): value is StockMovementWire {
+  return (
+    isRecord(value) &&
+    typeof value.product_id === 'string' &&
+    (typeof value.quantity_after === 'number' ||
+      typeof value.quantity_after === 'string')
+  );
+}
+
+function mapQuantity(value: number | string): number {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw invalidInventoryResponse();
+  }
+  return parsed;
+}
+
+export function mapInventoryItemResponse(value: unknown): InventoryItem {
+  if (!isInventoryItemWire(value) || !isInventoryStatus(value.stock_status)) {
+    throw invalidInventoryResponse();
+  }
+
+  return {
+    id: value.id,
+    productId: value.product_id,
+    product: {
+      id: value.product.id,
+      name: value.product.name,
+      sku: value.product.sku,
+      categoryId: value.product.category_id,
+      unit: value.product.unit,
+      isActive: value.product.is_active,
+    },
+    currentStock: mapQuantity(value.current_stock),
+    minimumStock: mapQuantity(value.minimum_stock),
+    safetyStock: mapQuantity(value.safety_stock),
+    stockStatus: value.stock_status,
+    isActive: value.is_active,
+    createdAt: value.created_at,
+    updatedAt: value.updated_at,
+  };
+}
+
+export function mapInventoryListResponse(value: unknown): InventoryListResult {
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.items) ||
+    !isFiniteNumber(value.total) ||
+    !isFiniteNumber(value.limit) ||
+    !isFiniteNumber(value.offset)
+  ) {
+    throw invalidInventoryResponse();
+  }
+
+  return {
+    items: value.items.map(mapInventoryItemResponse),
+    total: value.total,
+    limit: value.limit,
+    offset: value.offset,
+  };
+}
+
+export function mapStockMovementResponse(value: unknown): StockMovementResult {
+  if (!isRecord(value) || !isStockMovementWire(value.movement)) {
+    throw invalidInventoryResponse();
+  }
+  const movement = value.movement;
+
+  return {
+    productId: movement.product_id,
+    quantityAfter: mapQuantity(movement.quantity_after),
+  };
+}
+
+function toInventoryListQuery(
+  filters: InventoryListFilters,
+): Record<string, string | number | null> {
+  return {
+    search: filters.search.trim() || null,
+    stock_status: filters.status === 'all' ? null : filters.status,
+    limit: 200,
+    offset: 0,
+    sort_by: 'updated_at',
+    sort_order: 'desc',
+  };
+}
+
+function toInventoryMovementRequest(
+  input: StockMovementData,
+): Record<string, string | null> {
+  return {
+    product_id: input.productId,
+    movement_type: input.movementType,
+    quantity: input.quantity,
+    reason: input.reason,
+  };
+}
+
+function normalizeInventoryError(error: unknown): never {
+  if (isApiError(error)) {
+    if (error.code === 'insufficient_stock') {
+      throw new InventoryServiceError(
+        'insufficient_stock',
+        'Insufficient stock for this movement.',
+      );
+    }
+    if (error.code === 'inventory_item_not_found') {
+      throw new InventoryServiceError(
+        'inventory_item_not_found',
+        'Inventory is not configured for this product.',
+      );
+    }
+    if (error.code === 'inventory_product_not_found') {
+      throw new InventoryServiceError(
+        'inventory_product_not_found',
+        'The selected product is not available.',
+      );
+    }
+  }
+  throw error;
+}
+
+/** Real FastAPI Inventory adapter for normal application builds. */
+export function createHttpInventoryService(
+  client: ApiClient = apiClient,
+): InventoryService {
+  return {
+    async listInventory(filters) {
+      try {
+        return mapInventoryListResponse(
+          await client.get<unknown>('/api/v1/inventory/items', {
+            query: toInventoryListQuery(filters),
+          }),
+        );
+      } catch (error) {
+        return normalizeInventoryError(error);
+      }
+    },
+    async listLowStock(filters) {
+      try {
+        const data = mapInventoryListResponse(
+          await client.get<unknown>('/api/v1/inventory/low-stock', {
+            query: { limit: 200, offset: 0 },
+          }),
+        );
+        // The dedicated endpoint owns threshold evaluation. Its current public
+        // contract has no search/status parameters, so these existing controls
+        // refine only that backend-authoritative projection for presentation.
+        return applyFilters(data, filters);
+      } catch (error) {
+        return normalizeInventoryError(error);
+      }
+    },
+    async createStockMovement(input) {
+      try {
+        return mapStockMovementResponse(
+          await client.post<unknown>(
+            '/api/v1/inventory/movements',
+            toInventoryMovementRequest(input),
+          ),
+        );
+      } catch (error) {
+        return normalizeInventoryError(error);
+      }
+    },
+  };
+}
+
 /**
- * Production placeholder before Inventory API integration.
+ * Deliberately unavailable seam retained for isolated tests.
  *
  * It makes no network request and does not represent a stock movement as a
  * persistent write. A future HTTP adapter owns backend endpoint composition.
@@ -319,4 +557,4 @@ const isE2ETestMode = process.env.NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE === 'true'
 /** The sole Inventory service selected for the current build. */
 export const inventoryService: InventoryService = isE2ETestMode
   ? createE2EInventoryService()
-  : createUnavailableInventoryService();
+  : createHttpInventoryService();

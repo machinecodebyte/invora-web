@@ -206,6 +206,7 @@ npx playwright test e2e/auth.spec.ts          # Auth E2E suite
 npx playwright test e2e/dashboard.spec.ts     # Dashboard E2E suite
 npx playwright test e2e/products.spec.ts      # Products E2E suite
 npx playwright test e2e/inventory.spec.ts     # Inventory E2E suite
+npx playwright test e2e/inventory.real.spec.ts # opt-in real Inventory contract
 npx playwright test e2e/sales-upload.spec.ts  # Sales Upload E2E suite
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run E2E suite
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results E2E suite

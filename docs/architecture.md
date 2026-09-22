@@ -355,16 +355,21 @@ positive quantity, `adjustment` sets an absolute non-negative quantity, and
 decimal places and are retained as text at the form-to-adapter boundary.
 
 `api.ts` defines `InventoryService` with separate list, dedicated low-stock list,
-and immutable stock-movement operations. The normal service intentionally makes
-no endpoint composition or network request; it returns an honest unavailable or
-no-data state until the API integration phase. The low-stock method is separate
-from a status filter because the backend endpoint returns active items where
-`current_stock <= minimum_stock`, including zero-stock items. A future HTTP
-adapter can normalize that contract through the Foundation API client without
-changing the UI or tests.
+and immutable stock-movement operations. The normal service uses the established
+authenticated Foundation client for `GET /api/v1/inventory/items`,
+`GET /api/v1/inventory/low-stock`, and `POST /api/v1/inventory/movements`.
+Wire mappers convert snake_case values and Decimal-compatible numeric strings at
+the feature boundary. The low-stock endpoint remains the sole authority for
+threshold evaluation, including zero-stock items; its current API contract only
+accepts limit/offset, so existing search/status controls refine that
+backend-authoritative projection for presentation only. The UI never derives
+low-stock state from the complete Inventory list.
 
-`hooks.ts` owns explicit loading, ready, empty, error, and stock-update-pending
-state. `components/` composes a semantic, mobile-contained inventory table,
+`hooks.ts` uses Inventory-scoped TanStack Query keys for explicit loading, ready,
+empty, error, and stock-update-pending state. A successful immutable movement
+invalidates only those Inventory keys, then refetches the server projection;
+there is no optimistic stock calculation. `components/` composes a semantic,
+mobile-contained inventory table,
 backend-supported search/status controls, the dedicated low-stock view, safe
 empty/error states, and an accessible movement dialog. The server route
 `app/inventory/page.tsx` reuses the existing `ProtectedRoute`, `AppShell`,
@@ -372,8 +377,10 @@ empty/error states, and an accessible movement dialog. The server route
 
 Only the Playwright-managed build selects the deterministic Inventory adapter via
 `NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE=true`. It reads and writes test-supplied,
-session-scoped fixtures, never credentials or tokens. Normal application builds
-do not ship fake inventory data or local persistence.
+session-scoped fixtures, never credentials or tokens. An opt-in
+`e2e/inventory.real.spec.ts` supplements it against an explicitly configured
+FastAPI environment. Normal application builds do not ship fake inventory data
+or local persistence.
 
 **Frontend Inventory route protection is UX only. Backend Inventory APIs must
 independently enforce authentication and authorization when integration is

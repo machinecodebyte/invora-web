@@ -206,10 +206,13 @@ selected only by the managed Playwright build and never contacts FastAPI.
 
 ### Inventory tests
 
-Inventory unit tests cover movement schemas and the no-network adapter boundary.
+Inventory unit tests cover movement schemas, exact authenticated list/low-stock/
+movement request mapping, snake_case and Decimal response mapping, safe
+insufficient-stock normalization, and the isolated fixture adapter boundary.
 Component tests cover accessible stock update controls, safe field/form errors,
 pending behavior, readable status text, semantic table output, and loading,
-empty, filtered-empty, low-stock, and error states.
+empty, filtered-empty, low-stock, and error states. They also prove that a
+successful movement invalidates and refetches Inventory-scoped data.
 
 `e2e/inventory.spec.ts` covers protected-route redirect, authenticated inventory
 table rendering, zero and low stock, successful no-low-stock and empty states,
@@ -219,6 +222,13 @@ below-zero failure handling, search/status filters, safe service failure, and
 receive only test-supplied session-scoped fixtures under
 `NEXT_PUBLIC_INVENTORY_E2E_TEST_MODE=true`; no backend process or production
 inventory data is involved.
+
+`e2e/inventory.real.spec.ts` is opt-in through
+`PLAYWRIGHT_INVENTORY_REAL_BACKEND=true`. It creates a unique authenticated test
+account and prerequisite Product/Inventory record, then verifies the normal UI
+against real list, dedicated low-stock, successful movement/reconciliation, and
+insufficient-stock paths. It never uses the deterministic adapter or a
+production credential.
 
 ### Sales Upload tests
 
@@ -384,20 +394,20 @@ workflow; all 76 existing Chromium tests remain the browser regression gate.
 
 Per-module minimum, in addition to unit tests for any new `lib/` logic:
 
-| Module           | Required test layers               | Focus                                                                                                                                                                   |
-| ---------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys                                                          |
-| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow                                                         |
-| Products         | unit + component + E2E — completed | Schemas, no-network adapter, forms, list/search/status states, protected route, deterministic create/edit, and mobile browser flow                                      |
-| Inventory        | unit + component + E2E — completed | Movement schemas, unavailable/test-only adapter, stock update form, table/search/status/low-stock states, protected flow, and mobile browser journey                    |
-| Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                                       |
-| Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                                         |
-| Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                                               |
-| Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey                        |
-| Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey |
-| Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression                              |
-| Settings         | component — completed              | Forecast Defaults and absolute Safety Stock Defaults, validation, zero-safe decimal input, dirty/revert/save states, and safe loading/error UI                          |
-| Shared UI        | unit + component — completed       | Canonical primitive regressions plus responsive table containment, accessible pagination, and full browser regression                                                   |
+| Module           | Required test layers               | Focus                                                                                                                                                                                      |
+| ---------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys                                                                             |
+| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow                                                                            |
+| Products         | unit + component + E2E — completed | Schemas, no-network adapter, forms, list/search/status states, protected route, deterministic create/edit, and mobile browser flow                                                         |
+| Inventory        | unit + component + E2E — completed | Movement schemas, live adapter mapping/error handling, mutation reconciliation, stock update form, table/search/status/low-stock states, fixture journey, and opt-in real browser contract |
+| Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                                                          |
+| Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                                                            |
+| Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                                                                  |
+| Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey                                           |
+| Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey                    |
+| Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression                                                 |
+| Settings         | component — completed              | Forecast Defaults and absolute Safety Stock Defaults, validation, zero-safe decimal input, dirty/revert/save states, and safe loading/error UI                                             |
+| Shared UI        | unit + component — completed       | Canonical primitive regressions plus responsive table containment, accessible pagination, and full browser regression                                                                      |
 
 Each module adds MSW handlers for its own endpoints and updates this document
 with the tests it introduced.
