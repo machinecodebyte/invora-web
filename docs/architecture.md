@@ -272,13 +272,15 @@ authentication and authorization when integration is enabled.
   backend Dashboard Analytics summary: KPI counts, demand-trend points,
   inventory-risk items, and reorder alerts. It does not duplicate Product,
   Inventory, Forecast, or Recommendation domain entities.
-- `api.ts` defines `DashboardService`. The normal adapter resolves to `null`,
-  which renders the honest no-data state and performs no HTTP request or endpoint
-  composition. A future HTTP adapter will normalize `/dashboard/summary` through
-  the Foundation API client without changing feature components.
+- `api.ts` defines `DashboardService` and the normal real HTTP adapter. It calls
+  only `/api/v1/dashboard/summary` through the shared authenticated API client,
+  preserves backend default dates because the current UI has no date or forecast
+  filter, and maps snake_case, Decimal-compatible values, and date-only strings
+  at the feature boundary.
 - `hooks.ts` owns the explicit `loading`, `ready`, `empty`, and `error` view
-  state. It is deliberately independent from Auth state and ready to become a
-  TanStack Query integration seam when live server state is enabled.
+  state. It preserves the existing bounded local-state approach, passes a
+  caller-owned AbortSignal to the adapter, and does not add polling or a second
+  cache layer.
 - `components/` composes reusable KPI cards, a lightweight responsive SVG demand
   chart, reorder-alert and inventory-risk summaries, and a structural skeleton.
   The chart has textual summary content, so visual data is not its only accessible
@@ -296,12 +298,15 @@ or chart values. Deterministic values live only in `src/tests/fixtures/dashboard
 The Playwright-only service is selected with
 `NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE=true` in `playwright.config.ts` and reads
 serialized test fixtures from browser session storage; normal builds never select
-it.
+it. The explicit real-browser Dashboard contract flag disables the fixture adapter.
 
-**Module 2 implements Dashboard frontend architecture and UI only. Real Dashboard
-Analytics API integration remains deferred.** Frontend route protection is a UX
-boundary; backend authorization remains the authoritative security boundary once
-API integration is enabled.
+The mapper intentionally projects only the current UI sections: `kpis`,
+`demand_trends`, `inventory_risk`, and `reorder_alerts`. Backend
+`forecast_overview` and `recent_activity` are valid Summary fields but remain
+unrendered because Module 2 has no corresponding section. Dashboard analytics
+remain backend-authoritative and read-only; the frontend never reconstructs them
+from Product, Inventory, or Sales lists. Frontend route protection is a UX
+boundary; backend authorization remains the authoritative security boundary.
 
 ## Products architecture
 

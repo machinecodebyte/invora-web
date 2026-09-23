@@ -206,13 +206,15 @@ does not contact FastAPI, and never stores a token.
 
 ### Dashboard E2E behavior
 
-`/dashboard` is the protected Module 2 Dashboard route. It uses the completed
-Auth boundary for UX access control and the normal Dashboard service resolves to
-an honest no-data state without a request. The Playwright-managed build also sets
+`/dashboard` is the protected Module 2 Dashboard route. Normal builds use the
+existing authenticated client for one read-only `GET /api/v1/dashboard/summary`
+request and render the backend-authoritative KPI, demand, Inventory-risk, and
+reorder-alert projection. The current UI sends no Summary filters, preserving the
+backend default date window. The Playwright-managed deterministic build sets
 `NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE=true`; only in that build, the test service
 reads serialized fixtures from browser `sessionStorage` to exercise populated,
-empty, and error UI states. No fixture is used by normal builds, and no backend
-process is needed.
+empty, and error UI states. `PLAYWRIGHT_DASHBOARD_REAL_BACKEND=true` disables
+that fixture for the separate controlled live contract spec.
 
 ### Products E2E behavior
 

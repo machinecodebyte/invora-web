@@ -219,15 +219,15 @@ Implemented:
 - Data-driven KPI cards, responsive demand chart, reorder-alert summary, and
   high-risk inventory summary aligned to Dashboard Analytics response semantics
 - Explicit loading skeleton plus empty and safe error states
-- Strongly typed `DashboardService` boundary, ready for future API/TanStack Query
-  integration; normal builds make no Dashboard request and show no fake data
+- Strongly typed `DashboardService` boundary with one real shared-client Summary
+  adapter; normal builds render backend-authoritative data and show no fake data
 - Dashboard component and Playwright tests, including authenticated, populated,
   empty, error, protected-route, and mobile flows
 
-**Real Dashboard Analytics integration is intentionally not enabled.** The
-Playwright-only service is selected exclusively in its managed test build and
-reads isolated fixture data from session storage. It is never selected by normal
-application builds.
+**Real Dashboard Analytics integration is enabled through the Summary endpoint.**
+The Playwright-only fixture service remains selected exclusively in its managed
+deterministic test build and reads isolated session-storage data; the explicit
+live Dashboard test disables it. Fixtures are never selected by normal builds.
 
 ## Current Products Scope
 

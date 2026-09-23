@@ -104,7 +104,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `auth-schemas.test.ts`             | Backend-aligned email normalization, login requirements, registration password rules, confirmation mismatch, and UI-only confirmation omission                                                                                   |
 | `auth-api.test.ts`                 | Unavailable default adapter, deterministic E2E adapter, and test-state cleanup                                                                                                                                                   |
 | `auth-redirects.test.ts`           | Internal return paths, external/protocol-relative/backslash rejection, malformed/default fallback                                                                                                                                |
-| `dashboard-api.test.ts`            | Unavailable default service, isolated Playwright fixture state, safe fixture failure, and malformed-state fallback                                                                                                               |
+| `dashboard-api.test.ts`            | Real Summary route/header mapping, snake_case/camelCase mapper coverage, Decimal/date/null handling, safe failures, and isolated Playwright fixture state                                                                     |
+| `dashboard-api-contract.test.ts`   | MSW contract coverage for `GET /api/v1/dashboard/summary`, authenticated header, success envelope, omitted UI-invented filters, and safe failure envelope                                                                     |
 | `inventory-schemas.test.ts`        | Backend-aligned stock-in/out, absolute adjustment, signed correction, zero/negative, decimal precision, size, and reason normalization rules                                                                                     |
 | `inventory-api.test.ts`            | Unavailable default service, explicit low-stock projection, deterministic test-only movement semantics, insufficient-stock safety, and malformed fixture fallback                                                                |
 | `sales-upload-schemas.test.ts`     | CSV extension, MIME, empty/5 MiB limit, normalized headers, missing/duplicate-column preflight behavior                                                                                                                          |
@@ -185,6 +186,13 @@ needed.
 build. `e2e/dashboard.spec.ts` places serialized fixtures in isolated browser
 `sessionStorage`; those values are not production source data and no FastAPI
 process is contacted.
+
+`e2e/dashboard.real.spec.ts` is separately opt-in through
+`PLAYWRIGHT_DASHBOARD_REAL_BACKEND=true`. It disables the Dashboard fixture,
+uses the existing real Auth session, and creates isolated test prerequisites to
+verify the live Summary request, KPI cards, demand trend, Inventory risk, and
+legitimate empty reorder-alert state. It is not evidence from deterministic
+fixtures.
 
 ### Products tests
 

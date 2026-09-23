@@ -9,8 +9,9 @@ recommendation system for small-business inventory management.
 
 **Frontend Module 12 - Shared UI / final frontend consolidation: COMPLETED.**
 All frontend implementation modules 0-12 are complete. Integration Phases 1,
-2/2B, 3, and 4 connect Foundation/Auth, Product Catalog, Inventory, and Sales
-Upload/Sales History respectively; later business integrations remain separate.
+2/2B, 3, 4, and 5 connect Foundation/Auth, Product Catalog, Inventory, Sales
+Upload/Sales History, and Dashboard Summary respectively; later business
+integrations remain separate.
 
 **Frontend Module 10 — Reports: COMPLETED.**
 
@@ -58,11 +59,12 @@ pagination, reorder quantities that retain valid zeroes and up to three decimal
 places, and safe loading, empty, filtered-empty, and error states. Normal builds
 make no Reorder Recommendation request and contain no recommendation data.
 
-Dashboard, Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
-are **not** connected to the backend API yet. Auth, Products, Inventory, Sales Upload, and Sales History are connected through the
-shared API client and the backend's HttpOnly refresh-cookie contract. In normal builds Dashboard,
-Forecast Run, and Forecast Results remain honest; Sales fixtures are isolated to component and Playwright
-infrastructure. See
+Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
+are **not** connected to the backend API yet. Auth, Dashboard, Products,
+Inventory, Sales Upload, and Sales History are connected through the shared API
+client and the backend's HttpOnly refresh-cookie contract. Dashboard consumes
+the backend-authoritative read-only Summary projection; its fixtures remain
+isolated to component and Playwright infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
 Recommendations follows the same no-network adapter boundary. Its deterministic
@@ -201,9 +203,9 @@ complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
 CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
 horizon/lifecycle semantics were aligned through read-only inspection. Frontend
-Auth, Products, Inventory, Sales Upload, and Sales History now use the real FastAPI
-endpoints; Dashboard, Forecast Run, and Forecast Results still make no runtime API
-request. See
+Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History now use
+the real FastAPI endpoints; Forecast Run and Forecast Results still make no
+runtime API request. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
 
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
@@ -258,10 +260,15 @@ shared authenticated client for multipart CSV upload, transaction list, and
 backend-owned daily trends. The live adapter maps Decimal-compatible fields and
 calendar-date strings at the Sales boundary; it never calls Inventory APIs.
 
-Pending: Dashboard, Forecast Run, Forecast Results, Recommendations, Reports,
-and Settings.
+Phase 5 — Dashboard Summary: validated. Normal builds use one authenticated
+`GET /api/v1/dashboard/summary` request and map its backend-authoritative KPI,
+demand-trend, Inventory-risk, and reorder-alert projection at the Dashboard
+boundary. Forecast Overview and Recent Activity remain intentionally unrendered
+because the existing Module 2 UI has no sections for them.
 
-Next: Dashboard integration.
+Pending: Forecast Run, Forecast Results, Recommendations, Reports, and Settings.
+
+Next: Forecast Run + Background Jobs integration.
 
 ## Latest Integration Audit Status
 

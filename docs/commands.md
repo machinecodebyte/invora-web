@@ -148,7 +148,7 @@ npx vitest run src/tests/components/auth-forms.test.tsx src/tests/components/aut
 Run the Dashboard-focused Vitest files:
 
 ```bash
-npx vitest run src/tests/unit/dashboard-api.test.ts src/tests/components/dashboard.test.tsx
+npx vitest run src/tests/unit/dashboard-api.test.ts src/tests/unit/dashboard-api-contract.test.ts src/tests/components/dashboard.test.tsx
 npx vitest run src/tests/unit/products-schemas.test.ts src/tests/unit/products-api.test.ts src/tests/components/products.test.tsx src/tests/components/dialog.test.tsx
 npx vitest run src/tests/unit/inventory-schemas.test.ts src/tests/unit/inventory-api.test.ts src/tests/components/inventory.test.tsx
 npx vitest run src/tests/unit/sales-upload-schemas.test.ts src/tests/unit/sales-upload-api.test.ts src/tests/components/sales-upload.test.tsx
@@ -204,6 +204,7 @@ npx playwright test --debug                   # step through
 npx playwright test e2e/foundation.spec.ts    # single file
 npx playwright test e2e/auth.spec.ts          # Auth E2E suite
 npx playwright test e2e/dashboard.spec.ts     # Dashboard E2E suite
+npx playwright test e2e/dashboard.real.spec.ts # opt-in real Dashboard contract
 npx playwright test e2e/products.spec.ts      # Products E2E suite
 npx playwright test e2e/inventory.spec.ts     # Inventory E2E suite
 npx playwright test e2e/inventory.real.spec.ts # opt-in real Inventory contract
@@ -246,6 +247,7 @@ E2E is excluded from `verify` because it performs its own build; run
 | `PLAYWRIGHT_BASE_URL`           | Playwright     | Target an external server                             |
 | `PLAYWRIGHT_PORT`               | Playwright     | Managed server port                                   |
 | `PLAYWRIGHT_WEB_SERVER_COMMAND` | Playwright     | Override the managed server command                   |
+| `PLAYWRIGHT_DASHBOARD_REAL_BACKEND` | Playwright  | Enables the opt-in live Dashboard Summary contract    |
 | `PLAYWRIGHT_SALES_REAL_BACKEND`  | Playwright     | Enables the opt-in live Sales Upload/History contract |
 
 ## Suggested CI order
@@ -273,3 +275,15 @@ database first, then use PowerShell:
 This opt-in run creates an isolated browser-test account, verifies refresh-cookie
 session restoration after reload, and verifies logout revocation. It does not
 enable any business-module adapter.
+
+## Live Dashboard browser contract
+
+The default Dashboard suite uses deterministic fixtures. With a controlled local
+FastAPI instance and database, use PowerShell:
+
+    $env:PLAYWRIGHT_DASHBOARD_REAL_BACKEND='true'
+    $env:NEXT_PUBLIC_API_BASE_URL='http://localhost:8000'
+    npx playwright test e2e/dashboard.real.spec.ts
+
+The opt-in test uses real Auth and Summary data with unique test records. It
+disables only the Dashboard fixture adapter and does not enable later modules.

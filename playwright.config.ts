@@ -1,11 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
+const useRealDashboardBackend =
+  process.env.PLAYWRIGHT_DASHBOARD_REAL_BACKEND === 'true';
 const useRealSalesBackend = process.env.PLAYWRIGHT_SALES_REAL_BACKEND === 'true';
 const useRealInventoryBackend =
   process.env.PLAYWRIGHT_INVENTORY_REAL_BACKEND === 'true';
 const useRealAuthBackend =
   process.env.PLAYWRIGHT_AUTH_REAL_BACKEND === 'true' ||
+  useRealDashboardBackend ||
   useRealInventoryBackend ||
   useRealSalesBackend;
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
@@ -59,7 +62,10 @@ export default defineConfig({
       // browser contract requires the real cookie-session boundary.
       NEXT_PUBLIC_AUTH_E2E_TEST_MODE: useRealAuthBackend ? 'false' : 'true',
       // Enables the fixture reader only in the Playwright-managed build.
-      NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE: 'true',
+      // The Dashboard fixture is the default deterministic E2E adapter. The
+      // explicit live Dashboard contract disables it without changing other
+      // feature fixtures.
+      NEXT_PUBLIC_DASHBOARD_E2E_TEST_MODE: useRealDashboardBackend ? 'false' : 'true',
       // Enables the Product Catalog fixture adapter only in E2E builds.
       NEXT_PUBLIC_PRODUCTS_E2E_TEST_MODE: 'true',
       // The fixture is the default E2E adapter. The explicit real Inventory

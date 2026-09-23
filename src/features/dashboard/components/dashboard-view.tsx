@@ -11,7 +11,7 @@ import { KpiGrid } from '@/features/dashboard/components/kpi-grid';
 import { useDashboardSummary } from '@/features/dashboard/hooks';
 
 export interface DashboardViewProps {
-  /** Dependency-injection seam for component tests and the future HTTP adapter. */
+  /** Dependency-injection seam for component tests and the Dashboard HTTP adapter. */
   service?: DashboardService;
 }
 

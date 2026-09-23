@@ -9,7 +9,7 @@ Implementation status of the Invora frontend, module by module.
 | Foundation       | **Completed**                            | Next.js 16 App Router, strict TypeScript, Tailwind 4 design tokens, typed API client, `ApiError` model, TanStack Query provider, auth infrastructure, RHF + Zod pattern, logger with redaction, security headers, error/not-found/loading routes, Vitest + RTL + MSW + Playwright harness, 262 unit/component tests, 6 E2E tests, documentation                                                                    |
 | Shared UI        | **In progress — foundation established** | Button, Input, Label, Card (+ Header/Title/Description/Content/Footer), Spinner, Skeleton, EmptyState, ErrorState, Toaster; AppShell, Header, MainContent, PageContainer. All typed, accessible, and tested. Extended as modules need it.                                                                                                                                                                          |
 | Auth             | **Completed + Phase 1 integrated**       | Login/register, HttpOnly refresh-cookie session restoration, real shared-client Auth adapter, bounded 401 refresh/replay, server logout, safe redirects, protected/public route boundaries, and isolated test-only E2E adapter. Business API integration remains disabled.                                                                                                                                         |
-| Dashboard        | **Completed**                            | Protected responsive Dashboard with backend-aligned KPI, demand-trend, reorder-alert, and inventory-risk view projections; typed no-request service boundary; loading/empty/error states; 12 unit/component tests and 6 E2E tests. Real Dashboard Analytics integration remains disabled.                                                                                                                          |
+| Dashboard        | **Completed + Phase 5 integrated**       | Protected responsive Dashboard uses one real shared-client `GET /api/v1/dashboard/summary` adapter for backend-authoritative KPIs, demand trends, Inventory risk, and reorder alerts. Decimal/date mapping, safe loading/error/no-data states, deterministic fixtures, and opt-in live-browser coverage are preserved. |
 | Products         | **Completed**                            | Protected Product Catalog list with search and active-status filters; React Hook Form + Zod create/edit form; loading/empty/error/pending states; typed no-request service boundary; deterministic test-only E2E fixture adapter; 20 Product-specific unit/component tests and 7 E2E tests. Real Product Catalog API integration remains disabled.                                                                 |
 | Inventory        | **Completed + Phase 3 integrated**       | Protected Inventory table with backend-aligned stock status, search/status filters, dedicated low-stock view, and immutable stock-movement form; loading/empty/error/pending states; real shared-client list, low-stock, and movement adapter; Inventory-scoped query invalidation; deterministic fixture adapter plus opt-in real-backend E2E coverage.                                                           |
 | Sales Upload     | **Completed + Phase 4 integrated**       | Protected CSV upload with backend-aligned preflight and live `POST /api/v1/sales/uploads` through the shared authenticated client. The normal runtime uses browser-owned multipart boundaries and reports final server results without invented processing progress; the deterministic test-only adapter remains explicitly gated. |
@@ -67,13 +67,14 @@ feature and browser tests protect the business behavior they compose around.
 
 ## Backend integration
 
-**Auth, Products, Inventory, Sales Upload, and Sales History are enabled.** Foundation transport and Auth use
+**Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History are enabled.** Foundation transport and Auth use
 the real backend contract. Products use the shared authenticated client for their
 approved Phase 2/2B endpoints. Inventory uses it for item listing, the dedicated
 low-stock projection, and immutable movements. Sales uses it for multipart CSV
-upload, read-only transaction history, and backend-owned trends. Dashboard,
-Forecast Run, Forecast Results, Recommendations, Reports, and Settings make no
-real backend request.
+upload, read-only transaction history, and backend-owned trends. Dashboard uses
+the single Summary endpoint for its existing read-only projection. Forecast Run,
+Forecast Results, Recommendations, Reports, and Settings make no real backend
+request.
 The backend (`../backend`) was inspected read-only to align Auth fields,
 Dashboard Analytics summary semantics, Product Catalog validation/list semantics,
 and Inventory movement/low-stock semantics, Sales Upload CSV rules, Sales Transaction list/trend semantics, Forecast Run horizon/lifecycle semantics, Forecast Results overview/list/metrics/chart semantics, Recommendations risk/list/quantity semantics, and Reports views/export semantics, but the frontend uses unavailable or
@@ -151,16 +152,34 @@ boundary. No Product or Inventory cache/service is mutated after upload. The rea
 browser contract used a temporary local backend and unique controlled user/Product
 data; no backend source or production credential was changed.
 
+## Integration Phase 5 verification
+
+| Check | Result |
+| --- | --- |
+| Dashboard adapter, mapper, MSW, and component tests | Pass — 19 focused tests |
+| deterministic Dashboard Chromium E2E | Pass — 6 fixture-only scenarios |
+| opt-in real Dashboard Chromium contract | Pass — real Auth, Summary, KPI, demand, Inventory-risk, and no-data reorder-alert rendering |
+| backend Dashboard API/unit regression | Pass — 14 focused tests |
+
+Phase 5 replaces only the normal Dashboard unavailable adapter with a real
+authenticated Summary adapter. The existing Module 2 UI renders `kpis`,
+`demand_trends`, `inventory_risk`, and `reorder_alerts`; backend
+`forecast_overview` and `recent_activity` remain intentionally unrendered.
+The Dashboard has no current filter controls, so the adapter sends no dates or
+forecast id and preserves the backend default 30-day range. No Product,
+Inventory, or Sales source/cache behavior changed because Dashboard retains its
+existing local mount/reload fetch pattern rather than a cached query.
+
 ## Foundation exclusions
 
 Deliberately not implemented, by scope:
 
-- Any business API call outside the integrated Product Catalog, Inventory, and Sales scope
+- Any business API call outside the integrated Product Catalog, Inventory, Sales, and Dashboard scope
 - Any production business data — no fake products, sales, inventory, forecasts,
   recommendations, reports, KPIs, or users
 - Password reset, verification, MFA, OAuth, or any Auth feature beyond the
   implemented login/register/refresh/logout contract
-- Real Dashboard Analytics, Forecast Run, Forecast Results, Recommendations, Reports, Settings, or ML requests, or production fixture data
+- Real Forecast Run, Forecast Results, Recommendations, Reports, Settings, or ML requests, or production fixture data
 - Content-Security-Policy (requires per-request nonce plumbing; see
   [`architecture.md`](architecture.md))
 - External observability platform

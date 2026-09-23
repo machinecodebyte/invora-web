@@ -1,7 +1,7 @@
 /**
  * Dashboard-facing projections of the Dashboard Analytics contract.
  *
- * Values are normalized by the future HTTP adapter (for example, backend
+ * Values are normalized by the Dashboard HTTP adapter (for example, backend
  * Decimal values become numbers) before they reach these render models.
  * These types intentionally do not model Product, Inventory, or Recommendation
  * entities beyond the summary fields exposed by Dashboard Analytics.

@@ -47,8 +47,9 @@ but are not supported by that toolchain yet.
 the existing primitives, added narrowly scoped `TableScrollArea` and `Pagination`
 primitives, and adopted them only where generic duplication was verified. All
 frontend implementation modules 0-12 are now complete. Integration Phases 1,
-2/2B, and 3 connect Foundation/Auth, Product Catalog, and Inventory
-respectively; the remaining business integrations stay separate phases.
+2/2B, 3, 4, and 5 connect Foundation/Auth, Product Catalog, Inventory, Sales,
+and Dashboard Summary respectively; the remaining business integrations stay
+separate phases.
 
 **Settings: COMPLETED.** Module 11 adds protected `/settings` Forecast Defaults
 and Safety Stock Defaults forms with component-tested UI state. Persistence/API
@@ -134,11 +135,13 @@ integration was added.
 
 ## Dashboard module
 
-`src/features/dashboard/` owns Dashboard Analytics-facing summary types, the
-unavailable-by-default service contract, state hook, and data-driven KPI, chart,
-alert, and inventory-risk components. The normal application never creates fake
-business values or makes a Dashboard API request. Playwright receives serialized
-test fixtures only under its managed test-mode build.
+`src/features/dashboard/` owns Dashboard Analytics-facing summary types, a real
+shared-client Summary adapter, state hook, and data-driven KPI, chart, alert, and
+inventory-risk components. Normal builds call only `GET /api/v1/dashboard/summary`
+and map the backend-authoritative rendered projection without fabricating values.
+The existing UI intentionally leaves `forecast_overview` and `recent_activity`
+unrendered. Playwright receives serialized fixtures only under its managed
+test-mode build; the opt-in live spec disables that adapter explicitly.
 
 ## Products module
 

@@ -7,6 +7,7 @@ import {
   dashboardService,
   type DashboardService,
 } from '@/features/dashboard/api';
+import { toDisplayMessage } from '@/lib/api-error';
 import type { DashboardViewState } from '@/features/dashboard/types';
 
 const GENERIC_DASHBOARD_ERROR = 'Unable to load dashboard data.';
@@ -14,15 +15,14 @@ const GENERIC_DASHBOARD_ERROR = 'Unable to load dashboard data.';
 function toSafeErrorMessage(error: unknown): string {
   return error instanceof DashboardServiceError
     ? error.message
-    : GENERIC_DASHBOARD_ERROR;
+    : toDisplayMessage(error, GENERIC_DASHBOARD_ERROR);
 }
 
 /**
  * Loads the Dashboard projection through an adapter boundary.
  *
- * A future TanStack Query hook can use the same DashboardService contract when
- * HTTP integration is enabled. Until then this keeps local unavailable, empty,
- * ready, and error states explicit and testable without any network traffic.
+ * This preserves the existing bounded local-state architecture while its HTTP
+ * adapter receives a caller-owned AbortSignal for navigation cancellation.
  */
 export function useDashboardSummary(service: DashboardService = dashboardService): {
   state: DashboardViewState;
@@ -33,9 +33,10 @@ export function useDashboardSummary(service: DashboardService = dashboardService
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     void service
-      .getDashboardSummary()
+      .getDashboardSummary({ signal: controller.signal })
       .then((data) => {
         if (!active) {
           return;
@@ -43,13 +44,14 @@ export function useDashboardSummary(service: DashboardService = dashboardService
         setState(data === null ? { status: 'empty' } : { status: 'ready', data });
       })
       .catch((error: unknown) => {
-        if (active) {
+        if (active && !controller.signal.aborted) {
           setState({ status: 'error', message: toSafeErrorMessage(error) });
         }
       });
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [requestVersion, service]);
 
