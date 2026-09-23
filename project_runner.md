@@ -81,7 +81,7 @@ npm run start
 ## Testing
 
 ```bash
-npm run test              # unit + component (426 tests)
+npm run test              # unit + component
 npm run test:unit         # unit only
 npm run test:components   # component only
 npm run test:watch        # watch mode
@@ -111,6 +111,7 @@ npx playwright test e2e/inventory.spec.ts  # Inventory suite only
 npx playwright test e2e/inventory.real.spec.ts # opt-in live Inventory contract
 npx playwright test e2e/sales-upload.spec.ts # Sales Upload suite only
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run suite only
+npx playwright test e2e/forecast-run.real.spec.ts # opt-in Forecast Run/RQ worker contract
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results suite only
 npx playwright test e2e/recommendations.spec.ts # Recommendations suite only
 ```
@@ -318,13 +319,21 @@ Implemented:
   percentage progress
 - Start, manual status refresh, safe failure feedback, and reset/start-another
   behavior without Forecast Results UI
-- Typed no-network service boundary plus deterministic unit, component, and
-  Playwright lifecycle fixtures
+- Typed create/enqueue/job-poll/run-reconcile service boundary plus deterministic
+  unit, component, and Playwright lifecycle fixtures
 
-**Real Forecast Run API and ML pipeline integration are intentionally not
-enabled.** Normal builds create no local forecast run and make no request. The
-Playwright-only adapter is selected only by the managed E2E build and reads
-isolated session-scoped lifecycle data; it contains no production forecast data.
+**Real Forecast Run API integration is enabled.** Normal builds use the shared
+authenticated client to create a run, enqueue its durable Background Job, poll
+only `queued`/`started`/`retrying` jobs every three seconds, then reconcile the
+authoritative run after the job is terminal. They do not call the synchronous
+process route, Redis/RQ, worker code, or ML pipeline directly; Forecast Results
+is still not requested. The Playwright-only fixture adapter remains limited to
+the managed deterministic E2E build.
+
+Set `PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND=true` with a controlled FastAPI,
+PostgreSQL, Redis, and RQ-worker stack to run the opt-in live Forecast Run
+browser contract. It creates only unique test prerequisites and never enables
+Forecast Results or job-administration UI.
 
 ## Current Forecast Results Scope
 
@@ -420,5 +429,7 @@ generic contract. Module 12 adds no route, provider, store, API call, backend
 connection, or business data.
 
 **Current project status:** Frontend implementation modules 0-12 are complete.
-Integration Phases 1, 2/2B, and 3 are complete for Foundation/Auth, Products,
-and Inventory. Remaining business-module integrations remain separate phases.
+Integration Phases 1, 2/2B, 3, 4, 5, and 6 are complete for Foundation/Auth,
+Products, Inventory, Sales, Dashboard Summary, and Forecast Run/Background Jobs.
+Forecast Results, Recommendations, Reports, Settings, and other deferred
+business integrations remain separate phases.

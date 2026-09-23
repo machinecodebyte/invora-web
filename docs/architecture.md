@@ -845,5 +845,37 @@ Logout and unrecoverable recovery remove only queries whose metadata declares
 them protected.
 
 Frontend route protection remains a UX boundary only. FastAPI independently
-authenticates every protected endpoint and enforces ownership. Dashboard through
-Settings retain their existing no-network adapters until their separate phases.
+authenticates every protected endpoint and enforces ownership. Each later
+integration phase enables only its approved feature adapter; it does not widen
+the Auth transport or token-storage boundary.
+
+## Integration Phase 6 - Forecast Run + Background Jobs
+
+`features/forecasting/api.ts` now separates the status-only Forecast Run
+transport from the deferred Forecast Results transport. The normal run adapter
+uses the established `ApiClient` and maps FastAPI envelopes into safe feature
+models:
+
+```text
+POST /forecast-runs                         -> ForecastRun
+POST /jobs/forecast-runs/{runId}            -> ForecastJob
+GET  /jobs/{jobId} (active states only)     -> ForecastJob
+GET  /forecast-runs/{runId} (after terminal)-> ForecastRun
+```
+
+`useForecastRun` owns only browser orchestration. It uses a 3-second timer for
+`queued`, `started`, and `retrying` jobs, cancels pending work on unmount, and
+reconciles the run after every terminal job state (`finished`, `failed`, or
+`cancelled`). A job terminal state is not itself presented as business success;
+the server-owned Forecast Run remains the authority. The existing manual refresh
+still reads that run directly. Queue failures retain the created run but do not
+invent a synchronous fallback or automatic mutation retry.
+
+The browser never accesses Redis/RQ, worker functions, ML models, job cancel or
+retry administration, or `/forecast-runs/{id}/process`. `ForecastJob` exposes
+only safe ID, run ID, and status values. Forecast Results remains a separate,
+unintegrated feature boundary.
+
+> Frontend Forecast Run tracking is a user-experience boundary only. FastAPI
+> independently enforces authentication, ownership, validation, queueing, and
+> worker-side processing.

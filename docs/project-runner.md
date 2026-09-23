@@ -3,8 +3,10 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Integration Phases 1, 2/2B, and 3 enable Auth, Products, and Inventory.**
-> Normal Auth, Product Catalog, and Inventory flows require the backend service.
+> **Integration Phases 1 through 6 enable Auth, Products, Inventory, Sales,
+> Dashboard Summary, and Forecast Run/Background Jobs.** Normal flows for those
+> slices require the backend service; Forecast Run also requires Redis and an RQ
+> worker to complete its asynchronous lifecycle.
 > The deterministic frontend test suite still needs no backend, PostgreSQL, or
 > Redis service.
 
@@ -159,7 +161,7 @@ anywhere in the codebase.
 ## 10. Unit and component tests
 
 ```bash
-npm run test              # both suites (426 tests)
+npm run test              # both suites
 npm run test:unit
 npm run test:components
 npm run test:watch
@@ -261,11 +263,19 @@ reconciliation. `/sales/upload` remains the separate Module 5 upload workflow.
 ### Forecast Run E2E behavior
 
 `/forecasts/runs` is the protected Module 7 Forecast Run configuration and
-lifecycle-status route. Its normal `ForecastRunService` sends no request and
-does not invoke an ML pipeline. The Playwright-managed build alone sets
-`NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE=true`; its deterministic adapter reads
-only test-supplied, isolated `sessionStorage` lifecycle sequences. It provides no
-production forecast data, percentage progress, result UI, or backend connection.
+lifecycle-status route. Its normal `ForecastRunService` uses the shared
+authenticated client to create a run, enqueue its durable job, poll only active
+job states every three seconds, then reconcile the authoritative Forecast Run
+after a terminal job state. It never calls the synchronous process route,
+Redis/RQ, worker code, or the ML implementation directly. It provides no
+production forecast data, percentage progress, or result UI.
+
+The Playwright-managed deterministic build alone sets
+`NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE=true`; its isolated `sessionStorage`
+fixture adapter is never selected by normal builds. For the optional live
+contract, set `PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND=true` with a controlled
+FastAPI/PostgreSQL/Redis/RQ-worker stack and run
+`e2e/forecast-run.real.spec.ts`.
 
 ### Forecast Results E2E behavior
 
@@ -336,14 +346,14 @@ npm run test:e2e # separate: performs its own build
 
 Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sales Upload + Sales History + Forecast Run + Forecast Results + Recommendations + Reports + Settings + Shared UI consolidation:
 
-| Step            | Expected                                                       |
-| --------------- | -------------------------------------------------------------- |
-| `lint`          | no errors, no warnings                                         |
-| `typecheck`     | no errors                                                      |
-| `test`          | 55 files, 416 tests passing                                    |
-| `test:coverage` | above all 85% thresholds                                       |
-| `build`         | compiles; all completed routes and the shared-UI consolidation |
-| `test:e2e`      | 76 tests passing in Chromium                                   |
+| Step            | Expected                                                                        |
+| --------------- | ------------------------------------------------------------------------------- |
+| `lint`          | no errors, no warnings                                                          |
+| `typecheck`     | no errors                                                                       |
+| `test`          | latest coverage run: 58 files, 463 tests passing                                |
+| `test:coverage` | above all 85% thresholds                                                        |
+| `build`         | compiles; all completed routes and the shared-UI consolidation                  |
+| `test:e2e`      | 78 deterministic Chromium tests passing; 5 opt-in live specs skipped by default |
 
 ## 13. Troubleshooting
 

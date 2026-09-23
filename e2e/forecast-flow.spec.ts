@@ -5,6 +5,8 @@ import {
   type ForecastRunE2EFixture,
 } from '../src/features/forecasting/api';
 import {
+  FORECAST_JOB_FAILED_SEQUENCE,
+  FORECAST_JOB_SEQUENCE,
   FORECAST_RUN_FAILED_SEQUENCE,
   FORECAST_RUN_PENDING,
   FORECAST_RUN_SEQUENCE,
@@ -15,10 +17,12 @@ const TEST_PASSWORD = 'StrongPass1!';
 const SUCCESS_FIXTURE: ForecastRunE2EFixture = {
   state: 'sequence',
   runs: FORECAST_RUN_SEQUENCE,
+  jobs: FORECAST_JOB_SEQUENCE,
 };
 const FAILED_FIXTURE: ForecastRunE2EFixture = {
   state: 'sequence',
   runs: FORECAST_RUN_FAILED_SEQUENCE,
+  jobs: FORECAST_JOB_FAILED_SEQUENCE,
 };
 
 async function setForecastRunFixture(
@@ -48,6 +52,10 @@ async function signIn(
 }
 
 test.describe('Forecast Run', () => {
+  // Each case uses an isolated browser context, but serial execution prevents
+  // concurrent cold-start hydration from obscuring the Auth-route assertions.
+  test.describe.configure({ mode: 'serial' });
+
   test('redirects unauthenticated visitors before Forecast Run content is exposed', async ({
     page,
   }) => {
@@ -87,7 +95,7 @@ test.describe('Forecast Run', () => {
     await expect(page.getByRole('button', { name: 'Start Forecast' })).toBeDisabled();
   });
 
-  test('starts and manually tracks deterministic pending, running, and completed states', async ({
+  test('starts and manually reconciles deterministic pending, running, and completed states', async ({
     page,
   }) => {
     await signIn(page);
@@ -95,6 +103,7 @@ test.describe('Forecast Run', () => {
     await page.getByRole('button', { name: 'Start Forecast' }).click();
 
     await expect(page.getByText('Current status: Pending')).toBeVisible();
+    await expect(page.getByText('Processing status: Queued')).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Start Forecast' }),
     ).not.toBeVisible();
@@ -144,7 +153,11 @@ test.describe('Forecast Run', () => {
   test('renders a safe status refresh failure without backend details', async ({
     page,
   }) => {
-    await signIn(page, { state: 'status_error', run: FORECAST_RUN_PENDING });
+    await signIn(page, {
+      state: 'status_error',
+      run: FORECAST_RUN_PENDING,
+      job: FORECAST_JOB_SEQUENCE[0]!,
+    });
     await page.getByLabel(/^Forecast horizon/).selectOption('15');
     await page.getByRole('button', { name: 'Start Forecast' }).click();
     await page.getByRole('button', { name: 'Refresh status' }).click();

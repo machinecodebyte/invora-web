@@ -136,7 +136,7 @@ Runs `src/tests/components/**`.
 npm run test
 ```
 
-Unit + component in one pass (currently 416 tests).
+Unit + component in one pass. The latest Phase 6 coverage run contains 463 tests.
 
 Run the Auth-focused Vitest files without changing package scripts:
 
@@ -153,7 +153,7 @@ npx vitest run src/tests/unit/products-schemas.test.ts src/tests/unit/products-a
 npx vitest run src/tests/unit/inventory-schemas.test.ts src/tests/unit/inventory-api.test.ts src/tests/components/inventory.test.tsx
 npx vitest run src/tests/unit/sales-upload-schemas.test.ts src/tests/unit/sales-upload-api.test.ts src/tests/components/sales-upload.test.tsx
 npx vitest run src/tests/unit/sales-history-schemas.test.ts src/tests/unit/sales-history-api.test.ts src/tests/components/sales-history.test.tsx
-npx vitest run src/tests/unit/forecast-run-schemas.test.ts src/tests/unit/forecast-run-api.test.ts src/tests/components/forecast-run.test.tsx
+npx vitest run src/tests/unit/forecast-run-schemas.test.ts src/tests/unit/forecast-run-api.test.ts src/tests/unit/forecast-run-api-contract.test.ts src/tests/components/forecast-run.test.tsx
 npx vitest run src/tests/unit/forecast-results-schemas.test.ts src/tests/unit/forecast-results-api.test.ts src/tests/components/forecast-results.test.tsx
 npx vitest run src/tests/unit/recommendations-schemas.test.ts src/tests/unit/recommendations-api.test.ts src/tests/components/recommendations.test.tsx
 npx vitest run src/tests/unit/reports-schemas.test.ts src/tests/unit/reports-api.test.ts src/tests/components/reports.test.tsx
@@ -211,6 +211,7 @@ npx playwright test e2e/inventory.real.spec.ts # opt-in real Inventory contract
 npx playwright test e2e/sales-upload.spec.ts  # Sales Upload E2E suite
 npx playwright test e2e/sales.real.spec.ts    # opt-in real Sales contract
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run E2E suite
+npx playwright test e2e/forecast-run.real.spec.ts # opt-in live Forecast Run/worker contract
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results E2E suite
 npx playwright test e2e/recommendations.spec.ts # Recommendations E2E suite
 npx playwright show-report                    # last HTML report
@@ -238,17 +239,18 @@ E2E is excluded from `verify` because it performs its own build; run
 
 ## Environment variables
 
-| Variable                        | Used by        | Purpose                                               |
-| ------------------------------- | -------------- | ----------------------------------------------------- |
-| `NEXT_PUBLIC_API_BASE_URL`      | app, build     | Backend origin; absolute http(s) URL                  |
-| `NEXT_PUBLIC_APP_ENV`           | app            | `local` \| `development` \| `staging` \| `production` |
-| `PORT`                          | `dev`, `start` | Server port (default 3000)                            |
-| `CI`                            | Playwright     | Enables retries, single worker, `forbidOnly`          |
-| `PLAYWRIGHT_BASE_URL`           | Playwright     | Target an external server                             |
-| `PLAYWRIGHT_PORT`               | Playwright     | Managed server port                                   |
-| `PLAYWRIGHT_WEB_SERVER_COMMAND` | Playwright     | Override the managed server command                   |
-| `PLAYWRIGHT_DASHBOARD_REAL_BACKEND` | Playwright  | Enables the opt-in live Dashboard Summary contract    |
-| `PLAYWRIGHT_SALES_REAL_BACKEND`  | Playwright     | Enables the opt-in live Sales Upload/History contract |
+| Variable                               | Used by        | Purpose                                               |
+| -------------------------------------- | -------------- | ----------------------------------------------------- |
+| `NEXT_PUBLIC_API_BASE_URL`             | app, build     | Backend origin; absolute http(s) URL                  |
+| `NEXT_PUBLIC_APP_ENV`                  | app            | `local` \| `development` \| `staging` \| `production` |
+| `PORT`                                 | `dev`, `start` | Server port (default 3000)                            |
+| `CI`                                   | Playwright     | Enables retries, single worker, `forbidOnly`          |
+| `PLAYWRIGHT_BASE_URL`                  | Playwright     | Target an external server                             |
+| `PLAYWRIGHT_PORT`                      | Playwright     | Managed server port                                   |
+| `PLAYWRIGHT_WEB_SERVER_COMMAND`        | Playwright     | Override the managed server command                   |
+| `PLAYWRIGHT_DASHBOARD_REAL_BACKEND`    | Playwright     | Enables the opt-in live Dashboard Summary contract    |
+| `PLAYWRIGHT_SALES_REAL_BACKEND`        | Playwright     | Enables the opt-in live Sales Upload/History contract |
+| `PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND` | Playwright     | Enables the opt-in Forecast Run/RQ worker contract    |
 
 ## Suggested CI order
 
@@ -287,3 +289,18 @@ FastAPI instance and database, use PowerShell:
 
 The opt-in test uses real Auth and Summary data with unique test records. It
 disables only the Dashboard fixture adapter and does not enable later modules.
+
+## Live Forecast Run browser contract
+
+The default Forecast Run suite uses deterministic session-scoped fixtures. To
+exercise the asynchronous FastAPI/RQ path, start a controlled backend,
+PostgreSQL, Redis, and the Forecast RQ worker, then use PowerShell:
+
+    $env:PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND='true'
+    $env:NEXT_PUBLIC_API_BASE_URL='http://localhost:8000'
+    npx playwright test e2e/forecast-run.real.spec.ts
+
+The opt-in contract creates a unique user, product, and historical sales data.
+It proves the browser's create -> enqueue -> active-job polling -> terminal run
+reconciliation flow. It never invokes the synchronous process endpoint, talks
+to Redis/RQ directly, or enables Forecast Results.

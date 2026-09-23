@@ -25,6 +25,8 @@ function statusLabel(state: ForecastRunStatusProps['state']): string {
       return state.run.status === 'pending' ? 'Pending' : 'Running';
     case 'status_error':
       return state.run.status === 'pending' ? 'Pending' : 'Running';
+    case 'queue_error':
+      return state.run.status === 'pending' ? 'Pending' : 'Running';
     case 'completed':
       return 'Completed';
     case 'failed':
@@ -36,6 +38,30 @@ function statusLabel(state: ForecastRunStatusProps['state']): string {
 
 function runForState(state: ForecastRunStatusProps['state']) {
   return state.run;
+}
+
+function executionLabel(state: ForecastRunStatusProps['state']): string | null {
+  if (
+    state.status !== 'tracking' &&
+    state.status !== 'checking_status' &&
+    state.status !== 'status_error'
+  ) {
+    return null;
+  }
+
+  switch (state.job.status) {
+    case 'queued':
+      return 'Queued';
+    case 'started':
+    case 'retrying':
+      return 'Processing';
+    case 'finished':
+      return 'Finished; reconciling run status';
+    case 'failed':
+      return 'Failed; reconciling run status';
+    case 'cancelled':
+      return 'Cancelled; reconciling run status';
+  }
 }
 
 /** Status-only surface; it deliberately does not expose forecast results or progress percentages. */
@@ -50,15 +76,19 @@ export function ForecastRunStatus({
   const isTerminal =
     state.status === 'completed' ||
     state.status === 'failed' ||
-    state.status === 'cancelled';
+    state.status === 'cancelled' ||
+    state.status === 'queue_error';
   const description =
     state.status === 'completed'
       ? 'The forecast run completed. Detailed forecast results are not shown in this module.'
       : state.status === 'failed'
         ? state.message
-        : state.status === 'cancelled'
-          ? 'This forecast run was cancelled before completion.'
-          : 'The run is tracked by lifecycle status only. No percentage progress is available.';
+        : state.status === 'queue_error'
+          ? 'The forecast run was created but could not be queued for processing.'
+          : state.status === 'cancelled'
+            ? 'This forecast run was cancelled before completion.'
+            : 'The run is tracked through its durable job and lifecycle status. No percentage progress is available.';
+  const executionStatus = executionLabel(state);
 
   return (
     <Card aria-labelledby="forecast-run-status-title" className="max-w-2xl">
@@ -71,7 +101,9 @@ export function ForecastRunStatus({
       <CardContent className="space-y-5">
         <div
           role={
-            state.status === 'failed' || state.status === 'status_error'
+            state.status === 'failed' ||
+            state.status === 'status_error' ||
+            state.status === 'queue_error'
               ? 'alert'
               : 'status'
           }
@@ -81,6 +113,11 @@ export function ForecastRunStatus({
           <p className="text-sm font-semibold text-foreground">
             Current status: {statusLabel(state)}
           </p>
+          {executionStatus === null ? null : (
+            <p className="mt-1 text-sm text-foreground-muted">
+              Processing status: {executionStatus}
+            </p>
+          )}
           {run === null ? null : (
             <dl className="mt-3 grid gap-2 text-sm text-foreground-muted sm:grid-cols-2">
               <div>
@@ -93,7 +130,7 @@ export function ForecastRunStatus({
               </div>
             </dl>
           )}
-          {state.status === 'status_error' ? (
+          {state.status === 'status_error' || state.status === 'queue_error' ? (
             <p className="mt-3 text-sm text-danger">{state.message}</p>
           ) : null}
         </div>

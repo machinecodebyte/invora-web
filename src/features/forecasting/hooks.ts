@@ -11,7 +11,9 @@ import {
   type ForecastRunService,
 } from '@/features/forecasting/api';
 import { isForecastRunId } from '@/features/forecasting/schemas';
+import { toDisplayMessage } from '@/lib/api-error';
 import type {
+  ForecastJob,
   ForecastResultsFilters,
   ForecastResultsViewState,
   ForecastRun,
@@ -21,16 +23,28 @@ import type {
 
 const GENERIC_START_ERROR = 'Unable to start the forecast run.';
 const GENERIC_STATUS_ERROR = 'Unable to refresh forecast run status.';
+const GENERIC_JOB_STATUS_ERROR = 'Unable to refresh forecast processing status.';
 
-function toSafeErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof ForecastRunServiceError ? error.message : fallback;
+/** A modest interval keeps browser polling bounded while durable work runs in RQ. */
+export const FORECAST_JOB_POLL_INTERVAL_MS = 3_000;
+
+function isActiveJobStatus(job: ForecastJob): boolean {
+  return (
+    job.status === 'queued' || job.status === 'started' || job.status === 'retrying'
+  );
 }
 
-function stateForRun(run: ForecastRun): ForecastRunViewState {
+function toSafeErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ForecastRunServiceError
+    ? error.message
+    : toDisplayMessage(error, fallback);
+}
+
+function stateForRun(run: ForecastRun, job: ForecastJob): ForecastRunViewState {
   switch (run.status) {
     case 'pending':
     case 'running':
-      return { status: 'tracking', run };
+      return { status: 'tracking', run, job };
     case 'completed':
       return { status: 'completed', run };
     case 'failed':
@@ -48,22 +62,130 @@ export interface UseForecastRunResult {
 }
 
 /**
- * Forecast Run client orchestration. It does not poll by itself because the
- * backend exposes no progress estimate and its integration policy is deferred.
- * The explicit refresh action exercises the future status boundary safely.
+ * Forecast Run client orchestration. The browser creates a run, enqueues its
+ * durable worker job, polls only active job states, then reconciles the
+ * authoritative Forecast Run lifecycle when the job becomes terminal.
  */
 export function useForecastRun(
   service: ForecastRunService = forecastRunService,
 ): UseForecastRunResult {
   const [state, setState] = useState<ForecastRunViewState>({ status: 'idle' });
   const actionInFlight = useRef(false);
+  const mountedRef = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const pollJobRef = useRef<((run: ForecastRun, job: ForecastJob) => void) | null>(
+    null,
+  );
+
+  const clearPolling = useCallback((): void => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const releaseController = useCallback((controller: AbortController): void => {
+    if (requestControllerRef.current === controller) {
+      requestControllerRef.current = null;
+    }
+  }, []);
+
+  const schedulePolling = useCallback(
+    (run: ForecastRun, job: ForecastJob): void => {
+      clearPolling();
+      timerRef.current = setTimeout(() => {
+        pollJobRef.current?.(run, job);
+      }, FORECAST_JOB_POLL_INTERVAL_MS);
+    },
+    [clearPolling],
+  );
+
+  const pollJob = useCallback(
+    async (run: ForecastRun, job: ForecastJob): Promise<void> => {
+      if (!mountedRef.current || !isActiveJobStatus(job)) {
+        return;
+      }
+      if (actionInFlight.current) {
+        schedulePolling(run, job);
+        return;
+      }
+
+      const controller = new AbortController();
+      actionInFlight.current = true;
+      requestControllerRef.current = controller;
+      try {
+        const nextJob = await service.getForecastJobStatus(job.id, {
+          signal: controller.signal,
+        });
+        if (!mountedRef.current || controller.signal.aborted) {
+          return;
+        }
+        if (nextJob.runId !== run.id) {
+          throw new ForecastRunServiceError(
+            'forecast_job_status_unavailable',
+            GENERIC_JOB_STATUS_ERROR,
+          );
+        }
+
+        if (isActiveJobStatus(nextJob)) {
+          setState({ status: 'tracking', run, job: nextJob });
+          schedulePolling(run, nextJob);
+          return;
+        }
+
+        clearPolling();
+        const reconciledRun = await service.getForecastRunStatus(run.id, {
+          signal: controller.signal,
+        });
+        if (!mountedRef.current || controller.signal.aborted) {
+          return;
+        }
+        setState(stateForRun(reconciledRun, nextJob));
+      } catch (error: unknown) {
+        if (mountedRef.current && !controller.signal.aborted) {
+          setState({
+            status: 'status_error',
+            run,
+            job,
+            message: toSafeErrorMessage(error, GENERIC_JOB_STATUS_ERROR),
+          });
+        }
+      } finally {
+        actionInFlight.current = false;
+        releaseController(controller);
+      }
+    },
+    [clearPolling, releaseController, schedulePolling, service],
+  );
+
+  useEffect(() => {
+    pollJobRef.current = (run, job) => {
+      void pollJob(run, job);
+    };
+
+    return () => {
+      pollJobRef.current = null;
+    };
+  }, [pollJob]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearPolling();
+      requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
+    };
+  }, [clearPolling]);
 
   const reset = useCallback((): void => {
     if (actionInFlight.current) {
       return;
     }
+    clearPolling();
     setState({ status: 'idle' });
-  }, []);
+  }, [clearPolling]);
 
   const startForecast = useCallback(
     async (input: ForecastRunRequest): Promise<void> => {
@@ -73,20 +195,49 @@ export function useForecastRun(
 
       actionInFlight.current = true;
       setState({ status: 'starting' });
+      const controller = new AbortController();
+      requestControllerRef.current = controller;
+      let createdRun: ForecastRun | null = null;
       try {
-        const run = await service.startForecast(input);
-        setState(stateForRun(run));
-      } catch (error: unknown) {
-        setState({
-          status: 'failed',
-          run: null,
-          message: toSafeErrorMessage(error, GENERIC_START_ERROR),
+        createdRun = await service.startForecast(input, { signal: controller.signal });
+        const job = await service.enqueueForecastRun(createdRun.id, {
+          signal: controller.signal,
         });
+        if (job.runId !== createdRun.id) {
+          throw new ForecastRunServiceError(
+            'forecast_job_enqueue_failed',
+            'Unable to queue the forecast run.',
+          );
+        }
+        if (!mountedRef.current || controller.signal.aborted) {
+          return;
+        }
+        setState({ status: 'tracking', run: createdRun, job });
+        if (isActiveJobStatus(job)) {
+          schedulePolling(createdRun, job);
+        }
+      } catch (error: unknown) {
+        if (mountedRef.current && !controller.signal.aborted) {
+          if (createdRun !== null) {
+            setState({
+              status: 'queue_error',
+              run: createdRun,
+              message: toSafeErrorMessage(error, 'Unable to queue the forecast run.'),
+            });
+          } else {
+            setState({
+              status: 'failed',
+              run: null,
+              message: toSafeErrorMessage(error, GENERIC_START_ERROR),
+            });
+          }
+        }
       } finally {
         actionInFlight.current = false;
+        releaseController(controller);
       }
     },
-    [service],
+    [releaseController, schedulePolling, service],
   );
 
   const refreshStatus = useCallback(async (): Promise<void> => {
@@ -98,21 +249,39 @@ export function useForecastRun(
     }
 
     const currentRun = state.run;
+    const currentJob = state.job;
     actionInFlight.current = true;
-    setState({ status: 'checking_status', run: currentRun });
+    setState({ status: 'checking_status', run: currentRun, job: currentJob });
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
     try {
-      const run = await service.getForecastRunStatus(currentRun.id);
-      setState(stateForRun(run));
-    } catch (error: unknown) {
-      setState({
-        status: 'status_error',
-        run: currentRun,
-        message: toSafeErrorMessage(error, GENERIC_STATUS_ERROR),
+      const run = await service.getForecastRunStatus(currentRun.id, {
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted) {
+        return;
+      }
+      const nextState = stateForRun(run, currentJob);
+      setState(nextState);
+      if (nextState.status === 'tracking' && isActiveJobStatus(currentJob)) {
+        schedulePolling(run, currentJob);
+      } else {
+        clearPolling();
+      }
+    } catch (error: unknown) {
+      if (mountedRef.current && !controller.signal.aborted) {
+        setState({
+          status: 'status_error',
+          run: currentRun,
+          job: currentJob,
+          message: toSafeErrorMessage(error, GENERIC_STATUS_ERROR),
+        });
+      }
     } finally {
       actionInFlight.current = false;
+      releaseController(controller);
     }
-  }, [service, state]);
+  }, [clearPolling, releaseController, schedulePolling, service, state]);
 
   return { state, startForecast, refreshStatus, reset };
 }
@@ -176,12 +345,11 @@ export function useForecastResults(
 
   const validRunId = isForecastRunId(runId);
   const queryKey = `${runId ?? ''}|${filters.search}|${filters.dateFrom}|${filters.dateTo}|${offset}|${reloadVersion}`;
-  const state =
-    !validRunId
-      ? resultsInitialState(runId)
-      : settledState?.queryKey === queryKey
-        ? settledState.state
-        : ({ status: 'loading' } as const);
+  const state = !validRunId
+    ? resultsInitialState(runId)
+    : settledState?.queryKey === queryKey
+      ? settledState.state
+      : ({ status: 'loading' } as const);
 
   useEffect(() => {
     let isCurrent = true;

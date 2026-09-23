@@ -9,8 +9,8 @@ recommendation system for small-business inventory management.
 
 **Frontend Module 12 - Shared UI / final frontend consolidation: COMPLETED.**
 All frontend implementation modules 0-12 are complete. Integration Phases 1,
-2/2B, 3, 4, and 5 connect Foundation/Auth, Product Catalog, Inventory, Sales
-Upload/Sales History, and Dashboard Summary respectively; later business
+2/2B, 3, 4, 5, and 6 connect Foundation/Auth, Product Catalog, Inventory, Sales
+Upload/Sales History, Dashboard Summary, and Forecast Run/Background Jobs respectively; later business
 integrations remain separate.
 
 **Frontend Module 10 — Reports: COMPLETED.**
@@ -46,8 +46,10 @@ backend-aligned product/SKU search, source and inclusive date filters, offset/li
 pagination infrastructure, and a quantity-trend chart. Normal builds retrieve
 Sales Transactions and backend-owned trends through the shared authenticated client. Module 7 adds a protected
 Forecast Run form with backend-aligned 7-, 15-, and 30-day horizons, explicit
-pending/running/completed/failed lifecycle presentation, and manual status refresh.
-Normal builds make no Forecast Run or ML request and do not contain forecast data.
+pending/running/completed/failed lifecycle presentation, manual status refresh,
+and real background-job tracking. Normal builds create a run, enqueue the
+backend-owned job, poll active job state, and reconcile the authoritative run;
+they never call the synchronous processing endpoint or contain forecast data.
 Module 8 adds a protected completed-run results route with backend-aligned summary,
 MAE/RMSE/MAPE, paginated prediction rows, and an accessible actual-versus-predicted
 chart that preserves missing actual observations. Normal builds make no Forecast
@@ -59,8 +61,8 @@ pagination, reorder quantities that retain valid zeroes and up to three decimal
 places, and safe loading, empty, filtered-empty, and error states. Normal builds
 make no Reorder Recommendation request and contain no recommendation data.
 
-Forecast Run, Forecast Results, and Recommendations use adapter boundaries and
-are **not** connected to the backend API yet. Auth, Dashboard, Products,
+Forecast Results and Recommendations use adapter boundaries and are **not**
+connected to the backend API yet. Auth, Dashboard, Products,
 Inventory, Sales Upload, and Sales History are connected through the shared API
 client and the backend's HttpOnly refresh-cookie contract. Dashboard consumes
 the backend-authoritative read-only Summary projection; its fixtures remain
@@ -169,12 +171,10 @@ Full rationale: [`docs/architecture.md`](docs/architecture.md).
 ## Testing
 
 Module 12 adds focused coverage for the responsive table boundary and generic
-pagination controls. The complete frontend suite now contains 416
-unit/component tests plus 76 Playwright tests.
-
-426 unit and component tests plus 76 deterministic Playwright tests cover the Foundation, Auth,
-Dashboard, Products, Inventory, Sales Upload, Sales History, Forecast Run, Forecast Results, Recommendations, Reports, and Settings modules. Configured coverage exceeds the required 85%
-threshold for every measured metric.
+pagination controls. The latest full coverage run contains 463 unit/component
+tests; the deterministic Chromium regression contains 78 passed scenarios, with
+five opt-in live-backend specs skipped by default. Configured coverage exceeds
+the required 85% threshold for every measured metric.
 
 ```bash
 npm run test
@@ -203,9 +203,9 @@ complete. Auth fields, Dashboard Analytics summary semantics, Product Catalog
 validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
 CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
 horizon/lifecycle semantics were aligned through read-only inspection. Frontend
-Auth, Dashboard, Products, Inventory, Sales Upload, and Sales History now use
-the real FastAPI endpoints; Forecast Run and Forecast Results still make no
-runtime API request. See
+Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast
+Run now use the real FastAPI endpoints; Forecast Results still makes no runtime
+API request. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
 
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
@@ -246,8 +246,8 @@ create/list/update/archive, and backend-driven Product units now use the shared
 authenticated Product adapter. Product browser E2E coverage remains
 deterministic and test-only; normal application builds use the FastAPI adapter.
 
-Pending: Inventory, Sales Upload, Sales History, Dashboard, Forecast Run,
-Forecast Results, Recommendations, Reports, and Settings.
+At the Phase 2 checkpoint, Inventory, Sales, Dashboard, Forecast Run, Forecast
+Results, Recommendations, Reports, and Settings were still pending.
 
 Phase 3 — Inventory: validated. The normal Inventory adapter lists
 backend-owned inventory and low-stock projections and records immutable stock
@@ -266,9 +266,10 @@ demand-trend, Inventory-risk, and reorder-alert projection at the Dashboard
 boundary. Forecast Overview and Recent Activity remain intentionally unrendered
 because the existing Module 2 UI has no sections for them.
 
-Pending: Forecast Run, Forecast Results, Recommendations, Reports, and Settings.
-
-Next: Forecast Run + Background Jobs integration.
+At the Phase 5 checkpoint, Forecast Run, Forecast Results, Recommendations,
+Reports, and Settings were still pending. Phase 6 subsequently integrated
+Forecast Run and Background Jobs; the next integration phase is Forecast
+Results.
 
 ## Latest Integration Audit Status
 
@@ -284,3 +285,27 @@ omitted the Auth refresh cookie even though the current checked-out backend
 source correctly emits it. Restart that local process from the current backend
 checkout before manual frontend integration testing. No application source or
 backend files were changed by this audit.
+
+## Integration Phase 6 - Forecast Run + Background Jobs
+
+Normal Forecast Run builds now use the shared authenticated client for the
+backend-owned asynchronous lifecycle:
+
+1. `POST /api/v1/forecast-runs` creates the run.
+2. `POST /api/v1/jobs/forecast-runs/{runId}` enqueues its durable worker job.
+3. `GET /api/v1/jobs/{jobId}` is polled every three seconds only while the job
+   is `queued`, `started`, or `retrying`.
+4. Every terminal job state is reconciled with
+   `GET /api/v1/forecast-runs/{runId}` before the UI presents run state.
+
+The browser never calls `/forecast-runs/{runId}/process`, Redis, RQ, or ML
+implementation code. A queue failure keeps the newly created run visible with a
+safe retry-free message; manual refresh remains an authoritative run read. The
+deterministic fixture adapter remains limited to the Playwright-managed build.
+`e2e/forecast-run.real.spec.ts` is an opt-in controlled-environment contract
+requiring the backend, PostgreSQL, Redis, and an RQ worker. Forecast Results,
+Recommendations, Reports, Settings, and all other deferred integrations remain
+unchanged. Phase 6 validation passed the 463-test coverage suite, the complete
+78-scenario deterministic Chromium regression (five opt-in live specs skipped),
+strict type checking, lint, and a production build. Backend source remained
+unchanged throughout.

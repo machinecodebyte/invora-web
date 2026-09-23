@@ -1,16 +1,22 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ForecastRunService } from '@/features/forecasting/api';
 import { ForecastRunView } from '@/features/forecasting/components/forecast-run-view';
 import type { ForecastRun } from '@/features/forecasting/types';
 import {
+  FORECAST_JOB_QUEUED,
   FORECAST_RUN_FAILED_SEQUENCE,
+  FORECAST_RUN_COMPLETED,
   FORECAST_RUN_PENDING,
   FORECAST_RUN_SEQUENCE,
   createForecastRunTestService,
 } from '@/tests/fixtures/forecast-run';
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('ForecastRunView', () => {
   it('renders accessible horizon validation and enables start after a valid selection', async () => {
@@ -69,6 +75,8 @@ describe('ForecastRunView', () => {
     );
     const service: ForecastRunService = {
       startForecast,
+      enqueueForecastRun: () => Promise.resolve(FORECAST_JOB_QUEUED),
+      getForecastJobStatus: () => Promise.resolve(FORECAST_JOB_QUEUED),
       getForecastRunStatus: () => Promise.resolve(FORECAST_RUN_PENDING),
     };
     render(<ForecastRunView service={service} />);
@@ -132,5 +140,151 @@ describe('ForecastRunView', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Refresh status' })).toBeEnabled(),
     );
+  });
+
+  it('polls active jobs, reconciles the completed Forecast Run, and stops polling', async () => {
+    vi.useFakeTimers();
+    const getForecastJobStatus = vi
+      .fn()
+      .mockResolvedValueOnce({ ...FORECAST_JOB_QUEUED, status: 'started' })
+      .mockResolvedValueOnce({ ...FORECAST_JOB_QUEUED, status: 'finished' });
+    const getForecastRunStatus = vi.fn().mockResolvedValue(FORECAST_RUN_COMPLETED);
+    const service: ForecastRunService = {
+      startForecast: () => Promise.resolve(FORECAST_RUN_PENDING),
+      enqueueForecastRun: () => Promise.resolve(FORECAST_JOB_QUEUED),
+      getForecastJobStatus,
+      getForecastRunStatus,
+    };
+    render(<ForecastRunView service={service} />);
+
+    fireEvent.change(screen.getByLabelText(/^Forecast horizon/), {
+      target: { value: '15' },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start Forecast' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText('Processing status: Queued')).toBeVisible();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+    expect(screen.getByText('Processing status: Processing')).toBeVisible();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+    expect(screen.getByText('Current status: Completed')).toBeVisible();
+    expect(getForecastRunStatus).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9_000);
+    });
+    expect(getForecastJobStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('reconciles a failed terminal job without exposing job internals', async () => {
+    vi.useFakeTimers();
+    const failedRun = FORECAST_RUN_FAILED_SEQUENCE[1]!;
+    const service: ForecastRunService = {
+      startForecast: () => Promise.resolve(FORECAST_RUN_FAILED_SEQUENCE[0]!),
+      enqueueForecastRun: () =>
+        Promise.resolve({
+          ...FORECAST_JOB_QUEUED,
+          id: 'failed-job',
+          runId: failedRun.id,
+        }),
+      getForecastJobStatus: () =>
+        Promise.resolve({
+          ...FORECAST_JOB_QUEUED,
+          id: 'failed-job',
+          runId: failedRun.id,
+          status: 'failed',
+        }),
+      getForecastRunStatus: () => Promise.resolve(failedRun),
+    };
+    render(<ForecastRunView service={service} />);
+
+    fireEvent.change(screen.getByLabelText(/^Forecast horizon/), {
+      target: { value: '7' },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start Forecast' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    expect(screen.getByText('Current status: Failed')).toBeVisible();
+    expect(screen.getByText('Forecast run failed.')).toBeVisible();
+    expect(
+      screen.queryByText(/rq_job_id|Redis|test-only internal/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('retains the created run and shows a safe queue failure without a process fallback', async () => {
+    const user = userEvent.setup();
+    render(
+      <ForecastRunView
+        service={createForecastRunTestService({
+          enqueueError: new Error('redis://internal queue connection'),
+        })}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText(/^Forecast horizon/), '15');
+    await user.click(screen.getByRole('button', { name: 'Start Forecast' }));
+
+    expect(await screen.findByText('Current status: Pending')).toBeVisible();
+    expect(screen.getByText('Unable to queue the forecast run.')).toBeVisible();
+    expect(
+      screen.queryByText('redis://internal queue connection'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Start another forecast' }),
+    ).toBeVisible();
+  });
+
+  it('cancels scheduled polling when the view unmounts', async () => {
+    vi.useFakeTimers();
+    const getForecastJobStatus = vi.fn().mockResolvedValue(FORECAST_JOB_QUEUED);
+    const { unmount } = render(
+      <ForecastRunView
+        service={{
+          startForecast: () => Promise.resolve(FORECAST_RUN_PENDING),
+          enqueueForecastRun: () => Promise.resolve(FORECAST_JOB_QUEUED),
+          getForecastJobStatus,
+          getForecastRunStatus: () => Promise.resolve(FORECAST_RUN_PENDING),
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/^Forecast horizon/), {
+      target: { value: '15' },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start Forecast' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText('Processing status: Queued')).toBeVisible();
+    unmount();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6_000);
+    });
+    expect(getForecastJobStatus).not.toHaveBeenCalled();
   });
 });

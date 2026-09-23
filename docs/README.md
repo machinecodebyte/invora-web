@@ -47,8 +47,9 @@ but are not supported by that toolchain yet.
 the existing primitives, added narrowly scoped `TableScrollArea` and `Pagination`
 primitives, and adopted them only where generic duplication was verified. All
 frontend implementation modules 0-12 are now complete. Integration Phases 1,
-2/2B, 3, 4, and 5 connect Foundation/Auth, Product Catalog, Inventory, Sales,
-and Dashboard Summary respectively; the remaining business integrations stay
+2/2B, 3, 4, 5, and 6 connect Foundation/Auth, Product Catalog, Inventory,
+Sales, Dashboard Summary, and Forecast Run/Background Jobs respectively; the
+remaining business integrations stay
 separate phases.
 
 **Settings: COMPLETED.** Module 11 adds protected `/settings` Forecast Defaults
@@ -74,12 +75,14 @@ and its real shared-client adapter. Module 4 adds protected Inventory stock
 monitoring, movement validation, backend-authoritative low-stock handling, and
 its real shared-client adapter. Module 5 adds protected CSV file selection, backend-aligned
 preflight, upload-state UX, safe batch results, and rejected-row presentation
-through a no-network service boundary. Module 7 adds a protected global Forecast
-Run configuration and lifecycle-status surface with a no-network service boundary.
+through its real shared-client adapter. Module 7 adds a protected global Forecast
+Run configuration and lifecycle-status surface with a real create/enqueue/job-poll/
+run-reconcile adapter.
 Module 8 adds a protected completed-run Forecast Results surface with a no-network
 result adapter, summary, allowed metrics, prediction list, filters, and an
-actual-versus-predicted aggregate chart. No real Dashboard Analytics, Sales Upload, Sales
-Transaction, Forecast Run, Forecast Results, Recommendations, Reports, or ML API call is enabled.
+actual-versus-predicted aggregate chart. Auth, Dashboard, Products, Inventory,
+Sales, and Forecast Run use their approved real adapters; Forecast Results,
+Recommendations, Reports, Settings, and ML control surfaces remain deferred.
 
 Module 9 adds a protected, read-only Recommendations surface with backend-aligned
 five-level risk labels, read-only status display, Product/SKU search, risk/status filtering, backend-shaped
@@ -96,13 +99,12 @@ cookie-session boundary; remaining business adapters remain deferred.
 
 ### Integration Phase 1
 
-Auth, Products, and Inventory are the live integrations. The browser holds only an in-memory
-access token. The backend refresh token is an HttpOnly cookie scoped to Auth
+The browser holds only an in-memory access token. The backend refresh token is an HttpOnly cookie scoped to Auth
 routes, and is used only for browser refresh/logout transport. The shared client
 performs one coalesced invalid-access-token recovery and one replay. Frontend
 route protection remains a user-experience boundary; the FastAPI backend remains
-the authorization authority. Dashboard through Settings remain no-network
-feature adapters.
+the authorization authority. Later approved phases independently enable their
+own feature adapters; they do not widen Auth state or token storage.
 
 ## Settings module
 
@@ -278,3 +280,12 @@ Every future module must update, in the same change as its code:
 - `project_runner.md` — quick-start and scope changes
 
 Update the relevant sections; do not rewrite unrelated documentation.
+
+## Integration Phase 6 - Forecast Run + Background Jobs
+
+Forecast Run now has a real, shared-client adapter for create, enqueue, active
+job polling, and terminal run reconciliation. It remains a status-only surface:
+it does not show Forecast Results, progress percentages, queue internals, or an
+ML control plane. The deterministic E2E adapter stays explicitly build-gated;
+the live-worker browser contract is opt-in. See `architecture.md`,
+`testing.md`, and `project-runner.md` for the exact lifecycle and prerequisites.

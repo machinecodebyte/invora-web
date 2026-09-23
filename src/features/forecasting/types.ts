@@ -14,6 +14,28 @@ export const FORECAST_RUN_STATUSES = [
 
 export type ForecastRunStatus = (typeof FORECAST_RUN_STATUSES)[number];
 
+/** Durable Background Jobs states returned while a Forecast Run is executing. */
+export const FORECAST_JOB_STATUSES = [
+  'queued',
+  'started',
+  'finished',
+  'failed',
+  'cancelled',
+  'retrying',
+] as const;
+
+export type ForecastJobStatus = (typeof FORECAST_JOB_STATUSES)[number];
+
+/**
+ * Minimal internal projection of the Forecast Run's durable execution job.
+ * It is not a general Background Jobs administration model.
+ */
+export interface ForecastJob {
+  readonly id: string;
+  readonly runId: string;
+  readonly status: ForecastJobStatus;
+}
+
 /** Request projection for the future global Forecast Run creation adapter. */
 export interface ForecastRunRequest {
   readonly horizonDays: ForecastHorizon;
@@ -47,10 +69,24 @@ export interface ForecastRun {
 export type ForecastRunViewState =
   | { readonly status: 'idle' }
   | { readonly status: 'starting' }
-  | { readonly status: 'tracking'; readonly run: ForecastRun }
-  | { readonly status: 'checking_status'; readonly run: ForecastRun }
+  | {
+      readonly status: 'tracking';
+      readonly run: ForecastRun;
+      readonly job: ForecastJob;
+    }
+  | {
+      readonly status: 'checking_status';
+      readonly run: ForecastRun;
+      readonly job: ForecastJob;
+    }
   | {
       readonly status: 'status_error';
+      readonly run: ForecastRun;
+      readonly job: ForecastJob;
+      readonly message: string;
+    }
+  | {
+      readonly status: 'queue_error';
       readonly run: ForecastRun;
       readonly message: string;
     }

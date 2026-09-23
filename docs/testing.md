@@ -104,8 +104,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `auth-schemas.test.ts`             | Backend-aligned email normalization, login requirements, registration password rules, confirmation mismatch, and UI-only confirmation omission                                                                                   |
 | `auth-api.test.ts`                 | Unavailable default adapter, deterministic E2E adapter, and test-state cleanup                                                                                                                                                   |
 | `auth-redirects.test.ts`           | Internal return paths, external/protocol-relative/backslash rejection, malformed/default fallback                                                                                                                                |
-| `dashboard-api.test.ts`            | Real Summary route/header mapping, snake_case/camelCase mapper coverage, Decimal/date/null handling, safe failures, and isolated Playwright fixture state                                                                     |
-| `dashboard-api-contract.test.ts`   | MSW contract coverage for `GET /api/v1/dashboard/summary`, authenticated header, success envelope, omitted UI-invented filters, and safe failure envelope                                                                     |
+| `dashboard-api.test.ts`            | Real Summary route/header mapping, snake_case/camelCase mapper coverage, Decimal/date/null handling, safe failures, and isolated Playwright fixture state                                                                        |
+| `dashboard-api-contract.test.ts`   | MSW contract coverage for `GET /api/v1/dashboard/summary`, authenticated header, success envelope, omitted UI-invented filters, and safe failure envelope                                                                        |
 | `inventory-schemas.test.ts`        | Backend-aligned stock-in/out, absolute adjustment, signed correction, zero/negative, decimal precision, size, and reason normalization rules                                                                                     |
 | `inventory-api.test.ts`            | Unavailable default service, explicit low-stock projection, deterministic test-only movement semantics, insufficient-stock safety, and malformed fixture fallback                                                                |
 | `sales-upload-schemas.test.ts`     | CSV extension, MIME, empty/5 MiB limit, normalized headers, missing/duplicate-column preflight behavior                                                                                                                          |
@@ -141,7 +141,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `inventory.test.tsx`        | Accessible movement form, field-level validation, safe mutation failure, pending controls, status text, semantic table, and composed loading/ready/empty/filtered-empty/low-stock/error states     |
 | `sales-upload.test.tsx`     | Native file input, preflight feedback, selected-file reset, semantic progress, duplicate prevention, safe errors/retry, result summary, and rejected-row table                                     |
 | `sales-history.test.tsx`    | Semantic transaction table, zero-value formatting, product/SKU/source/date filters, reset, pagination controls, quantity trend, loading, no-data, filtered-empty, and safe partial/error states    |
-| `forecast-run.test.tsx`     | Accessible horizon validation, pending/running/completed lifecycle, duplicate-start prevention, safe failures, refresh retry, and reset                                                            |
+| `forecast-run.test.tsx`     | Accessible horizon validation, create/enqueue/active-job-poll/terminal-run-reconcile lifecycle, duplicate-start prevention, safe queue/status failures, refresh retry, and reset                   |
 | `forecast-results.test.tsx` | Run selection, loading, summary/metrics/table/chart rendering, zero/null distinction, filter validation, empty/not-ready/failed/error states, and safe adapter failures                            |
 | `recommendations.test.tsx`  | Semantic risk table, Product/SKU context, decimal and zero quantity display, risk/search filters, pagination, loading, empty/filtered-empty, and safe adapter errors                               |
 | `reports.test.tsx`          | Report selector, scoped filters, semantic table/summary, zero/null rendering, validation, loading, empty/filtered-empty/error states, and CSV pending/success/failure behavior                     |
@@ -283,11 +283,12 @@ frontend Inventory request. It is separate from deterministic fixture coverage.
 ### Forecast Run tests
 
 Forecast Run unit and component tests cover the one backend-supported request
-field, 7/15/30-day validation, native-select normalization, unavailable normal
-service, malformed fixture safety, accessible required feedback, disabled/pending
-submission, duplicate-start prevention, `pending`/`running`/`completed` states,
-safe failure/status-refresh treatment, and reset for another run. They never
-render raw failure detail, prediction data, result metrics, or fake progress.
+field, 7/15/30-day validation, FastAPI envelope mapping, exact create/enqueue/
+poll/reconcile routes, malformed payload safety, queue-unavailable handling,
+accessible required feedback, duplicate-start prevention, active-job polling,
+terminal-run reconciliation, timer cleanup, safe failure/status-refresh
+treatment, and reset for another run. They never render raw failure detail,
+queue internals, prediction data, result metrics, or fake progress.
 
 `e2e/forecast-flow.spec.ts` covers protected-route redirect, authenticated page
 load, allowed horizon options, required horizon validation, deterministic
@@ -296,6 +297,13 @@ failure, and 375Ã—667 overflow containment. Its 7 browser scenarios use only
 session-scoped lifecycle fixtures under
 `NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE=true`; no FastAPI service, forecast
 result, or ML process is used.
+
+`e2e/forecast-run.real.spec.ts` is skipped unless
+`PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND=true`. It uses a unique controlled test
+account plus product and historical-sales prerequisites, then verifies the
+normal browser create -> enqueue -> job poll -> run reconciliation flow. It
+requires PostgreSQL, Redis, and an RQ worker; it never calls the synchronous
+process route or Forecast Results.
 
 ### Forecast Results tests
 
@@ -419,20 +427,20 @@ workflow; all 76 existing Chromium tests remain the browser regression gate.
 
 Per-module minimum, in addition to unit tests for any new `lib/` logic:
 
-| Module           | Required test layers               | Focus                                                                                                                                                                                      |
-| ---------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys                                                                             |
-| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow                                                                            |
-| Products         | unit + component + E2E — completed | Schemas, no-network adapter, forms, list/search/status states, protected route, deterministic create/edit, and mobile browser flow                                                         |
-| Inventory        | unit + component + E2E — completed | Movement schemas, live adapter mapping/error handling, mutation reconciliation, stock update form, table/search/status/low-stock states, fixture journey, and opt-in real browser contract |
-| Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                                                          |
-| Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                                                            |
-| Forecast Run     | component + E2E — completed        | Global 7/15/30-day configuration, explicit lifecycle status (no percentage progress), protected deterministic run journey                                                                  |
-| Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey                                           |
-| Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey                    |
-| Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression                                                 |
-| Settings         | component — completed              | Forecast Defaults and absolute Safety Stock Defaults, validation, zero-safe decimal input, dirty/revert/save states, and safe loading/error UI                                             |
-| Shared UI        | unit + component — completed       | Canonical primitive regressions plus responsive table containment, accessible pagination, and full browser regression                                                                      |
+| Module           | Required test layers               | Focus                                                                                                                                                                                           |
+| ---------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth             | unit + component + E2E — completed | Schemas, adapter boundary, safe redirects, forms, protected routes, login/registration/logout browser journeys                                                                                  |
+| Dashboard        | component + E2E — completed        | KPIs, chart, alerts, high-risk inventory, loading/empty/error states, protected access, and mobile browser flow                                                                                 |
+| Products         | unit + component + E2E — completed | Schemas, no-network adapter, forms, list/search/status states, protected route, deterministic create/edit, and mobile browser flow                                                              |
+| Inventory        | unit + component + E2E — completed | Movement schemas, live adapter mapping/error handling, mutation reconciliation, stock update form, table/search/status/low-stock states, fixture journey, and opt-in real browser contract      |
+| Sales Upload     | component + E2E — completed        | CSV preflight, progress, safe batch summary/rejected rows, protected deterministic upload journey                                                                                               |
+| Sales History    | component — completed              | Transaction table, Product/SKU search, source/date filters, offset/limit pagination, quantity trend, loading/empty/error states                                                                 |
+| Forecast Run     | unit + component + E2E — completed | Global 7/15/30-day configuration, exact create/enqueue/job-poll/run-reconcile contract, explicit lifecycle status (no percentage progress), protected deterministic journey, opt-in worker flow |
+| Forecast Results | component + E2E — completed        | Validated run selection, summary, MAE/RMSE/MAPE, filters, pagination, nullable-actual chart, safe result states, protected deterministic journey                                                |
+| Recommendations  | component + E2E — completed        | Read-only recommendation list, exact risk/status values, Product/SKU search, risk/status filters, offset/limit pagination, safe states, protected deterministic journey                         |
+| Reports          | component — completed              | Report selection, scoped backend filters, semantic table/summary, zero/null, CSV pending/success/failure, safe states, and full regression                                                      |
+| Settings         | component — completed              | Forecast Defaults and absolute Safety Stock Defaults, validation, zero-safe decimal input, dirty/revert/save states, and safe loading/error UI                                                  |
+| Shared UI        | unit + component — completed       | Canonical primitive regressions plus responsive table containment, accessible pagination, and full browser regression                                                                           |
 
 Each module adds MSW handlers for its own endpoints and updates this document
 with the tests it introduced.
