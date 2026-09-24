@@ -9,9 +9,9 @@ recommendation system for small-business inventory management.
 
 **Frontend Module 12 - Shared UI / final frontend consolidation: COMPLETED.**
 All frontend implementation modules 0-12 are complete. Integration Phases 1,
-2/2B, 3, 4, 5, and 6 connect Foundation/Auth, Product Catalog, Inventory, Sales
-Upload/Sales History, Dashboard Summary, and Forecast Run/Background Jobs respectively; later business
-integrations remain separate.
+2/2B, 3, 4, 5, 6, and 7 connect Foundation/Auth, Product Catalog, Inventory,
+Sales Upload/Sales History, Dashboard Summary, Forecast Run/Background Jobs,
+and Forecast Results respectively; later business integrations remain separate.
 
 **Frontend Module 10 — Reports: COMPLETED.**
 
@@ -50,10 +50,12 @@ pending/running/completed/failed lifecycle presentation, manual status refresh,
 and real background-job tracking. Normal builds create a run, enqueue the
 backend-owned job, poll active job state, and reconcile the authoritative run;
 they never call the synchronous processing endpoint or contain forecast data.
-Module 8 adds a protected completed-run results route with backend-aligned summary,
-MAE/RMSE/MAPE, paginated prediction rows, and an accessible actual-versus-predicted
-chart that preserves missing actual observations. Normal builds make no Forecast
-Results, backend, or ML request and contain no forecast result data.
+Module 8 adds a protected completed-run results route with backend-authoritative
+summary, MAE/RMSE/MAPE, paginated prediction rows, an accessible
+actual-versus-predicted chart that preserves missing actual observations, and
+on-demand product result detail. Normal builds use the shared authenticated
+client to read persisted Forecast Results; they do not invoke ML processing or
+calculate predictions, metrics, or chart values.
 
 Module 9 adds a protected, read-only Recommendations route with backend-aligned
 five-level risk presentation, read-only status display, Product/SKU search, risk/status filtering, offset/limit
@@ -61,10 +63,10 @@ pagination, reorder quantities that retain valid zeroes and up to three decimal
 places, and safe loading, empty, filtered-empty, and error states. Normal builds
 make no Reorder Recommendation request and contain no recommendation data.
 
-Forecast Results and Recommendations use adapter boundaries and are **not**
-connected to the backend API yet. Auth, Dashboard, Products,
-Inventory, Sales Upload, and Sales History are connected through the shared API
-client and the backend's HttpOnly refresh-cookie contract. Dashboard consumes
+Recommendations uses an adapter boundary and is **not** connected to the backend
+API yet. Auth, Dashboard, Products, Inventory, Sales Upload, Sales History,
+Forecast Run, and Forecast Results are connected through the shared API client
+and the backend's HttpOnly refresh-cookie contract. Dashboard consumes
 the backend-authoritative read-only Summary projection; its fixtures remain
 isolated to component and Playwright infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
@@ -204,8 +206,7 @@ validation/list semantics, Inventory movement/low-stock semantics, Sales Upload
 CSV requirements, Sales Transaction list/trend semantics, Forecast Run lifecycle semantics, and Forecast Results
 horizon/lifecycle semantics were aligned through read-only inspection. Frontend
 Auth, Dashboard, Products, Inventory, Sales Upload, Sales History, and Forecast
-Run now use the real FastAPI endpoints; Forecast Results still makes no runtime
-API request. See
+Run and Forecast Results now use the real FastAPI endpoints. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
 
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
@@ -309,3 +310,20 @@ unchanged. Phase 6 validation passed the 463-test coverage suite, the complete
 78-scenario deterministic Chromium regression (five opt-in live specs skipped),
 strict type checking, lint, and a production build. Backend source remained
 unchanged throughout.
+
+## Integration Phase 7 - Forecast Results
+
+Normal Forecast Results builds use the shared authenticated client for the five
+read-only persisted-result endpoints: run overview, paginated predictions,
+metrics, actual-versus-predicted chart data, and on-demand product detail. The
+adapter validates FastAPI envelopes and decimal/date-only fields before mapping
+them to feature models. It keeps a chart failure isolated so summary,
+predictions, and metrics remain usable; an absent metrics record is shown as
+unavailable rather than manufactured client-side.
+
+The completed Forecast Run status now links to its validated Results route. The
+page performs no Result polling, mutation, ML invocation, recommendation call,
+or client-side forecast calculation. Product detail is the only new Results UI:
+an accessible dialog opened from a prediction row. Deterministic fixtures remain
+Playwright-only; `e2e/forecast-results.real.spec.ts` is an opt-in live browser
+contract requiring FastAPI, PostgreSQL, Redis, and an RQ worker.

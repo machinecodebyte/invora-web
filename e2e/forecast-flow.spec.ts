@@ -112,8 +112,13 @@ test.describe('Forecast Run', () => {
     await page.getByRole('button', { name: 'Refresh status' }).click();
     await expect(page.getByText('Current status: Completed')).toBeVisible();
     await expect(
-      page.getByText(/Detailed forecast results are not shown in this module\./),
+      page.getByText(
+        'The forecast run completed. View its persisted result data on the Forecast Results page.',
+      ),
     ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'View forecast results' }),
+    ).toHaveAttribute('href', '/forecasts/results?runId=test-forecast-run-001');
     await expect(page.locator('body')).not.toContainText('Predicted demand');
   });
 

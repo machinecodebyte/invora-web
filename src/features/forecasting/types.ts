@@ -173,6 +173,32 @@ export interface ForecastResultChart {
   readonly points: readonly ForecastResultChartPoint[];
 }
 
+/** One persisted forecast point for the product-level Results detail API. */
+export interface ForecastProductResultPoint {
+  readonly forecastDate: string;
+  readonly predictedDemand: number;
+  /** Null means the backend has no actual observation for that forecast date. */
+  readonly actualQuantity: number | null;
+  readonly modelName: string;
+}
+
+/** Safe, read-only projection from the product-specific Forecast Results API. */
+export interface ForecastProductResult {
+  readonly runId: string;
+  readonly horizonDays: ForecastHorizon;
+  readonly productId: string;
+  readonly productName: string;
+  readonly sku: string;
+  readonly categoryId: string | null;
+  readonly categoryName: string | null;
+  readonly unit: string;
+  readonly currentStock: number | null;
+  readonly minimumStock: number | null;
+  readonly safetyStock: number | null;
+  readonly totalPredictedDemand: number;
+  readonly points: readonly ForecastProductResultPoint[];
+}
+
 /** User-facing filters supported directly by the backend result list. */
 export interface ForecastResultsFilters {
   readonly search: string;
@@ -192,6 +218,14 @@ export interface ForecastResultsQuery {
   readonly sortOrder: 'asc';
   readonly chartInterval: ForecastResultChartInterval;
 }
+
+/** UI state for the on-demand, read-only product Forecast Results dialog. */
+export type ForecastProductResultViewState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'loading' }
+  | { readonly status: 'ready'; readonly data: ForecastProductResult }
+  | { readonly status: 'not_found' }
+  | { readonly status: 'error'; readonly message: string };
 
 /** Read model assembled by the result adapter; table and chart fail independently. */
 export interface ForecastResultsData {

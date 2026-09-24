@@ -78,11 +78,12 @@ preflight, upload-state UX, safe batch results, and rejected-row presentation
 through its real shared-client adapter. Module 7 adds a protected global Forecast
 Run configuration and lifecycle-status surface with a real create/enqueue/job-poll/
 run-reconcile adapter.
-Module 8 adds a protected completed-run Forecast Results surface with a no-network
-result adapter, summary, allowed metrics, prediction list, filters, and an
-actual-versus-predicted aggregate chart. Auth, Dashboard, Products, Inventory,
-Sales, and Forecast Run use their approved real adapters; Forecast Results,
-Recommendations, Reports, Settings, and ML control surfaces remain deferred.
+Module 8 adds a protected completed-run Forecast Results surface with a real
+shared-client result adapter, summary, allowed metrics, prediction list,
+filters, actual-versus-predicted aggregate chart, and on-demand product detail.
+Auth, Dashboard, Products, Inventory, Sales, Forecast Run, and Forecast Results
+use their approved real adapters; Recommendations, Reports, Settings, and ML
+control surfaces remain deferred.
 
 Module 9 adds a protected, read-only Recommendations surface with backend-aligned
 five-level risk labels, read-only status display, Product/SKU search, risk/status filtering, backend-shaped
@@ -208,13 +209,13 @@ intentionally deferred.
 `src/features/forecasting/` also owns the protected `/forecasts/results` route.
 It accepts only a validated UUID `runId` query, then composes safe completed-run
 summary fields, backend-produced MAE/RMSE/MAPE metrics, offset/limit prediction
-rows, product/SKU and inclusive date filters, and an accessible lightweight SVG
-aggregate chart. Actual quantity is nullable and is never converted to zero;
-the prediction table does not invent actual values because they are absent from
-the backend list contract. Normal runtime uses an unavailable service with no
-HTTP/ML call. Playwright alone receives isolated session-scoped result fixtures.
-Real Forecast Results API and ML pipeline integration remain intentionally
-deferred.
+rows, product/SKU and inclusive date filters, an accessible lightweight SVG
+aggregate chart, and on-demand product detail. Actual quantity is nullable and
+is never converted to zero; the prediction table does not invent actual values
+because they are absent from the backend list contract. Normal runtime uses the
+shared authenticated client for persisted Results reads only. Playwright alone
+receives isolated session-scoped result fixtures. Forecast Result generation and
+the ML pipeline remain backend-owned.
 
 ## Recommendations module
 
@@ -289,3 +290,14 @@ it does not show Forecast Results, progress percentages, queue internals, or an
 ML control plane. The deterministic E2E adapter stays explicitly build-gated;
 the live-worker browser contract is opt-in. See `architecture.md`,
 `testing.md`, and `project-runner.md` for the exact lifecycle and prerequisites.
+
+## Integration Phase 7 - Forecast Results
+
+Forecast Results now reads the verified FastAPI overview, prediction, metrics,
+chart, and product-specific result contracts through the existing authenticated
+client. The browser maps response envelopes at the feature boundary and renders
+only backend-persisted values. Chart failures are local to the chart surface;
+metrics may be legitimately unavailable. A completed Forecast Run links to its
+own Results route, while the Results route remains read-only and does not poll,
+run ML, or call Recommendations. The deterministic Results adapter is selected
+only for Playwright fixture builds; the live worker-backed contract is opt-in.

@@ -10,7 +10,10 @@ import {
   type ForecastRunStatus,
   type ForecastPrediction,
   type ForecastPredictionPage,
+  type ForecastProductResult,
+  type ForecastProductResultPoint,
   type ForecastResultChart,
+  type ForecastResultChartInterval,
   type ForecastResultChartPoint,
   type ForecastResultMetrics,
   type ForecastResultOverview,
@@ -628,7 +631,10 @@ export const forecastRunService: ForecastRunService = isE2ETestMode
   : createHttpForecastRunService();
 
 export type ForecastResultsServiceErrorCode =
-  'forecast_results_unavailable' | 'forecast_results_not_ready' | 'forecast_run_failed';
+  | 'forecast_results_unavailable'
+  | 'forecast_results_not_ready'
+  | 'forecast_run_failed'
+  | 'forecast_result_product_not_found';
 
 /** Safe, normalized error for the Forecast Results presentation boundary. */
 export class ForecastResultsServiceError extends Error {
@@ -641,18 +647,123 @@ export class ForecastResultsServiceError extends Error {
   }
 }
 
-/**
- * Read-only transport boundary for a completed forecast result set. The future
- * HTTP adapter will map the backend's overview, listing, metrics, and chart
- * reads here; it must not expose paths or tokens to UI components.
- */
-export interface ForecastResultsService {
-  getForecastResults(query: ForecastResultsQuery): Promise<ForecastResultsData>;
+/** Caller-owned cancellation options for Forecast Results reads. */
+export interface ForecastResultsRequestOptions {
+  readonly signal?: AbortSignal | undefined;
 }
 
+/** Read-only transport boundary for persisted Forecast Results data. */
+export interface ForecastResultsService {
+  getForecastResults(
+    query: ForecastResultsQuery,
+    options?: ForecastResultsRequestOptions,
+  ): Promise<ForecastResultsData>;
+  getProductForecastResult(
+    runId: string,
+    productId: string,
+    options?: ForecastResultsRequestOptions,
+  ): Promise<ForecastProductResult>;
+}
+
+type DecimalWire = string | number;
+
+type ForecastResultMetricsWire = {
+  readonly model_name: string;
+  readonly mae: DecimalWire | null;
+  readonly rmse: DecimalWire | null;
+  readonly mape: DecimalWire | null;
+  readonly training_rows: number;
+  readonly validation_rows: number;
+  readonly total_products: number;
+  readonly fallback_products: number;
+  readonly created_at: string;
+};
+
+type ForecastResultOverviewWire = {
+  readonly run_id: string;
+  readonly status: 'completed';
+  readonly horizon_days: ForecastHorizon;
+  readonly requested_at: string;
+  readonly completed_at: string | null;
+  readonly model_name: string | null;
+  readonly total_products: number;
+  readonly total_predictions: number;
+  readonly forecast_start_date: string | null;
+  readonly forecast_end_date: string | null;
+  readonly total_predicted_demand: DecimalWire;
+  readonly average_predicted_demand: DecimalWire;
+  readonly metrics: ForecastResultMetricsWire | null;
+};
+
+type ForecastPredictionWire = {
+  readonly product_id: string;
+  readonly product_name: string;
+  readonly sku: string;
+  readonly category_id: string | null;
+  readonly category_name: string | null;
+  readonly unit: string;
+  readonly current_stock: DecimalWire | null;
+  readonly minimum_stock: DecimalWire | null;
+  readonly safety_stock: DecimalWire | null;
+  readonly forecast_date: string;
+  readonly predicted_demand: DecimalWire;
+  readonly model_name: string;
+};
+
+type ForecastPredictionPageWire = {
+  readonly predictions: readonly ForecastPredictionWire[];
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
+};
+
+type ForecastMetricsDataWire = {
+  readonly metrics: ForecastResultMetricsWire;
+};
+
+type ForecastChartMetadataWire = {
+  readonly run_id: string;
+  readonly horizon_days: ForecastHorizon;
+  readonly interval: ForecastResultChartInterval;
+};
+
+type ForecastChartPointWire = {
+  readonly period_start: string;
+  readonly predicted_demand: DecimalWire;
+  readonly actual_quantity: DecimalWire | null;
+};
+
+type ForecastChartDataWire = {
+  readonly metadata: ForecastChartMetadataWire;
+  readonly points: readonly ForecastChartPointWire[];
+};
+
+type ForecastProductResultPointWire = {
+  readonly forecast_date: string;
+  readonly predicted_demand: DecimalWire;
+  readonly actual_quantity: DecimalWire | null;
+  readonly model_name: string;
+};
+
+type ForecastProductResultWire = {
+  readonly run_id: string;
+  readonly horizon_days: ForecastHorizon;
+  readonly product_id: string;
+  readonly product_name: string;
+  readonly sku: string;
+  readonly category_id: string | null;
+  readonly category_name: string | null;
+  readonly unit: string;
+  readonly current_stock: DecimalWire | null;
+  readonly minimum_stock: DecimalWire | null;
+  readonly safety_stock: DecimalWire | null;
+  readonly total_predicted_demand: DecimalWire;
+  readonly points: readonly ForecastProductResultPointWire[];
+};
+
 /**
- * Normal-runtime adapter. Module 8 makes no backend or ML request and does not
- * manufacture forecast data. Backend integration will replace this adapter.
+ * Explicit unavailable fallback for isolated tests. It never manufactures
+ * forecast output or becomes the normal application adapter.
  */
 export function createUnavailableForecastResultsService(): ForecastResultsService {
   return {
@@ -663,6 +774,13 @@ export function createUnavailableForecastResultsService(): ForecastResultsServic
           'Forecast Results are not available yet.',
         ),
       ),
+    getProductForecastResult: () =>
+      Promise.reject(
+        new ForecastResultsServiceError(
+          'forecast_result_product_not_found',
+          'Forecast detail is not available for this product.',
+        ),
+      ),
   };
 }
 
@@ -670,7 +788,11 @@ export function createUnavailableForecastResultsService(): ForecastResultsServic
 export const FORECAST_RESULTS_E2E_STORAGE_KEY = 'invora-e2e-forecast-results-fixture';
 
 export type ForecastResultsE2EFixture =
-  | { readonly state: 'ready'; readonly data: ForecastResultsData }
+  | {
+      readonly state: 'ready';
+      readonly data: ForecastResultsData;
+      readonly productResults?: readonly ForecastProductResult[] | undefined;
+    }
   | { readonly state: 'not_ready' }
   | { readonly state: 'failed_run' }
   | { readonly state: 'error' };
@@ -775,6 +897,454 @@ function isForecastResultsData(value: unknown): value is ForecastResultsData {
   );
 }
 
+function isForecastProductResult(value: unknown): value is ForecastProductResult {
+  return (
+    isRecord(value) &&
+    typeof value.runId === 'string' &&
+    isForecastHorizon(value.horizonDays) &&
+    typeof value.productId === 'string' &&
+    typeof value.productName === 'string' &&
+    typeof value.sku === 'string' &&
+    isStringOrNull(value.categoryId) &&
+    isStringOrNull(value.categoryName) &&
+    typeof value.unit === 'string' &&
+    (value.currentStock === null || isFiniteNumber(value.currentStock)) &&
+    (value.minimumStock === null || isFiniteNumber(value.minimumStock)) &&
+    (value.safetyStock === null || isFiniteNumber(value.safetyStock)) &&
+    isFiniteNumber(value.totalPredictedDemand) &&
+    Array.isArray(value.points) &&
+    value.points.every(
+      (point) =>
+        isRecord(point) &&
+        typeof point.forecastDate === 'string' &&
+        isFiniteNumber(point.predictedDemand) &&
+        (point.actualQuantity === null || isFiniteNumber(point.actualQuantity)) &&
+        typeof point.modelName === 'string',
+    )
+  );
+}
+
+function isDateOnly(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isDecimalWire(value: unknown): value is DecimalWire {
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+  return (
+    typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))
+  );
+}
+
+function isNullableDecimalWire(value: unknown): value is DecimalWire | null {
+  return value === null || isDecimalWire(value);
+}
+
+function toDecimal(value: DecimalWire): number {
+  return typeof value === 'number' ? value : Number(value);
+}
+
+function isForecastResultMetricsWire(
+  value: unknown,
+): value is ForecastResultMetricsWire {
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.model_name) &&
+    isNullableDecimalWire(value.mae) &&
+    isNullableDecimalWire(value.rmse) &&
+    isNullableDecimalWire(value.mape) &&
+    isFiniteNumber(value.training_rows) &&
+    isFiniteNumber(value.validation_rows) &&
+    isFiniteNumber(value.total_products) &&
+    isFiniteNumber(value.fallback_products) &&
+    isNonEmptyString(value.created_at)
+  );
+}
+
+function isForecastResultOverviewWire(
+  value: unknown,
+): value is ForecastResultOverviewWire {
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.run_id) &&
+    value.status === 'completed' &&
+    isForecastHorizon(value.horizon_days) &&
+    isNonEmptyString(value.requested_at) &&
+    isNullableString(value.completed_at) &&
+    isNullableString(value.model_name) &&
+    isFiniteNumber(value.total_products) &&
+    isFiniteNumber(value.total_predictions) &&
+    (value.forecast_start_date === null || isDateOnly(value.forecast_start_date)) &&
+    (value.forecast_end_date === null || isDateOnly(value.forecast_end_date)) &&
+    isDecimalWire(value.total_predicted_demand) &&
+    isDecimalWire(value.average_predicted_demand) &&
+    (value.metrics === null || isForecastResultMetricsWire(value.metrics))
+  );
+}
+
+function isForecastPredictionWire(value: unknown): value is ForecastPredictionWire {
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.product_id) &&
+    isNonEmptyString(value.product_name) &&
+    isNonEmptyString(value.sku) &&
+    isNullableString(value.category_id) &&
+    isNullableString(value.category_name) &&
+    isNonEmptyString(value.unit) &&
+    isNullableDecimalWire(value.current_stock) &&
+    isNullableDecimalWire(value.minimum_stock) &&
+    isNullableDecimalWire(value.safety_stock) &&
+    isDateOnly(value.forecast_date) &&
+    isDecimalWire(value.predicted_demand) &&
+    isNonEmptyString(value.model_name)
+  );
+}
+
+function isForecastPredictionPageWire(
+  value: unknown,
+): value is ForecastPredictionPageWire {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.predictions) &&
+    value.predictions.every(isForecastPredictionWire) &&
+    isFiniteNumber(value.total) &&
+    isFiniteNumber(value.limit) &&
+    isFiniteNumber(value.offset)
+  );
+}
+
+function isForecastMetricsDataWire(value: unknown): value is ForecastMetricsDataWire {
+  return isRecord(value) && isForecastResultMetricsWire(value.metrics);
+}
+
+function isChartInterval(value: unknown): value is ForecastResultChartInterval {
+  return value === 'day' || value === 'week' || value === 'month';
+}
+
+function isForecastChartDataWire(value: unknown): value is ForecastChartDataWire {
+  if (!isRecord(value) || !isRecord(value.metadata) || !Array.isArray(value.points)) {
+    return false;
+  }
+  return (
+    isNonEmptyString(value.metadata.run_id) &&
+    isForecastHorizon(value.metadata.horizon_days) &&
+    isChartInterval(value.metadata.interval) &&
+    value.points.every(
+      (point) =>
+        isRecord(point) &&
+        isDateOnly(point.period_start) &&
+        isDecimalWire(point.predicted_demand) &&
+        isNullableDecimalWire(point.actual_quantity),
+    )
+  );
+}
+
+function isForecastProductResultWire(
+  value: unknown,
+): value is ForecastProductResultWire {
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.run_id) &&
+    isForecastHorizon(value.horizon_days) &&
+    isNonEmptyString(value.product_id) &&
+    isNonEmptyString(value.product_name) &&
+    isNonEmptyString(value.sku) &&
+    isNullableString(value.category_id) &&
+    isNullableString(value.category_name) &&
+    isNonEmptyString(value.unit) &&
+    isNullableDecimalWire(value.current_stock) &&
+    isNullableDecimalWire(value.minimum_stock) &&
+    isNullableDecimalWire(value.safety_stock) &&
+    isDecimalWire(value.total_predicted_demand) &&
+    Array.isArray(value.points) &&
+    value.points.every(
+      (point) =>
+        isRecord(point) &&
+        isDateOnly(point.forecast_date) &&
+        isDecimalWire(point.predicted_demand) &&
+        isNullableDecimalWire(point.actual_quantity) &&
+        isNonEmptyString(point.model_name),
+    )
+  );
+}
+
+function invalidForecastResultsResponse(message: string): ForecastResultsServiceError {
+  return new ForecastResultsServiceError('forecast_results_unavailable', message);
+}
+
+export function mapForecastResultMetricsResponse(
+  value: unknown,
+): ForecastResultMetrics {
+  if (!isForecastResultMetricsWire(value)) {
+    throw invalidForecastResultsResponse('Unable to read forecast metrics.');
+  }
+  return {
+    modelName: value.model_name,
+    mae: value.mae === null ? null : toDecimal(value.mae),
+    rmse: value.rmse === null ? null : toDecimal(value.rmse),
+    mape: value.mape === null ? null : toDecimal(value.mape),
+    trainingRows: value.training_rows,
+    validationRows: value.validation_rows,
+    totalProducts: value.total_products,
+    fallbackProducts: value.fallback_products,
+    createdAt: value.created_at,
+  };
+}
+
+/** Maps the verified Forecast Results overview DTO. */
+export function mapForecastResultOverviewResponse(
+  value: unknown,
+): ForecastResultOverview {
+  if (!isForecastResultOverviewWire(value)) {
+    throw invalidForecastResultsResponse('Unable to read forecast results.');
+  }
+  return {
+    runId: value.run_id,
+    status: value.status,
+    horizonDays: value.horizon_days,
+    requestedAt: value.requested_at,
+    completedAt: value.completed_at,
+    modelName: value.model_name,
+    totalProducts: value.total_products,
+    totalPredictions: value.total_predictions,
+    forecastStartDate: value.forecast_start_date,
+    forecastEndDate: value.forecast_end_date,
+    totalPredictedDemand: toDecimal(value.total_predicted_demand),
+    averagePredictedDemand: toDecimal(value.average_predicted_demand),
+    metrics:
+      value.metrics === null ? null : mapForecastResultMetricsResponse(value.metrics),
+  };
+}
+
+function mapForecastPrediction(value: ForecastPredictionWire): ForecastPrediction {
+  return {
+    productId: value.product_id,
+    productName: value.product_name,
+    sku: value.sku,
+    categoryId: value.category_id,
+    categoryName: value.category_name,
+    unit: value.unit,
+    currentStock: value.current_stock === null ? null : toDecimal(value.current_stock),
+    minimumStock: value.minimum_stock === null ? null : toDecimal(value.minimum_stock),
+    safetyStock: value.safety_stock === null ? null : toDecimal(value.safety_stock),
+    forecastDate: value.forecast_date,
+    predictedDemand: toDecimal(value.predicted_demand),
+    modelName: value.model_name,
+  };
+}
+
+/** Maps the backend offset-pagination response without deriving totals locally. */
+export function mapForecastPredictionPageResponse(
+  value: unknown,
+): ForecastPredictionPage {
+  if (!isForecastPredictionPageWire(value)) {
+    throw invalidForecastResultsResponse('Unable to read forecast predictions.');
+  }
+  return {
+    predictions: value.predictions.map(mapForecastPrediction),
+    total: value.total,
+    limit: value.limit,
+    offset: value.offset,
+  };
+}
+
+export function mapForecastMetricsDataResponse(value: unknown): ForecastResultMetrics {
+  if (!isForecastMetricsDataWire(value)) {
+    throw invalidForecastResultsResponse('Unable to read forecast metrics.');
+  }
+  return mapForecastResultMetricsResponse(value.metrics);
+}
+
+/** Maps chart metadata and date-only aggregate points from persisted backend data. */
+export function mapForecastChartResponse(value: unknown): ForecastResultChart {
+  if (!isForecastChartDataWire(value)) {
+    throw invalidForecastResultsResponse('Unable to read forecast comparison data.');
+  }
+  return {
+    runId: value.metadata.run_id,
+    horizonDays: value.metadata.horizon_days,
+    interval: value.metadata.interval,
+    points: value.points.map((point): ForecastResultChartPoint => ({
+      periodStart: point.period_start,
+      predictedDemand: toDecimal(point.predicted_demand),
+      actualQuantity:
+        point.actual_quantity === null ? null : toDecimal(point.actual_quantity),
+    })),
+  };
+}
+
+/** Maps the user-facing product-level Forecast Results DTO. */
+export function mapForecastProductResultResponse(
+  value: unknown,
+): ForecastProductResult {
+  if (!isForecastProductResultWire(value)) {
+    throw invalidForecastResultsResponse('Unable to read product forecast detail.');
+  }
+  return {
+    runId: value.run_id,
+    horizonDays: value.horizon_days,
+    productId: value.product_id,
+    productName: value.product_name,
+    sku: value.sku,
+    categoryId: value.category_id,
+    categoryName: value.category_name,
+    unit: value.unit,
+    currentStock: value.current_stock === null ? null : toDecimal(value.current_stock),
+    minimumStock: value.minimum_stock === null ? null : toDecimal(value.minimum_stock),
+    safetyStock: value.safety_stock === null ? null : toDecimal(value.safety_stock),
+    totalPredictedDemand: toDecimal(value.total_predicted_demand),
+    points: value.points.map((point): ForecastProductResultPoint => ({
+      forecastDate: point.forecast_date,
+      predictedDemand: toDecimal(point.predicted_demand),
+      actualQuantity:
+        point.actual_quantity === null ? null : toDecimal(point.actual_quantity),
+      modelName: point.model_name,
+    })),
+  };
+}
+
+function toForecastResultsServiceError(
+  error: unknown,
+  fallback: string,
+): ForecastResultsServiceError {
+  if (error instanceof ForecastResultsServiceError) {
+    return error;
+  }
+  if (isApiError(error) && error.code === 'forecast_results_not_ready') {
+    return new ForecastResultsServiceError('forecast_results_not_ready', error.message);
+  }
+  if (isApiError(error) && error.code === 'forecast_result_product_not_found') {
+    return new ForecastResultsServiceError(
+      'forecast_result_product_not_found',
+      'Forecast detail is not available for this product.',
+    );
+  }
+  return new ForecastResultsServiceError(
+    'forecast_results_unavailable',
+    isApiError(error) ? error.message : fallback,
+  );
+}
+
+function toForecastResultsQueryParams(
+  query: ForecastResultsQuery,
+): Record<string, string | number | null> {
+  const search = query.search?.trim();
+  return {
+    search: search === undefined || search === '' ? null : search,
+    date_from: query.dateFrom,
+    date_to: query.dateTo,
+    limit: query.limit,
+    offset: query.offset,
+    sort_by: query.sortBy,
+    sort_order: query.sortOrder,
+  };
+}
+
+function toForecastChartQueryParams(
+  query: ForecastResultsQuery,
+): Record<string, string | null> {
+  return {
+    date_from: query.dateFrom,
+    date_to: query.dateTo,
+    interval: query.chartInterval,
+  };
+}
+
+/**
+ * Real read-only Forecast Results adapter. Chart failures remain isolated so
+ * overview, predictions, and persisted metrics stay usable.
+ */
+export function createHttpForecastResultsService(
+  client: ApiClient = apiClient,
+): ForecastResultsService {
+  return {
+    async getForecastResults(query, options) {
+      const config =
+        options?.signal === undefined ? undefined : { signal: options.signal };
+      const encodedRunId = encodeURIComponent(query.runId);
+      try {
+        const overview = mapForecastResultOverviewResponse(
+          await client.get<unknown>(
+            `/api/v1/forecast-results/runs/${encodedRunId}`,
+            config,
+          ),
+        );
+        const [predictions, metrics] = await Promise.all([
+          client
+            .get<unknown>(`/api/v1/forecast-results/runs/${encodedRunId}/predictions`, {
+              ...(config ?? {}),
+              query: toForecastResultsQueryParams(query),
+            })
+            .then(mapForecastPredictionPageResponse),
+          client
+            .get<unknown>(
+              `/api/v1/forecast-results/runs/${encodedRunId}/metrics`,
+              config,
+            )
+            .then(mapForecastMetricsDataResponse)
+            .catch((error: unknown): ForecastResultMetrics | null => {
+              if (
+                isApiError(error) &&
+                error.code === 'forecast_result_metrics_not_found'
+              ) {
+                return null;
+              }
+              throw error;
+            }),
+        ]);
+
+        try {
+          const chart = mapForecastChartResponse(
+            await client.get<unknown>(
+              `/api/v1/forecast-results/runs/${encodedRunId}/chart`,
+              {
+                ...(config ?? {}),
+                query: toForecastChartQueryParams(query),
+              },
+            ),
+          );
+          return { overview, predictions, metrics, chart };
+        } catch (error: unknown) {
+          return {
+            overview,
+            predictions,
+            metrics,
+            chart: null,
+            chartError: toForecastResultsServiceError(
+              error,
+              'Unable to load forecast comparison data.',
+            ).message,
+          };
+        }
+      } catch (error: unknown) {
+        throw toForecastResultsServiceError(error, 'Unable to load Forecast Results.');
+      }
+    },
+    async getProductForecastResult(runId, productId, options) {
+      try {
+        const response = await client.get<unknown>(
+          `/api/v1/forecast-results/runs/${encodeURIComponent(runId)}/products/${encodeURIComponent(productId)}`,
+          options?.signal === undefined ? undefined : { signal: options.signal },
+        );
+        const detail = mapForecastProductResultResponse(response);
+        if (detail.runId !== runId || detail.productId !== productId) {
+          throw new ForecastResultsServiceError(
+            'forecast_result_product_not_found',
+            'Forecast detail is not available for this product.',
+          );
+        }
+        return detail;
+      } catch (error: unknown) {
+        throw toForecastResultsServiceError(
+          error,
+          'Unable to load product forecast detail.',
+        );
+      }
+    },
+  };
+}
+
 function readForecastResultsE2EFixture(): ForecastResultsE2EFixture | null {
   if (typeof window === 'undefined') {
     return null;
@@ -802,7 +1372,20 @@ function readForecastResultsE2EFixture(): ForecastResultsE2EFixture | null {
       return { state: 'error' };
     }
     if (value.state === 'ready' && isForecastResultsData(value.data)) {
-      return { state: 'ready', data: value.data };
+      if (
+        value.productResults !== undefined &&
+        (!Array.isArray(value.productResults) ||
+          !value.productResults.every(isForecastProductResult))
+      ) {
+        return null;
+      }
+      return {
+        state: 'ready',
+        data: value.data,
+        ...(value.productResults === undefined
+          ? {}
+          : { productResults: value.productResults }),
+      };
     }
   } catch {
     // Malformed test data must never crash a route or become forecast output.
@@ -905,6 +1488,28 @@ export function createE2EForecastResultsService(): ForecastResultsService {
         chart: filterChart(fixture.data.chart, query),
       });
     },
+    getProductForecastResult: (runId, productId) => {
+      const fixture = readForecastResultsE2EFixture();
+      if (fixture === null || fixture.state !== 'ready') {
+        return Promise.reject(
+          new ForecastResultsServiceError(
+            'forecast_result_product_not_found',
+            'Forecast detail is not available for this product.',
+          ),
+        );
+      }
+      const productResult = fixture.productResults?.find(
+        (detail) => detail.runId === runId && detail.productId === productId,
+      );
+      return productResult === undefined
+        ? Promise.reject(
+            new ForecastResultsServiceError(
+              'forecast_result_product_not_found',
+              'Forecast detail is not available for this product.',
+            ),
+          )
+        : Promise.resolve(productResult);
+    },
   };
 }
 
@@ -915,4 +1520,4 @@ const isForecastResultsE2ETestMode =
 export const forecastResultsService: ForecastResultsService =
   isForecastResultsE2ETestMode
     ? createE2EForecastResultsService()
-    : createUnavailableForecastResultsService();
+    : createHttpForecastResultsService();

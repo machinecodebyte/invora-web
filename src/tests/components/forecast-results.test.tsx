@@ -10,6 +10,7 @@ import { ForecastResultsView } from '@/features/forecasting/components/forecast-
 import type { ForecastResultsData } from '@/features/forecasting/types';
 import {
   EMPTY_FORECAST_RESULTS_DATA,
+  FORECAST_PRODUCT_RESULT,
   FORECAST_RESULTS_DATA,
   FORECAST_RESULTS_RUN_ID,
   createForecastResultsTestService,
@@ -33,15 +34,23 @@ describe('ForecastResultsView', () => {
       />,
     );
 
-    expect(await screen.findByRole('heading', { name: 'Forecast summary' })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { name: 'Forecast summary' }),
+    ).toBeVisible();
     expect(screen.getAllByText('Zero-demand Widget')[0]).toBeVisible();
     expect(screen.getByRole('cell', { name: '0' })).toBeVisible();
     expect(screen.getByText('Actual data is unavailable for 1 period.')).toBeVisible();
-    expect(screen.getByRole('img', { name: /Actual observations are available for 2 periods/ })).toBeVisible();
+    expect(
+      screen.getByRole('img', {
+        name: /Actual observations are available for 2 periods/,
+      }),
+    ).toBeVisible();
     expect(screen.getByText('MAE')).toBeVisible();
     expect(screen.getByText('RMSE')).toBeVisible();
     expect(screen.getByText('MAPE')).toBeVisible();
-    expect(screen.queryByRole('columnheader', { name: /actual/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('columnheader', { name: /actual/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('validates date filters and applies backend-supported product or SKU search', async () => {
@@ -57,7 +66,9 @@ describe('ForecastResultsView', () => {
     await user.type(screen.getByLabelText('Forecast date from'), '2026-06-04');
     await user.type(screen.getByLabelText('Forecast date to'), '2026-06-02');
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
-    expect(await screen.findByText('End date must be on or after the start date.')).toBeVisible();
+    expect(
+      await screen.findByText('End date must be on or after the start date.'),
+    ).toBeVisible();
 
     await user.clear(screen.getByLabelText('Forecast date from'));
     await user.clear(screen.getByLabelText('Forecast date to'));
@@ -65,14 +76,73 @@ describe('ForecastResultsView', () => {
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
 
     expect(await screen.findByText('Blue Widget')).toBeVisible();
-    await waitFor(() => expect(screen.queryByText('Zero-demand Widget')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText('Zero-demand Widget')).not.toBeInTheDocument(),
+    );
+  });
+
+  it('loads a product-level persisted Forecast Result from a prediction row', async () => {
+    const user = userEvent.setup();
+    render(
+      <ForecastResultsView
+        runId={FORECAST_RESULTS_RUN_ID}
+        service={createForecastResultsTestService()}
+      />,
+    );
+    await screen.findByRole('table', { name: 'Forecast predictions' });
+
+    await user.click(
+      screen
+        .getAllByRole('button', {
+          name: 'View forecast detail for Zero-demand Widget',
+        })
+        .at(0)!,
+    );
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Product forecast detail' }),
+    ).toBeVisible();
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      FORECAST_PRODUCT_RESULT.productName,
+    );
+    expect(
+      screen.getByRole('table', { name: 'Product forecast detail' }),
+    ).toBeVisible();
+  });
+
+  it('keeps product-detail failure contained inside its dialog', async () => {
+    const user = userEvent.setup();
+    render(
+      <ForecastResultsView
+        runId={FORECAST_RESULTS_RUN_ID}
+        service={createForecastResultsTestService({
+          productError: new Error('backend trace'),
+        })}
+      />,
+    );
+    await screen.findByRole('table', { name: 'Forecast predictions' });
+
+    await user.click(
+      screen
+        .getAllByRole('button', {
+          name: 'View forecast detail for Zero-demand Widget',
+        })
+        .at(0)!,
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to load product forecast detail.',
+    );
+    expect(screen.getByRole('table', { name: 'Forecast predictions' })).toBeVisible();
   });
 
   it('renders an honest empty result state', async () => {
     render(
       <ForecastResultsView
         runId={EMPTY_FORECAST_RESULTS_DATA.overview.runId}
-        service={createForecastResultsTestService({ data: EMPTY_FORECAST_RESULTS_DATA })}
+        service={createForecastResultsTestService({
+          data: EMPTY_FORECAST_RESULTS_DATA,
+        })}
       />,
     );
     expect(await screen.findByText('No forecast results available.')).toBeVisible();
@@ -127,7 +197,9 @@ describe('ForecastResultsView', () => {
     render(
       <ForecastResultsView
         runId={FORECAST_RESULTS_RUN_ID}
-        service={createForecastResultsTestService({ error: new Error('database trace') })}
+        service={createForecastResultsTestService({
+          error: new Error('database trace'),
+        })}
       />,
     );
     expect(await screen.findByText('Unable to load Forecast Results.')).toBeVisible();
@@ -141,14 +213,19 @@ describe('ForecastResultsView', () => {
         new Promise<ForecastResultsData>((resolve) => {
           resolveData = resolve;
         }),
+      getProductForecastResult: () => Promise.resolve(FORECAST_PRODUCT_RESULT),
     };
     render(<ForecastResultsView runId={FORECAST_RESULTS_RUN_ID} service={service} />);
 
-    expect(screen.getByRole('status', { name: 'Loading Forecast Results' })).toBeVisible();
+    expect(
+      screen.getByRole('status', { name: 'Loading Forecast Results' }),
+    ).toBeVisible();
     if (resolveData === undefined) {
       throw new Error('Result resolver was not initialized.');
     }
     resolveData(FORECAST_RESULTS_DATA);
-    expect(await screen.findByRole('heading', { name: 'Forecast summary' })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { name: 'Forecast summary' }),
+    ).toBeVisible();
   });
 });

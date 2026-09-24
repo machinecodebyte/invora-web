@@ -88,40 +88,41 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 
 ### Unit tests — `src/tests/unit/`
 
-| File                               | Covers                                                                                                                                                                                                                           |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `utils.test.ts`                    | `cn` conflict resolution, number/date formatting incl. invalid input, URL joining                                                                                                                                                |
-| `constants.test.ts`                | Brand strings, `API_V1_PREFIX` matching the backend contract, timeout sanity                                                                                                                                                     |
-| `env.test.ts`                      | Env validation: missing/empty/relative/non-http URLs, trailing-slash stripping, environment enum, non-throwing probe                                                                                                             |
-| `api-error.test.ts`                | Envelope parsing, safe status fallbacks, **no leakage of HTML/traceback bodies**, message truncation, detail normalization, correlation id, type guards                                                                          |
-| `api-client.test.ts`               | Query serialization, envelope unwrapping, JSON vs FormData bodies, all verbs, 204/empty bodies, text/blob/void formats, auth headers, header precedence, HTTP/network/parse errors, timeout vs caller abort, base-URL resolution |
-| `auth.test.ts`                     | Expiry maths, memory storage, store lifecycle, subscribe/unsubscribe, snapshot stability, injected storage, instance isolation                                                                                                   |
-| `query-client.test.ts`             | Retry policy per status class, backoff and cap, client defaults, no mutation retries, per-call independence                                                                                                                      |
-| `toast.test.ts`                    | Queueing, dismissal, auto-dismiss timing, timer cancellation, notification semantics, snapshot stability                                                                                                                         |
-| `forms.test.ts`                    | API validation errors mapped to fields, unknown/field-less issues routed to form level, non-`ApiError` inputs ignored                                                                                                            |
-| `logger.test.ts`                   | Redaction (incl. nested and case-insensitive), level gating in production, behavior when env is misconfigured                                                                                                                    |
-| `pagination.test.ts`               | `hasMorePages`, `currentPageNumber`, `totalPageCount`, divide-by-zero guards                                                                                                                                                     |
-| `auth-schemas.test.ts`             | Backend-aligned email normalization, login requirements, registration password rules, confirmation mismatch, and UI-only confirmation omission                                                                                   |
-| `auth-api.test.ts`                 | Unavailable default adapter, deterministic E2E adapter, and test-state cleanup                                                                                                                                                   |
-| `auth-redirects.test.ts`           | Internal return paths, external/protocol-relative/backslash rejection, malformed/default fallback                                                                                                                                |
-| `dashboard-api.test.ts`            | Real Summary route/header mapping, snake_case/camelCase mapper coverage, Decimal/date/null handling, safe failures, and isolated Playwright fixture state                                                                        |
-| `dashboard-api-contract.test.ts`   | MSW contract coverage for `GET /api/v1/dashboard/summary`, authenticated header, success envelope, omitted UI-invented filters, and safe failure envelope                                                                        |
-| `inventory-schemas.test.ts`        | Backend-aligned stock-in/out, absolute adjustment, signed correction, zero/negative, decimal precision, size, and reason normalization rules                                                                                     |
-| `inventory-api.test.ts`            | Unavailable default service, explicit low-stock projection, deterministic test-only movement semantics, insufficient-stock safety, and malformed fixture fallback                                                                |
-| `sales-upload-schemas.test.ts`     | CSV extension, MIME, empty/5 MiB limit, normalized headers, missing/duplicate-column preflight behavior                                                                                                                          |
-| `sales-upload-api.test.ts`         | Unavailable normal service, deterministic progress/result fixture, safe missing-fixture failure                                                                                                                                  |
-| `sales-history-schemas.test.ts`    | Inclusive same-day date validation, cleared dates, malformed dates, and start-after-end rejection                                                                                                                                |
-| `sales-history-api.test.ts`        | Honest unavailable Sales Transaction list/trend service boundary with no runtime request                                                                                                                                         |
-| `forecast-run-schemas.test.ts`     | Backend-supported 7/15/30-day horizons, missing/unsupported rejection, and native-select request normalization                                                                                                                   |
-| `forecast-run-api.test.ts`         | Unavailable normal service, deterministic session-scoped lifecycle adapter, and malformed-fixture safety                                                                                                                         |
-| `forecast-results-schemas.test.ts` | Result filter validation, date-range safety, search normalization, and UUID run-id validation                                                                                                                                    |
-| `forecast-results-api.test.ts`     | Honest unavailable normal Forecast Results service boundary with no runtime request                                                                                                                                              |
-| `recommendations-schemas.test.ts`  | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
-| `recommendations-api.test.ts`      | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                               |
-| `reports-schemas.test.ts`          | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                               |
-| `reports-api.test.ts`              | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
-| `settings-schemas.test.ts`         | Backend-aligned forecast choices/history window and zero-safe three-decimal absolute safety-stock validation                                                                                                                     |
-| `settings-api.test.ts`             | Honest unavailable normal Settings service boundary with no runtime request or persistence                                                                                                                                       |
+| File                                    | Covers                                                                                                                                                                                                                           |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `utils.test.ts`                         | `cn` conflict resolution, number/date formatting incl. invalid input, URL joining                                                                                                                                                |
+| `constants.test.ts`                     | Brand strings, `API_V1_PREFIX` matching the backend contract, timeout sanity                                                                                                                                                     |
+| `env.test.ts`                           | Env validation: missing/empty/relative/non-http URLs, trailing-slash stripping, environment enum, non-throwing probe                                                                                                             |
+| `api-error.test.ts`                     | Envelope parsing, safe status fallbacks, **no leakage of HTML/traceback bodies**, message truncation, detail normalization, correlation id, type guards                                                                          |
+| `api-client.test.ts`                    | Query serialization, envelope unwrapping, JSON vs FormData bodies, all verbs, 204/empty bodies, text/blob/void formats, auth headers, header precedence, HTTP/network/parse errors, timeout vs caller abort, base-URL resolution |
+| `auth.test.ts`                          | Expiry maths, memory storage, store lifecycle, subscribe/unsubscribe, snapshot stability, injected storage, instance isolation                                                                                                   |
+| `query-client.test.ts`                  | Retry policy per status class, backoff and cap, client defaults, no mutation retries, per-call independence                                                                                                                      |
+| `toast.test.ts`                         | Queueing, dismissal, auto-dismiss timing, timer cancellation, notification semantics, snapshot stability                                                                                                                         |
+| `forms.test.ts`                         | API validation errors mapped to fields, unknown/field-less issues routed to form level, non-`ApiError` inputs ignored                                                                                                            |
+| `logger.test.ts`                        | Redaction (incl. nested and case-insensitive), level gating in production, behavior when env is misconfigured                                                                                                                    |
+| `pagination.test.ts`                    | `hasMorePages`, `currentPageNumber`, `totalPageCount`, divide-by-zero guards                                                                                                                                                     |
+| `auth-schemas.test.ts`                  | Backend-aligned email normalization, login requirements, registration password rules, confirmation mismatch, and UI-only confirmation omission                                                                                   |
+| `auth-api.test.ts`                      | Unavailable default adapter, deterministic E2E adapter, and test-state cleanup                                                                                                                                                   |
+| `auth-redirects.test.ts`                | Internal return paths, external/protocol-relative/backslash rejection, malformed/default fallback                                                                                                                                |
+| `dashboard-api.test.ts`                 | Real Summary route/header mapping, snake_case/camelCase mapper coverage, Decimal/date/null handling, safe failures, and isolated Playwright fixture state                                                                        |
+| `dashboard-api-contract.test.ts`        | MSW contract coverage for `GET /api/v1/dashboard/summary`, authenticated header, success envelope, omitted UI-invented filters, and safe failure envelope                                                                        |
+| `inventory-schemas.test.ts`             | Backend-aligned stock-in/out, absolute adjustment, signed correction, zero/negative, decimal precision, size, and reason normalization rules                                                                                     |
+| `inventory-api.test.ts`                 | Unavailable default service, explicit low-stock projection, deterministic test-only movement semantics, insufficient-stock safety, and malformed fixture fallback                                                                |
+| `sales-upload-schemas.test.ts`          | CSV extension, MIME, empty/5 MiB limit, normalized headers, missing/duplicate-column preflight behavior                                                                                                                          |
+| `sales-upload-api.test.ts`              | Unavailable normal service, deterministic progress/result fixture, safe missing-fixture failure                                                                                                                                  |
+| `sales-history-schemas.test.ts`         | Inclusive same-day date validation, cleared dates, malformed dates, and start-after-end rejection                                                                                                                                |
+| `sales-history-api.test.ts`             | Honest unavailable Sales Transaction list/trend service boundary with no runtime request                                                                                                                                         |
+| `forecast-run-schemas.test.ts`          | Backend-supported 7/15/30-day horizons, missing/unsupported rejection, and native-select request normalization                                                                                                                   |
+| `forecast-run-api.test.ts`              | Unavailable normal service, deterministic session-scoped lifecycle adapter, and malformed-fixture safety                                                                                                                         |
+| `forecast-results-schemas.test.ts`      | Result filter validation, date-range safety, search normalization, and UUID run-id validation                                                                                                                                    |
+| `forecast-results-api.test.ts`          | Real Forecast Results DTO/envelope mapping, decimal/date-only integrity, exact route/query mapping, not-ready mapping, and isolated chart failure                                                                                |
+| `forecast-results-api-contract.test.ts` | MSW coverage for authenticated overview/predictions/metrics/chart/product-detail routes, backend pagination, supported filters, and safe error envelopes                                                                         |
+| `recommendations-schemas.test.ts`       | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
+| `recommendations-api.test.ts`           | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                               |
+| `reports-schemas.test.ts`               | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                               |
+| `reports-api.test.ts`                   | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
+| `settings-schemas.test.ts`              | Backend-aligned forecast choices/history window and zero-safe three-decimal absolute safety-stock validation                                                                                                                     |
+| `settings-api.test.ts`                  | Honest unavailable normal Settings service boundary with no runtime request or persistence                                                                                                                                       |
 
 ### Component tests — `src/tests/components/`
 
@@ -307,12 +308,15 @@ process route or Forecast Results.
 
 ### Forecast Results tests
 
-Forecast Results unit and component tests cover validated UUID selection, the
-normal no-request service boundary, product/SKU and inclusive forecast-date
-filter validation, loading, completed-run empty, not-ready, failed-run, and safe
-error states. They assert that zero prediction/metric values remain visible,
-nullable actual observations are not treated as zero, the table contains only its
-backend-supported columns, and the comparison SVG has an accessible summary.
+Forecast Results unit, MSW contract, and component tests cover validated UUID
+selection; real envelope/route/query/auth-header mapping for overview,
+predictions, metrics, chart, and product detail; decimal and date-only mapping;
+backend pagination; missing metrics; not-ready; safe product-detail absence; and
+mandatory chart-failure isolation. Component coverage also includes loading,
+completed-run empty, failed-fixture, filtering, accessibility, and the
+on-demand product-detail dialog. They assert that zero prediction/metric values
+remain visible, nullable actual observations are not treated as zero, and the
+frontend never manufactures Result values.
 
 `e2e/forecast-results.spec.ts` covers unauthenticated redirect, authenticated
 no-selection, populated summary/metrics/table/chart rendering, zero and missing
@@ -320,6 +324,20 @@ actual values, search/date validation, empty, not-ready, failed-run, safe-error,
 and 375×667 overflow behavior. The suite uses session-scoped fixtures only under
 `NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE=true`; it makes no FastAPI or ML
 pipeline request.
+
+#### Phase 7 integration update
+
+The prior no-request statement above is historical Module 8 documentation.
+Phase 7 replaces normal-runtime Forecast Results transport with the real shared
+authenticated adapter. The focused tests now cover FastAPI envelopes, exact
+overview/predictions/metrics/chart/product-detail route and query mapping,
+decimal/date-only conversion, missing metrics, not-ready, safe detail absence,
+and mandatory chart-failure isolation. The deterministic Result suite also now
+covers product detail. `e2e/forecast-results.real.spec.ts` is an opt-in
+cross-stack contract enabled by `PLAYWRIGHT_FORECAST_RESULTS_REAL_BACKEND=true`;
+it creates isolated product/sales prerequisites, completes a frontend Forecast
+Run through the worker, opens the completed-run Result link, and verifies all
+five Result reads. It requires FastAPI, PostgreSQL, Redis, and an RQ worker.
 
 ### Recommendations tests
 

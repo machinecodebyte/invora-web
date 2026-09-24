@@ -57,7 +57,9 @@ describe('ForecastRunView', () => {
     await user.click(screen.getByRole('button', { name: 'Refresh status' }));
     expect(await screen.findByText('Current status: Completed')).toBeVisible();
     expect(
-      screen.getByText(/Detailed forecast results are not shown in this module\./),
+      screen.getByText(
+        'The forecast run completed. View its persisted result data on the Forecast Results page.',
+      ),
     ).toBeVisible();
     expect(
       screen.queryByText(/test-only internal execution detail/),
@@ -179,6 +181,10 @@ describe('ForecastRunView', () => {
       await vi.advanceTimersByTimeAsync(3_000);
     });
     expect(screen.getByText('Current status: Completed')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'View forecast results' })).toHaveAttribute(
+      'href',
+      `/forecasts/results?runId=${FORECAST_RUN_COMPLETED.id}`,
+    );
     expect(getForecastRunStatus).toHaveBeenCalledTimes(1);
 
     await act(async () => {

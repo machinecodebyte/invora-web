@@ -879,3 +879,45 @@ unintegrated feature boundary.
 > Frontend Forecast Run tracking is a user-experience boundary only. FastAPI
 > independently enforces authentication, ownership, validation, queueing, and
 > worker-side processing.
+
+## Integration Phase 7 - Forecast Results
+
+`features/forecasting/api.ts` keeps Forecast Results transport separate from
+Forecast Run orchestration. Normal runtime selects the shared authenticated
+`ApiClient` adapter; the existing browser fixture adapter is selected only when
+`NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE=true`.
+
+```text
+GET /forecast-results/runs/{runId}                     -> ForecastResultOverview
+GET /forecast-results/runs/{runId}/predictions         -> ForecastPredictionPage
+GET /forecast-results/runs/{runId}/metrics             -> ForecastResultMetrics | null
+GET /forecast-results/runs/{runId}/chart               -> ForecastResultChart | chartError
+GET /forecast-results/runs/{runId}/products/{productId}-> ForecastProductResult
+```
+
+The composed Results read validates the UUID run ID before it starts, carries
+search/date/offset inputs only to the supported prediction and chart query
+parameters, sends cancellation signals through `ApiClient`, and aborts obsolete
+work on filter, page, detail-selection, or unmount changes. Overview is read
+first; predictions and metrics are then read in parallel. A missing metrics
+record maps to `null`. Chart failure is deliberately isolated into `chartError`,
+so persisted overview, predictions, and metrics remain renderable. Product
+detail uses its own `{runId, productId}` key and an on-demand dialog opened from
+a prediction row.
+
+FastAPI remains authoritative for forecast availability, ownership, pagination,
+filtering, prediction values, model metrics, actual-versus-predicted aggregates,
+and product detail. The frontend validates/mappings only: it does not compute
+predictions, aggregate chart data, derive metrics, invoke ML, poll Results, or
+call Recommendations. The one Phase 6 compatibility addition is a completed-run
+link to `/forecasts/results?runId=...`; it does not change run creation, queueing,
+or worker tracking.
+
+Current backend Result reads expose `forecast_results_not_ready` when no
+completed persisted output is available; they do not expose a distinct failed-run
+Result error. The legacy `failed_run` UI state remains deterministic-fixture
+coverage only and is not synthesized from a live backend response.
+
+> Frontend Forecast Results route protection and UI state are user-experience
+> controls only. FastAPI independently enforces authentication, ownership,
+> validation, availability, and authorization for every Results endpoint.

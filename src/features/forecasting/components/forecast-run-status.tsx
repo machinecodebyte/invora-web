@@ -1,4 +1,6 @@
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
+import { buttonClassName, Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { ForecastRunViewState } from '@/features/forecasting/types';
+import { ROUTES } from '@/lib/constants';
 
 export interface ForecastRunStatusProps {
   readonly state: Exclude<
@@ -64,7 +67,7 @@ function executionLabel(state: ForecastRunStatusProps['state']): string | null {
   }
 }
 
-/** Status-only surface; it deliberately does not expose forecast results or progress percentages. */
+/** Run lifecycle status; completed runs link to the separate read-only Results route. */
 export function ForecastRunStatus({
   state,
   onRefresh,
@@ -80,7 +83,7 @@ export function ForecastRunStatus({
     state.status === 'queue_error';
   const description =
     state.status === 'completed'
-      ? 'The forecast run completed. Detailed forecast results are not shown in this module.'
+      ? 'The forecast run completed. View its persisted result data on the Forecast Results page.'
       : state.status === 'failed'
         ? state.message
         : state.status === 'queue_error'
@@ -150,6 +153,14 @@ export function ForecastRunStatus({
             <Button variant="secondary" onClick={onStartAnother}>
               Start another forecast
             </Button>
+          ) : null}
+          {state.status === 'completed' && run !== null ? (
+            <Link
+              href={`${ROUTES.forecastResults}?runId=${encodeURIComponent(run.id)}`}
+              className={buttonClassName()}
+            >
+              View forecast results
+            </Link>
           ) : null}
         </div>
       </CardContent>

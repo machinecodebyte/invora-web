@@ -12,10 +12,10 @@ Quick start for running the Invora frontend locally. For the long-form version
 - A Chromium download for Playwright (one-time, see [E2E Testing](#e2e-testing))
 
 No database, Redis, or backend service is required for the deterministic
-frontend test suite. Normal Auth, Product Catalog, and Inventory usage require
-the configured FastAPI service; Dashboard, Sales Upload, Sales History, Forecast
-Run, Forecast Results, Recommendations, Reports, and Settings still make no
-production API calls.
+frontend test suite. Normal Auth, Product Catalog, Inventory, Sales Upload,
+Sales History, Dashboard, Forecast Run, and Forecast Results usage require the
+configured FastAPI service; Recommendations, Reports, and Settings remain
+separate integrations.
 
 ## Installation
 
@@ -335,6 +335,18 @@ PostgreSQL, Redis, and RQ-worker stack to run the opt-in live Forecast Run
 browser contract. It creates only unique test prerequisites and never enables
 Forecast Results or job-administration UI.
 
+For the opt-in live Forecast Results contract, use the same controlled stack:
+
+```powershell
+$env:PLAYWRIGHT_FORECAST_RESULTS_REAL_BACKEND='true'
+$env:NEXT_PUBLIC_API_BASE_URL='http://localhost:8000'
+npx playwright test e2e/forecast-results.real.spec.ts
+```
+
+It completes a real frontend run, follows the completed-run Result link, and
+checks the five authenticated Result reads without seeding predictions or
+calling the synchronous processing endpoint.
+
 ## Current Forecast Results Scope
 
 Implemented:
@@ -342,16 +354,20 @@ Implemented:
 - Protected `/forecasts/results` route using the existing Auth boundary and app shell
 - Validated UUID `runId` selection with no latest-run guessing or untrusted route use
 - Completed-run summary, backend-produced MAE/RMSE/MAPE, responsive prediction table,
-  product/SKU and inclusive forecast-date filters, offset/limit pagination, and an
-  accessible actual-versus-predicted SVG chart
+  product/SKU and inclusive forecast-date filters, offset/limit pagination, an
+  accessible actual-versus-predicted SVG chart, and on-demand product detail
 - Explicit loading, no-selection, invalid-id, empty, not-ready, failed-run, filtered-empty,
   and safe error states; zero values stay visible and missing actuals remain unavailable
-- Typed no-network service boundary plus deterministic unit/component and Playwright fixtures
+- Real shared-client read adapter for persisted overview, predictions, metrics,
+  chart, and product detail, plus deterministic unit/component and Playwright fixtures
 
-**Real Forecast Results API and ML pipeline integration are intentionally not
-enabled.** Normal builds make no request and contain no forecast result data.
-Only the Playwright-managed test build reads isolated session-scoped fixtures;
-it never contacts FastAPI or stores production forecast data.
+**Forecast Result reads are enabled; ML processing remains intentionally
+backend-owned.** Normal builds make only authenticated read requests and never
+calculate predictions, metrics, or chart data. The completed Forecast Run status
+links to its Results route. Only the Playwright-managed deterministic test build
+reads isolated session-scoped fixtures; an opt-in live Result contract requires
+FastAPI, PostgreSQL, Redis, and an RQ worker through
+`PLAYWRIGHT_FORECAST_RESULTS_REAL_BACKEND=true`.
 
 ## Current Recommendations Scope
 
@@ -429,7 +445,7 @@ generic contract. Module 12 adds no route, provider, store, API call, backend
 connection, or business data.
 
 **Current project status:** Frontend implementation modules 0-12 are complete.
-Integration Phases 1, 2/2B, 3, 4, 5, and 6 are complete for Foundation/Auth,
-Products, Inventory, Sales, Dashboard Summary, and Forecast Run/Background Jobs.
-Forecast Results, Recommendations, Reports, Settings, and other deferred
+Integration Phases 1, 2/2B, 3, 4, 5, 6, and 7 are complete for Foundation/Auth,
+Products, Inventory, Sales, Dashboard Summary, Forecast Run/Background Jobs, and
+Forecast Results. Recommendations, Reports, Settings, and other deferred
 business integrations remain separate phases.

@@ -281,13 +281,20 @@ FastAPI/PostgreSQL/Redis/RQ-worker stack and run
 
 `/forecasts/results` is the protected Module 8 completed-run result surface. It
 requires a validated UUID `runId` query and deliberately has no “latest run”
-fallback. Its normal service makes no request and supplies no local forecast
+fallback. Its normal service uses the shared authenticated client for the five
+read-only persisted Forecast Results endpoints and supplies no local forecast
 data. The Playwright-managed build alone sets
 `NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE=true`; the adapter reads only
 test-supplied, isolated `sessionStorage` fixtures for populated, empty,
-not-ready, failed, and safe-error flows. It never connects to FastAPI or an ML
-pipeline. Actual chart observations remain nullable; the table does not invent
-actual-demand fields.
+not-ready, failed, and safe-error flows. Actual chart observations remain
+nullable; the table does not invent actual-demand fields. Normal runtime maps
+only backend-persisted overview, predictions, metrics, chart, and product detail;
+it does not run ML, calculate values, or poll Results. Chart failure is isolated
+from the remaining Result sections. The completed Forecast Run status links to
+this route. For an opt-in live browser contract, start FastAPI, PostgreSQL,
+Redis, and an RQ worker, then set
+`PLAYWRIGHT_FORECAST_RESULTS_REAL_BACKEND=true` and run
+`e2e/forecast-results.real.spec.ts`.
 
 ### Recommendations E2E behavior
 

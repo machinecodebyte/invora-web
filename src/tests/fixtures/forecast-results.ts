@@ -4,6 +4,7 @@ import {
 } from '@/features/forecasting/api';
 import type {
   ForecastPredictionPage,
+  ForecastProductResult,
   ForecastResultsData,
   ForecastResultsQuery,
 } from '@/features/forecasting/types';
@@ -129,7 +130,39 @@ export const EMPTY_FORECAST_RESULTS_DATA: ForecastResultsData = {
   },
 };
 
-function applyQuery(data: ForecastResultsData, query: ForecastResultsQuery): ForecastResultsData {
+export const FORECAST_PRODUCT_RESULT: ForecastProductResult = {
+  runId: FORECAST_RESULTS_RUN_ID,
+  horizonDays: 7,
+  productId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  productName: 'Zero-demand Widget',
+  sku: 'ZERO-001',
+  categoryId: null,
+  categoryName: null,
+  unit: 'units',
+  currentStock: null,
+  minimumStock: null,
+  safetyStock: null,
+  totalPredictedDemand: 9,
+  points: [
+    {
+      forecastDate: '2026-06-02',
+      predictedDemand: 0,
+      actualQuantity: 0,
+      modelName: 'test-demand-model',
+    },
+    {
+      forecastDate: '2026-06-04',
+      predictedDemand: 9,
+      actualQuantity: 7,
+      modelName: 'test-demand-model',
+    },
+  ],
+};
+
+function applyQuery(
+  data: ForecastResultsData,
+  query: ForecastResultsQuery,
+): ForecastResultsData {
   const normalizedSearch = query.search?.toLocaleLowerCase('en-US') ?? '';
   const rows = data.predictions.predictions.filter(
     (row) =>
@@ -166,6 +199,8 @@ function applyQuery(data: ForecastResultsData, query: ForecastResultsQuery): For
 export interface ForecastResultsTestServiceOptions {
   readonly data?: ForecastResultsData | undefined;
   readonly error?: Error | undefined;
+  readonly productResults?: readonly ForecastProductResult[] | undefined;
+  readonly productError?: Error | undefined;
 }
 
 /** Deterministic Module 8 adapter used only by component and hook tests. */
@@ -173,6 +208,7 @@ export function createForecastResultsTestService(
   options: ForecastResultsTestServiceOptions = {},
 ): ForecastResultsService {
   const data = options.data ?? FORECAST_RESULTS_DATA;
+  const productResults = options.productResults ?? [FORECAST_PRODUCT_RESULT];
   return {
     getForecastResults: (query) => {
       if (options.error !== undefined) {
@@ -187,6 +223,22 @@ export function createForecastResultsTestService(
         );
       }
       return Promise.resolve(applyQuery(data, query));
+    },
+    getProductForecastResult: (runId, productId) => {
+      if (options.productError !== undefined) {
+        return Promise.reject(options.productError);
+      }
+      const detail = productResults.find(
+        (candidate) => candidate.runId === runId && candidate.productId === productId,
+      );
+      return detail === undefined
+        ? Promise.reject(
+            new ForecastResultsServiceError(
+              'forecast_result_product_not_found',
+              'Forecast detail is not available for this product.',
+            ),
+          )
+        : Promise.resolve(detail);
     },
   };
 }

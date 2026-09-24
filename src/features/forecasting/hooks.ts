@@ -14,6 +14,7 @@ import { isForecastRunId } from '@/features/forecasting/schemas';
 import { toDisplayMessage } from '@/lib/api-error';
 import type {
   ForecastJob,
+  ForecastProductResultViewState,
   ForecastResultsFilters,
   ForecastResultsViewState,
   ForecastRun,
@@ -352,28 +353,33 @@ export function useForecastResults(
       : ({ status: 'loading' } as const);
 
   useEffect(() => {
+    const controller = new AbortController();
     let isCurrent = true;
 
     if (!validRunId) {
       return () => {
         isCurrent = false;
+        controller.abort();
       };
     }
 
     void service
-      .getForecastResults({
-        runId,
-        search: filters.search === '' ? null : filters.search,
-        dateFrom: filters.dateFrom === '' ? null : filters.dateFrom,
-        dateTo: filters.dateTo === '' ? null : filters.dateTo,
-        limit: FORECAST_RESULTS_PAGE_SIZE,
-        offset,
-        sortBy: 'forecast_date',
-        sortOrder: 'asc',
-        chartInterval: 'day',
-      })
+      .getForecastResults(
+        {
+          runId,
+          search: filters.search === '' ? null : filters.search,
+          dateFrom: filters.dateFrom === '' ? null : filters.dateFrom,
+          dateTo: filters.dateTo === '' ? null : filters.dateTo,
+          limit: FORECAST_RESULTS_PAGE_SIZE,
+          offset,
+          sortBy: 'forecast_date',
+          sortOrder: 'asc',
+          chartInterval: 'day',
+        },
+        { signal: controller.signal },
+      )
       .then((data) => {
-        if (!isCurrent) {
+        if (!isCurrent || controller.signal.aborted) {
           return;
         }
         setSettledState({
@@ -385,13 +391,14 @@ export function useForecastResults(
         });
       })
       .catch((error: unknown) => {
-        if (isCurrent) {
+        if (isCurrent && !controller.signal.aborted) {
           setSettledState({ queryKey, state: toForecastResultsErrorState(error) });
         }
       });
 
     return () => {
       isCurrent = false;
+      controller.abort();
     };
   }, [filters, offset, queryKey, reloadVersion, runId, service, validRunId]);
 
@@ -422,4 +429,74 @@ export function useForecastResults(
     setPageOffset,
     reload,
   };
+}
+
+function toForecastProductResultErrorState(
+  error: unknown,
+): ForecastProductResultViewState {
+  if (
+    error instanceof ForecastResultsServiceError &&
+    error.code === 'forecast_result_product_not_found'
+  ) {
+    return { status: 'not_found' };
+  }
+  return {
+    status: 'error',
+    message:
+      error instanceof ForecastResultsServiceError
+        ? error.message
+        : toDisplayMessage(error, 'Unable to load product forecast detail.'),
+  };
+}
+
+/** On-demand product Forecast Results read with route-safe IDs and cancellation. */
+export function useForecastProductResult(
+  runId: string,
+  productId: string | null,
+  service: ForecastResultsService = forecastResultsService,
+): ForecastProductResultViewState {
+  const queryKey = `${runId}|${productId ?? ''}`;
+  const validIds =
+    isForecastRunId(runId) && productId !== null && isForecastRunId(productId);
+  const [settledState, setSettledState] = useState<{
+    readonly queryKey: string;
+    readonly state: ForecastProductResultViewState;
+  } | null>(null);
+
+  const state = !validIds
+    ? ({ status: 'not_found' } as const)
+    : settledState?.queryKey === queryKey
+      ? settledState.state
+      : ({ status: 'loading' } as const);
+
+  useEffect(() => {
+    if (!validIds || productId === null) {
+      return;
+    }
+
+    const controller = new AbortController();
+    let isCurrent = true;
+    void service
+      .getProductForecastResult(runId, productId, { signal: controller.signal })
+      .then((data) => {
+        if (isCurrent && !controller.signal.aborted) {
+          setSettledState({ queryKey, state: { status: 'ready', data } });
+        }
+      })
+      .catch((error: unknown) => {
+        if (isCurrent && !controller.signal.aborted) {
+          setSettledState({
+            queryKey,
+            state: toForecastProductResultErrorState(error),
+          });
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+      controller.abort();
+    };
+  }, [productId, queryKey, runId, service, validIds]);
+
+  return state;
 }

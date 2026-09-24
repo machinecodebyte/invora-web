@@ -8,12 +8,15 @@ const useRealInventoryBackend =
   process.env.PLAYWRIGHT_INVENTORY_REAL_BACKEND === 'true';
 const useRealForecastRunBackend =
   process.env.PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND === 'true';
+const useRealForecastResultsBackend =
+  process.env.PLAYWRIGHT_FORECAST_RESULTS_REAL_BACKEND === 'true';
 const useRealAuthBackend =
   process.env.PLAYWRIGHT_AUTH_REAL_BACKEND === 'true' ||
   useRealDashboardBackend ||
   useRealInventoryBackend ||
   useRealSalesBackend ||
-  useRealForecastRunBackend;
+  useRealForecastRunBackend ||
+  useRealForecastResultsBackend;
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${port}`;
 
@@ -82,8 +85,11 @@ export default defineConfig({
       NEXT_PUBLIC_FORECAST_RUN_E2E_TEST_MODE: useRealForecastRunBackend
         ? 'false'
         : 'true',
-      // Enables the Forecast Results fixture adapter only in E2E builds.
-      NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE: 'true',
+      // The fixture is default deterministic E2E behavior. The explicit live
+      // Results contract disables it without changing unrelated fixtures.
+      NEXT_PUBLIC_FORECAST_RESULTS_E2E_TEST_MODE: useRealForecastResultsBackend
+        ? 'false'
+        : 'true',
       // Enables the Recommendations fixture adapter only in E2E builds.
       NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE: 'true',
       PORT: String(port),

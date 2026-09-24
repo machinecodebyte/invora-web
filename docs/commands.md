@@ -154,7 +154,7 @@ npx vitest run src/tests/unit/inventory-schemas.test.ts src/tests/unit/inventory
 npx vitest run src/tests/unit/sales-upload-schemas.test.ts src/tests/unit/sales-upload-api.test.ts src/tests/components/sales-upload.test.tsx
 npx vitest run src/tests/unit/sales-history-schemas.test.ts src/tests/unit/sales-history-api.test.ts src/tests/components/sales-history.test.tsx
 npx vitest run src/tests/unit/forecast-run-schemas.test.ts src/tests/unit/forecast-run-api.test.ts src/tests/unit/forecast-run-api-contract.test.ts src/tests/components/forecast-run.test.tsx
-npx vitest run src/tests/unit/forecast-results-schemas.test.ts src/tests/unit/forecast-results-api.test.ts src/tests/components/forecast-results.test.tsx
+npx vitest run src/tests/unit/forecast-results-schemas.test.ts src/tests/unit/forecast-results-api.test.ts src/tests/unit/forecast-results-api-contract.test.ts src/tests/components/forecast-results.test.tsx src/tests/components/forecast-run.test.tsx
 npx vitest run src/tests/unit/recommendations-schemas.test.ts src/tests/unit/recommendations-api.test.ts src/tests/components/recommendations.test.tsx
 npx vitest run src/tests/unit/reports-schemas.test.ts src/tests/unit/reports-api.test.ts src/tests/components/reports.test.tsx
 npx vitest run src/tests/unit/settings-schemas.test.ts src/tests/unit/settings-api.test.ts src/tests/components/settings.test.tsx
@@ -213,6 +213,7 @@ npx playwright test e2e/sales.real.spec.ts    # opt-in real Sales contract
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run E2E suite
 npx playwright test e2e/forecast-run.real.spec.ts # opt-in live Forecast Run/worker contract
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results E2E suite
+npx playwright test e2e/forecast-results.real.spec.ts # opt-in live Forecast Results/worker contract
 npx playwright test e2e/recommendations.spec.ts # Recommendations E2E suite
 npx playwright show-report                    # last HTML report
 ```
@@ -304,3 +305,18 @@ The opt-in contract creates a unique user, product, and historical sales data.
 It proves the browser's create -> enqueue -> active-job polling -> terminal run
 reconciliation flow. It never invokes the synchronous process endpoint, talks
 to Redis/RQ directly, or enables Forecast Results.
+
+### Live Forecast Results browser contract
+
+With a controlled FastAPI, PostgreSQL, Redis, and RQ-worker stack running:
+
+```powershell
+$env:PLAYWRIGHT_FORECAST_RESULTS_REAL_BACKEND='true'
+$env:NEXT_PUBLIC_API_BASE_URL='http://localhost:8000'
+npx playwright test e2e/forecast-results.real.spec.ts
+```
+
+The test creates isolated prerequisites, completes the run through the normal
+frontend and worker path, follows the completed-run Results link, and verifies
+the five authenticated read endpoints. It does not invoke synchronous forecast
+processing, seed persisted predictions, or call Recommendations.
