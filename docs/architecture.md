@@ -552,46 +552,41 @@ responses.
 
 ## Recommendations architecture
 
-Module 9 adds its own read-only vertical slice without changing the existing
-Forecast Run or Forecast Results feature boundaries:
+Phase 8 extends the existing Module 9 vertical slice without changing the
+Forecast Run or Forecast Results ownership boundaries:
 
 ```text
 features/recommendations/
-  api.ts        RecommendationsService boundary and Playwright-only fixture reader
-  hooks.ts      Local search, risk-filter, pagination, loading, ready, and error state
+  api.ts        Shared-client HTTP adapter, boundary mappers, and Playwright-only fixture reader
+  hooks.ts      Abortable global/run reads, generation, summary, detail, status, and list state
   schemas.ts    Backend-aligned risk-filter validation
   types.ts      Safe recommendation, forecast-run reference, query, and view types
-  components/   Risk badge, quantity display, toolbar, table, skeleton, and page view
+  components/   Risk badge, quantity display, toolbar, summary, detail dialog, table, skeleton, and page view
 ```
 
 `app/recommendations/page.tsx` remains a Server Component that composes the
 existing protected-route boundary, application shell, and client-side
-`RecommendationsView`. The view supports only the inspected list contract:
-Product/SKU search, the five backend risk levels (`low`, `medium`, `high`,
-`critical`, and `overstocked`), the read-only backend statuses (`open`,
-`acknowledged`, and `dismissed`), and `limit`/`offset` pagination ordered by the
-backend's generated timestamp. It presents backend-generated quantities with up
-to three fraction digits, preserving zero, and renders a nullable reason safely.
+`RecommendationsView`. The global view supports Product/SKU search, risk/status
+filters, and backend `limit`/`offset` pagination. A validated
+`?forecastRunId=<uuid>` switches it to the narrower run-scoped contract, where
+the backend summary and only its supported risk/status filters are used. The
+completed Forecast Results view is the single hand-off into this run scope.
 
-`RecommendationsService` is transport-neutral. Its normal implementation never
-builds an endpoint, calls a backend, calculates risk, or persists data. A future
-HTTP adapter can map the backend list response and query fields at this boundary
-without rewriting the feature; that adapter can then be composed through the
-existing TanStack Query provider without introducing another cache or provider.
-Only the Playwright-managed build selects the
-validated, session-scoped fixture adapter through
-`NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`; it is not a production mock or
-storage strategy.
+`RecommendationsService` maps all six verified endpoints through the existing
+authenticated API client: generate, global list, run list, run summary, detail,
+and status update. Read hooks carry caller-owned abort signals. The generation
+mutation always sends `{ refresh: false }`, has no automatic retry, prevents
+duplicate UI submission, and reloads existing data after
+`recommendations_already_generated`; it never selects the backend refresh path
+automatically. The Playwright fixture adapter remains gated by
+`NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true` and is never selected by normal
+runtime builds.
 
-There are deliberately no recommendation action controls, status updates,
-acknowledgement/dismissal behavior, thresholds, or client-side reorder/risk
-calculations in Module 9. Those remain backend-owned or future-scope concerns.
-The Dashboard high-risk summary remains an aggregate surface and was not changed;
-Recommendations is the detailed list. Forecast Results remains the separate
-prediction/metric/chart surface. Reports and Settings remain outside this module.
-
-> Module 9 implements Recommendations frontend UI and architecture only. Real
-> Reorder Recommendation API integration remains intentionally deferred.
+The UI renders backend-generated values only. Detail exposes no status action
+for dismissed rows, acknowledge/dismiss for open rows, and only dismiss for an
+acknowledged row. Neither generation nor status mutation invalidates or mutates
+Inventory, creates a purchase order, calculates reorder/risk, or changes the
+Dashboard. Reports and Settings remain outside this module.
 
 > Frontend Recommendations route protection and filter UI are user-experience
 > controls only. Backend APIs must independently enforce authentication,

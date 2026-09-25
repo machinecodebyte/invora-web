@@ -16,7 +16,7 @@ Implementation status of the Invora frontend, module by module.
 | Sales History    | **Completed + Phase 4 integrated**       | Protected read-only Sales Transaction table and day trend now use live `GET /api/v1/sales/transactions` and `GET /api/v1/sales/transactions/trends` adapters, with explicit snake_case query mapping, date-only preservation, decimal boundary mapping, and independent safe states.                                                                                                                       |
 | Forecast Run     | **Completed + Phase 6 integrated**       | Protected `/forecasts/runs` configuration/status route; backend-aligned 7/15/30-day horizon form; real shared-client create/enqueue/active-job-poll/terminal-run-reconcile flow; safe queue/status errors; deterministic fixture adapter and opt-in live worker contract. Completed runs link to the separate Phase 7 Results route; ML control remains deferred.                                          |
 | Forecast Results | **Completed + Phase 7 integrated**       | Protected `/forecasts/results` completed-run route; validated UUID selection; real shared-client overview, predictions, metrics, chart, and product-detail reads; backend pagination/filtering, decimal/date-only mapping, nullable actuals, isolated chart failure, deterministic fixture adapter, and opt-in live worker contract. Forecast computation remains backend-owned.                           |
-| Recommendations  | **Completed**                            | Protected read-only `/recommendations` route; backend-aligned five-level risk and read-only status labels, Product/SKU search, risk/status filters, offset/limit pagination, three-decimal-safe reorder display, and explicit safe states; typed no-network boundary; deterministic test-only fixture adapter; 10 unit/component tests and 9 E2E tests. Real Recommendations integration remains disabled. |
+| Recommendations  | **Completed + Phase 8 integrated**       | Protected `/recommendations` uses the shared authenticated client for generation, global/run list, run summary, detail, and supported status updates. It preserves backend-authoritative risk/action/reorder data, explicit `refresh: false` generation, safe conflict handling, deterministic test-only fixtures, and an opt-in live contract. |
 | Reports          | **Completed**                            | Protected read-only `/reports` route with the five inspected backend report types, report-specific filters, semantic tables, backend-provided summary projection, CSV-only export state, and deterministic component fixtures. Normal runtime makes no Report or export request and creates no file/download.                                                                                              |
 | Settings         | **Completed**                            | Protected `/settings` route with backend-aligned Forecast Defaults and absolute three-decimal Safety Stock Defaults; RHF + Zod validation; independent dirty/save/revert states; safe loading/error UI; test-only component fixtures; no runtime persistence or request.                                                                                                                                   |
 
@@ -27,9 +27,9 @@ or business data.
 
 **All frontend implementation modules 0-12 are complete. Integration Phases 1,
 2/2B, 3, 4, 5, 6, and 7 are complete for Auth, Products, Inventory, Sales,
-Dashboard Summary, Forecast Run/Background Jobs, and Forecast Results.
-Recommendations, Reports, Settings, and other deferred integrations remain
-separate phases.**
+Dashboard Summary, Forecast Run/Background Jobs, Forecast Results, and
+Recommendations are complete. Reports, Settings, and other deferred integrations
+remain separate phases.**
 
 Shared UI was incrementally extended for Module 3 with typed, tested Select,
 Textarea, and accessible Dialog primitives. Existing Foundation primitives and
@@ -79,11 +79,31 @@ upload, read-only transaction history, and backend-owned trends. Dashboard uses
 the single Summary endpoint for its existing read-only projection. Forecast Run
 uses create, durable job enqueue, active-job polling, and terminal run
 reconciliation. Forecast Results reads persisted overview, predictions, metrics,
-chart, and product detail through the shared authenticated client. Recommendations,
-Reports, and Settings make no real backend request.
+chart, and product detail through the shared authenticated client. Recommendations
+uses the shared authenticated client for its six verified Phase 8 operations;
+Reports and Settings make no real backend request.
 The backend (`../backend`) was inspected read-only to align Auth fields,
 Dashboard Analytics summary semantics, Product Catalog validation/list semantics,
 and Inventory movement/low-stock semantics, Sales Upload CSV rules, Sales Transaction list/trend semantics, Forecast Run horizon/lifecycle semantics, Forecast Results overview/list/metrics/chart semantics, Recommendations risk/list/quantity semantics, and Reports views/export semantics. Each feature module wires up endpoints only when its approved integration phase is enabled; remaining modules retain unavailable or no-data-by-default adapters.
+
+## Integration Phase 8 - Recommendations
+
+**Completed.** Phase 8 replaces the former no-network Recommendations adapter
+with the shared authenticated HTTP client for all six verified user-facing
+operations: explicit generation, global list, run list, run summary, detail,
+and status update. The protected route supports a validated `forecastRunId`
+query from Forecast Results, conflict-safe `{ refresh: false }` generation,
+backend summary/detail, and only the backend-confirmed status transitions.
+Recommendation values remain backend-authoritative. No action mutates Inventory
+or creates a purchase order. Deterministic fixtures remain Playwright-only; an
+opt-in real browser contract requires FastAPI, PostgreSQL, Redis, and an RQ
+worker. Reports, Settings, and User Profile remain unintegrated.
+
+The Phase 8 validation snapshot is 15 focused Recommendations unit/component
+tests, 11 deterministic Recommendations Chromium scenarios, and the full
+coverage suite at 59 files / 476 tests. Coverage remains above the configured
+85% thresholds (94.41% statements, 93.28% branches, 95.94% functions, and
+94.33% lines).
 
 Module 12 adds presentation reuse only; it does not make a backend request or
 alter any existing service boundary.
@@ -220,12 +240,13 @@ controlled FastAPI/PostgreSQL/Redis/RQ-worker environment.
 Deliberately not implemented, by scope:
 
 - Any business API call outside the integrated Auth, Product Catalog, Inventory,
-  Sales, Dashboard Summary, and Forecast Run scope
+  Sales, Dashboard Summary, Forecast Run, Forecast Results, and Recommendations
+  scope
 - Any production business data — no fake products, sales, inventory, forecasts,
   recommendations, reports, KPIs, or users
 - Password reset, verification, MFA, OAuth, or any Auth feature beyond the
   implemented login/register/refresh/logout contract
-- Recommendations, Reports, Settings, ML control, or
+- Reports, Settings, ML control, or
   production fixture data
 - Content-Security-Policy (requires per-request nonce plumbing; see
   [`architecture.md`](architecture.md))

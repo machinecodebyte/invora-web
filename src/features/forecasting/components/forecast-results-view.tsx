@@ -101,12 +101,22 @@ export function ForecastResultsView({ runId, service }: ForecastResultsViewProps
             available.
           </p>
         </div>
-        <Link
-          href={ROUTES.forecastRuns}
-          className={buttonClassName({ variant: 'secondary' })}
-        >
-          Forecast runs
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          {runId === undefined ? null : (
+            <Link
+              href={`${ROUTES.recommendations}?forecastRunId=${encodeURIComponent(runId)}`}
+              className={buttonClassName({ variant: 'primary' })}
+            >
+              Recommendations
+            </Link>
+          )}
+          <Link
+            href={ROUTES.forecastRuns}
+            className={buttonClassName({ variant: 'secondary' })}
+          >
+            Forecast runs
+          </Link>
+        </div>
       </div>
 
       <ForecastResultsToolbar

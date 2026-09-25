@@ -32,6 +32,8 @@ const STATUS_FILTER_LABELS: Readonly<Record<RecommendationStatusFilter, string>>
 
 export interface RecommendationsToolbarProps {
   readonly filters: RecommendationFilters;
+  /** The run-scoped backend list endpoint intentionally does not accept search. */
+  readonly showSearch?: boolean | undefined;
   readonly onFiltersChange: (filters: RecommendationFilters) => void;
   readonly onClearFilters: () => void;
 }
@@ -39,28 +41,33 @@ export interface RecommendationsToolbarProps {
 /** Search product/SKU and filter by the backend's risk-level enumeration. */
 export function RecommendationsToolbar({
   filters,
+  showSearch = true,
   onFiltersChange,
   onClearFilters,
 }: RecommendationsToolbarProps) {
   const hasActiveFilters =
-    filters.search !== '' || filters.riskLevel !== 'all' || filters.status !== 'all';
+    (showSearch && filters.search !== '') ||
+    filters.riskLevel !== 'all' ||
+    filters.status !== 'all';
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-end">
-      <div className="min-w-0 flex-1">
-        <Label htmlFor="recommendations-search">Search recommendations</Label>
-        <Input
-          id="recommendations-search"
-          type="search"
-          placeholder="Search product name or SKU"
-          value={filters.search}
-          maxLength={255}
-          onChange={(event) =>
-            onFiltersChange({ ...filters, search: event.target.value })
-          }
-          className="mt-1.5"
-        />
-      </div>
+      {showSearch ? (
+        <div className="min-w-0 flex-1">
+          <Label htmlFor="recommendations-search">Search recommendations</Label>
+          <Input
+            id="recommendations-search"
+            type="search"
+            placeholder="Search product name or SKU"
+            value={filters.search}
+            maxLength={255}
+            onChange={(event) =>
+              onFiltersChange({ ...filters, search: event.target.value })
+            }
+            className="mt-1.5"
+          />
+        </div>
+      ) : null}
       <div className="w-full sm:w-48">
         <Label htmlFor="recommendations-risk-filter">Risk level</Label>
         <Select

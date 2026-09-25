@@ -10,8 +10,20 @@ export const metadata: Metadata = {
   title: 'Recommendations',
 };
 
+interface RecommendationsPageProps {
+  readonly searchParams: Promise<{
+    readonly forecastRunId?: string | readonly string[] | undefined;
+  }>;
+}
+
 /** Protected Module 9 route; risk and reorder decisions remain backend-owned. */
-export default function RecommendationsPage() {
+export default async function RecommendationsPage({
+  searchParams,
+}: RecommendationsPageProps) {
+  const params = await searchParams;
+  const forecastRunId =
+    typeof params.forecastRunId === 'string' ? params.forecastRunId : undefined;
+
   return (
     <ProtectedRoute>
       <AppShell navigation={<LogoutButton />}>
@@ -19,7 +31,7 @@ export default function RecommendationsPage() {
           title="Recommendations"
           description="Review reorder risk and backend-generated reorder quantities."
         >
-          <RecommendationsView />
+          <RecommendationsView forecastRunId={forecastRunId} />
         </PageContainer>
       </AppShell>
     </ProtectedRoute>

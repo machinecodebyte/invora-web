@@ -13,8 +13,8 @@ Quick start for running the Invora frontend locally. For the long-form version
 
 No database, Redis, or backend service is required for the deterministic
 frontend test suite. Normal Auth, Product Catalog, Inventory, Sales Upload,
-Sales History, Dashboard, Forecast Run, and Forecast Results usage require the
-configured FastAPI service; Recommendations, Reports, and Settings remain
+Sales History, Dashboard, Forecast Run, Forecast Results, and Recommendations
+usage require the configured FastAPI service; Reports and Settings remain
 separate integrations.
 
 ## Installation
@@ -114,6 +114,7 @@ npx playwright test e2e/forecast-flow.spec.ts # Forecast Run suite only
 npx playwright test e2e/forecast-run.real.spec.ts # opt-in Forecast Run/RQ worker contract
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results suite only
 npx playwright test e2e/recommendations.spec.ts # Recommendations suite only
+npx playwright test e2e/recommendations.real.spec.ts # opt-in live Recommendations/worker contract
 ```
 
 By default Playwright builds the app and serves the production output, so the
@@ -374,20 +375,22 @@ FastAPI, PostgreSQL, Redis, and an RQ worker through
 Implemented:
 
 - Protected `/recommendations` route using the existing Auth boundary and app shell
-- Read-only responsive risk/status table with Product/SKU search, exact backend
-  risk/status filters, and backend-shaped offset/limit pagination
+- Responsive global and run-scoped risk/status review with Product/SKU search,
+  exact backend risk/status filters, and backend-shaped offset/limit pagination
 - Backend-generated reorder quantities shown with valid zeroes and up to three
   decimal places; nullable reasons have a safe fallback
+- Explicit non-retrying generation with `{ refresh: false }`, conflict-safe
+  reconciliation, backend summary, on-demand detail, and only supported
+  acknowledge/dismiss actions
 - Loading, empty, filtered-empty, and safe error states with semantic table and
   accessible controls
-- Typed no-network service contract plus deterministic unit/component and
-  Playwright fixtures
+- Shared-client live service plus deterministic unit/component and Playwright
+  fixtures; the real worker-backed browser contract is opt-in
 
-**Real Recommendations API integration is intentionally not enabled.** Normal
-builds make no request, contain no recommendation data, and do not calculate
-risk/reorder quantities or perform recommendation actions. Only the
-Playwright-managed test build reads isolated session-scoped fixtures; it never
-contacts FastAPI or stores production recommendation data.
+**Recommendations API integration is enabled.** Normal builds call only the
+verified authenticated Recommendations routes and do not calculate risk/reorder
+quantities, mutate Inventory, create purchase orders, or store production
+recommendation data locally. The Playwright fixture remains test-only.
 
 ## Current Reports Scope
 
@@ -445,7 +448,7 @@ generic contract. Module 12 adds no route, provider, store, API call, backend
 connection, or business data.
 
 **Current project status:** Frontend implementation modules 0-12 are complete.
-Integration Phases 1, 2/2B, 3, 4, 5, 6, and 7 are complete for Foundation/Auth,
-Products, Inventory, Sales, Dashboard Summary, Forecast Run/Background Jobs, and
-Forecast Results. Recommendations, Reports, Settings, and other deferred
-business integrations remain separate phases.
+Integration Phases 1, 2/2B, 3, 4, 5, 6, 7, and 8 are complete for
+Foundation/Auth, Products, Inventory, Sales, Dashboard Summary, Forecast
+Run/Background Jobs, Forecast Results, and Recommendations. Reports, Settings,
+User Profile, and other deferred business integrations remain separate phases.

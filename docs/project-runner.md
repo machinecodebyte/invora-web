@@ -3,10 +3,10 @@
 Complete guide to running, verifying, and troubleshooting the Invora frontend.
 For the condensed version see [`../project_runner.md`](../project_runner.md).
 
-> **Integration Phases 1 through 6 enable Auth, Products, Inventory, Sales,
-> Dashboard Summary, and Forecast Run/Background Jobs.** Normal flows for those
-> slices require the backend service; Forecast Run also requires Redis and an RQ
-> worker to complete its asynchronous lifecycle.
+> **Integration Phases 1 through 8 enable Auth, Products, Inventory, Sales,
+> Dashboard Summary, Forecast Run/Background Jobs, Forecast Results, and
+> Recommendations.** Normal flows for those slices require the backend service;
+> Forecast Run and Recommendations generation also require Redis and an RQ worker.
 > The deterministic frontend test suite still needs no backend, PostgreSQL, or
 > Redis service.
 
@@ -184,6 +184,7 @@ npx playwright test e2e/sales-upload.spec.ts
 npx playwright test e2e/forecast-flow.spec.ts
 npx playwright test e2e/forecast-results.spec.ts
 npx playwright test e2e/recommendations.spec.ts
+npx playwright test e2e/recommendations.real.spec.ts
 ```
 
 Playwright builds and serves the production output by default, so the smoke test
@@ -298,13 +299,20 @@ Redis, and an RQ worker, then set
 
 ### Recommendations E2E behavior
 
-`/recommendations` is the protected Module 9 read-only list surface. The normal
-`RecommendationsService` makes no request and exposes no local recommendation
-data. The Playwright-managed build alone sets
-`NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`; its adapter reads validated,
-test-supplied, isolated `sessionStorage` fixtures for populated, risk/status/search
-filter, pagination, empty, and safe-error flows. It neither calculates reorder
-quantities/risk nor contacts FastAPI.
+`/recommendations` is the protected Module 9 global and run-scoped review
+surface. Normal builds use the shared authenticated client for all six verified
+Recommendations operations. Use a valid `forecastRunId` query from Forecast
+Results to generate once with `{ refresh: false }`, then read the backend summary
+and run list. The UI never calculates reorder/risk, mutates Inventory, creates a
+purchase order, or automatically uses the backend refresh path. The
+Playwright-managed build alone sets `NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`
+and uses validated, isolated `sessionStorage` fixtures.
+
+For the opt-in real contract, start FastAPI, PostgreSQL, Redis, and an RQ worker,
+then run `PLAYWRIGHT_RECOMMENDATIONS_REAL_BACKEND=true npx playwright test
+e2e/recommendations.real.spec.ts`. It creates isolated authenticated
+prerequisites and verifies generation, global/run reads, summary, detail, and a
+supported status update through the normal UI.
 
 ### Reports component behavior
 

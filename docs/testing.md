@@ -118,7 +118,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `forecast-results-api.test.ts`          | Real Forecast Results DTO/envelope mapping, decimal/date-only integrity, exact route/query mapping, not-ready mapping, and isolated chart failure                                                                                |
 | `forecast-results-api-contract.test.ts` | MSW coverage for authenticated overview/predictions/metrics/chart/product-detail routes, backend pagination, supported filters, and safe error envelopes                                                                         |
 | `recommendations-schemas.test.ts`       | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
-| `recommendations-api.test.ts`           | Honest unavailable normal Recommendations service boundary with no runtime request                                                                                                                                               |
+| `recommendations-api.test.ts`           | All six authenticated Recommendations routes, required generation body, snake_case/Decimal mapping, invalid payload rejection, and backend query semantics                                                                       |
 | `reports-schemas.test.ts`               | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                               |
 | `reports-api.test.ts`                   | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
 | `settings-schemas.test.ts`              | Backend-aligned forecast choices/history window and zero-safe three-decimal absolute safety-stock validation                                                                                                                     |
@@ -144,7 +144,7 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `sales-history.test.tsx`    | Semantic transaction table, zero-value formatting, product/SKU/source/date filters, reset, pagination controls, quantity trend, loading, no-data, filtered-empty, and safe partial/error states    |
 | `forecast-run.test.tsx`     | Accessible horizon validation, create/enqueue/active-job-poll/terminal-run-reconcile lifecycle, duplicate-start prevention, safe queue/status failures, refresh retry, and reset                   |
 | `forecast-results.test.tsx` | Run selection, loading, summary/metrics/table/chart rendering, zero/null distinction, filter validation, empty/not-ready/failed/error states, and safe adapter failures                            |
-| `recommendations.test.tsx`  | Semantic risk table, Product/SKU context, decimal and zero quantity display, risk/search filters, pagination, loading, empty/filtered-empty, and safe adapter errors                               |
+| `recommendations.test.tsx`  | Global and run-scoped lists, generation, summary, on-demand detail, supported status transitions, filters, pagination, loading, empty/filtered-empty, and safe adapter errors                      |
 | `reports.test.tsx`          | Report selector, scoped filters, semantic table/summary, zero/null rendering, validation, loading, empty/filtered-empty/error states, and CSV pending/success/failure behavior                     |
 | `settings.test.tsx`         | Forecast and safety-stock forms, labels, valid zero, validation, dirty/revert, safe save success/failure, duplicate prevention, and loading/error states                                           |
 
@@ -342,11 +342,12 @@ five Result reads. It requires FastAPI, PostgreSQL, Redis, and an RQ worker.
 ### Recommendations tests
 
 Recommendations unit and component tests cover the exact inspected risk/status
-enumerations, normalized search/filter inputs, the unavailable normal service
-boundary, risk badge/table semantics, decimal and zero-valued reorder quantities,
-search/risk/status filtering, offset/limit pagination, loading, empty, filtered-empty,
-and safe-error states. They do not model a recommendation action or client-side
-calculation.
+enumerations, normalized search/filter inputs, all six normal HTTP operations,
+the required `{ refresh: false }` generation body, boundary Decimal mapping,
+risk badge/table semantics, decimal and zero-valued reorder quantities,
+global/run filtering, offset/limit pagination, generation conflict reconciliation,
+summary, detail, supported status transitions, loading, empty, filtered-empty,
+and safe-error states. They do not model a recommendation calculation.
 
 `e2e/recommendations.spec.ts` covers protected-route redirect, authenticated
 page/table rendering, all user-facing list controls, populated risk/status/reorder
@@ -354,6 +355,13 @@ display, risk/status and SKU search, dedicated empty/filtered-empty/error states
 pagination boundaries, and 375×667 overflow behavior. Its nine scenarios use
 only session-scoped fixtures under `NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE=true`;
 no FastAPI or recommendation calculation process is used.
+
+Phase 8 update: the deterministic suite now has eleven scenarios, including
+run-scoped generation, backend summary, on-demand detail, and a supported status
+transition. `e2e/recommendations.real.spec.ts` is opt-in through
+`PLAYWRIGHT_RECOMMENDATIONS_REAL_BACKEND=true`; it requires FastAPI,
+PostgreSQL, Redis, and an RQ worker and verifies all six user-facing routes
+against controlled prerequisites.
 
 ### Reports tests
 
@@ -373,10 +381,10 @@ Measured with `npm run test:coverage`:
 
 | Metric     | Result | Threshold |
 | ---------- | ------ | --------- |
-| Statements | 94.46% | 85%       |
-| Branches   | 92.95% | 85%       |
-| Functions  | 94.89% | 85%       |
-| Lines      | 94.38% | 85%       |
+| Statements | 94.41% | 85%       |
+| Branches   | 93.28% | 85%       |
+| Functions  | 95.94% | 85%       |
+| Lines      | 94.33% | 85%       |
 
 Uncovered remainder is in `useCallback` bodies reached only through the shared
 module store, and defensive branches in `api-client`/`api-error`.

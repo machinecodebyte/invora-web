@@ -215,7 +215,16 @@ npx playwright test e2e/forecast-run.real.spec.ts # opt-in live Forecast Run/wor
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results E2E suite
 npx playwright test e2e/forecast-results.real.spec.ts # opt-in live Forecast Results/worker contract
 npx playwright test e2e/recommendations.spec.ts # Recommendations E2E suite
+npx playwright test e2e/recommendations.real.spec.ts # opt-in live Recommendations/worker contract
 npx playwright show-report                    # last HTML report
+```
+
+The deterministic Recommendations suite uses only the Playwright fixture build.
+Run its live browser contract only in a controlled environment with FastAPI,
+PostgreSQL, Redis, and an RQ worker:
+
+```bash
+PLAYWRIGHT_RECOMMENDATIONS_REAL_BACKEND=true npx playwright test e2e/recommendations.real.spec.ts
 ```
 
 ## Playwright UI

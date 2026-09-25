@@ -4,8 +4,12 @@ import {
 } from '@/features/recommendations/api';
 import type {
   Recommendation,
+  RecommendationGenerationResult,
   RecommendationPage,
   RecommendationQuery,
+  RecommendationRunQuery,
+  RecommendationStatusUpdate,
+  RecommendationSummary,
 } from '@/features/recommendations/types';
 
 function recommendation(
@@ -125,6 +129,33 @@ export const EMPTY_RECOMMENDATIONS_FIXTURE: RecommendationPage = {
   offset: 0,
 };
 
+export const RECOMMENDATION_SUMMARY_FIXTURE: RecommendationSummary = {
+  forecastRunId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  totalRecommendations: 5,
+  totalReorderQuantity: 63.75,
+  criticalCount: 1,
+  highCount: 1,
+  mediumCount: 1,
+  lowCount: 1,
+  overstockedCount: 1,
+  totalPredictedDemand: 64.75,
+  totalCurrentStock: 52,
+  latestGeneratedAt: '2026-07-05T12:00:00Z',
+  topReorderProducts: RECOMMENDATIONS_FIXTURE.recommendations,
+};
+
+export const RECOMMENDATION_GENERATION_FIXTURE: RecommendationGenerationResult = {
+  forecastRunId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  totalProducts: 5,
+  recommendationsCreated: 5,
+  refreshed: false,
+  criticalCount: 1,
+  highCount: 1,
+  mediumCount: 1,
+  lowCount: 1,
+  overstockedCount: 1,
+};
+
 export const PAGINATED_RECOMMENDATIONS_FIXTURE: RecommendationPage = {
   recommendations: Array.from({ length: 21 }, (_, index) =>
     recommendation(index + 10, {
@@ -138,7 +169,10 @@ export const PAGINATED_RECOMMENDATIONS_FIXTURE: RecommendationPage = {
   offset: 0,
 };
 
-function applyQuery(data: RecommendationPage, query: RecommendationQuery): RecommendationPage {
+function applyQuery(
+  data: RecommendationPage,
+  query: RecommendationQuery,
+): RecommendationPage {
   const search = query.search?.trim().toLocaleLowerCase('en-US') ?? '';
   const rows = data.recommendations
     .filter(
@@ -151,7 +185,10 @@ function applyQuery(data: RecommendationPage, query: RecommendationQuery): Recom
         (query.riskLevel === null || item.riskLevel === query.riskLevel) &&
         (query.status === null || item.status === query.status),
     )
-    .sort((left, right) => new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime());
+    .sort(
+      (left, right) =>
+        new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime(),
+    );
   return {
     recommendations: rows.slice(query.offset, query.offset + query.limit),
     total: rows.length,
@@ -163,19 +200,136 @@ function applyQuery(data: RecommendationPage, query: RecommendationQuery): Recom
 export interface RecommendationsTestServiceOptions {
   readonly data?: RecommendationPage | undefined;
   readonly error?: Error | undefined;
+  readonly notGenerated?: boolean | undefined;
 }
 
 /** Deterministic Recommendations adapter used only in unit/component tests. */
 export function createRecommendationsTestService(
   options: RecommendationsTestServiceOptions = {},
 ): RecommendationsService {
-  const data = options.data ?? RECOMMENDATIONS_FIXTURE;
+  let data = options.data ?? RECOMMENDATIONS_FIXTURE;
+  let generated = !options.notGenerated;
+  const getDetail = (recommendationId: string): Recommendation => {
+    const detail = data.recommendations.find((item) => item.id === recommendationId);
+    if (detail === undefined) {
+      throw new RecommendationsServiceError(
+        'recommendation_not_found',
+        'Recommendation details are no longer available.',
+      );
+    }
+    return detail;
+  };
+
   return {
     listRecommendations: (query) => {
       if (options.error !== undefined) {
         return Promise.reject(options.error);
       }
       return Promise.resolve(applyQuery(data, query));
+    },
+    listRunRecommendations: (_forecastRunId: string, query: RecommendationRunQuery) => {
+      if (options.error !== undefined) {
+        return Promise.reject(options.error);
+      }
+      if (!generated) {
+        return Promise.reject(
+          new RecommendationsServiceError(
+            'recommendations_not_generated',
+            'Recommendations have not been generated for this forecast run.',
+          ),
+        );
+      }
+      return Promise.resolve(
+        applyQuery(data, {
+          search: null,
+          riskLevel: query.riskLevel,
+          status: query.status,
+          limit: query.limit,
+          offset: query.offset,
+          sortBy: 'generated_at',
+          sortOrder: 'desc',
+        }),
+      );
+    },
+    getRunSummary: () => {
+      if (options.error !== undefined) {
+        return Promise.reject(options.error);
+      }
+      if (!generated) {
+        return Promise.reject(
+          new RecommendationsServiceError(
+            'recommendations_not_generated',
+            'Recommendations have not been generated for this forecast run.',
+          ),
+        );
+      }
+      return Promise.resolve(RECOMMENDATION_SUMMARY_FIXTURE);
+    },
+    getRecommendation: (recommendationId) => {
+      if (options.error !== undefined) {
+        return Promise.reject(options.error);
+      }
+      try {
+        return Promise.resolve(getDetail(recommendationId));
+      } catch (error: unknown) {
+        return Promise.reject(error);
+      }
+    },
+    updateRecommendationStatus: (
+      recommendationId: string,
+      status: RecommendationStatusUpdate,
+    ) => {
+      if (options.error !== undefined) {
+        return Promise.reject(options.error);
+      }
+      try {
+        const current = getDetail(recommendationId);
+        if (
+          current.status === 'dismissed' ||
+          (current.status === 'acknowledged' && status !== 'dismissed')
+        ) {
+          throw new RecommendationsServiceError(
+            'invalid_recommendation_status_transition',
+            'This recommendation status can no longer be changed.',
+          );
+        }
+        const updated: Recommendation = {
+          ...current,
+          status,
+          acknowledgedAt:
+            status === 'acknowledged'
+              ? (current.acknowledgedAt ?? current.updatedAt)
+              : current.acknowledgedAt,
+          dismissedAt:
+            status === 'dismissed'
+              ? (current.dismissedAt ?? current.updatedAt)
+              : current.dismissedAt,
+        };
+        data = {
+          ...data,
+          recommendations: data.recommendations.map((item) =>
+            item.id === recommendationId ? updated : item,
+          ),
+        };
+        return Promise.resolve(updated);
+      } catch (error: unknown) {
+        return Promise.reject(error);
+      }
+    },
+    generateRecommendations: () => {
+      if (options.error !== undefined) {
+        return Promise.reject(options.error);
+      }
+      if (generated) {
+        return Promise.reject(
+          new RecommendationsServiceError(
+            'recommendations_already_generated',
+            'Recommendations already exist for this forecast run. Existing recommendations were loaded.',
+          ),
+        );
+      }
+      generated = true;
+      return Promise.resolve(RECOMMENDATION_GENERATION_FIXTURE);
     },
   };
 }

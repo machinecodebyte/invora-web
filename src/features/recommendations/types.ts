@@ -7,11 +7,7 @@ export const RECOMMENDATION_RISK_LEVELS = [
   'overstocked',
 ] as const;
 
-export const RECOMMENDATION_STATUSES = [
-  'open',
-  'acknowledged',
-  'dismissed',
-] as const;
+export const RECOMMENDATION_STATUSES = ['open', 'acknowledged', 'dismissed'] as const;
 
 export const RECOMMENDATION_ACTIONS = [
   'reorder_now',
@@ -25,6 +21,7 @@ export type RecommendationStatus = (typeof RECOMMENDATION_STATUSES)[number];
 export type RecommendationAction = (typeof RECOMMENDATION_ACTIONS)[number];
 export type RecommendationRiskFilter = 'all' | RecommendationRiskLevel;
 export type RecommendationStatusFilter = 'all' | RecommendationStatus;
+export type RecommendationStatusUpdate = Exclude<RecommendationStatus, 'open'>;
 
 /** Minimal safe Forecast Run reference embedded by the Recommendation contract. */
 export interface RecommendationForecastRun {
@@ -73,6 +70,35 @@ export interface RecommendationPage {
   readonly offset: number;
 }
 
+/** Backend aggregate for one generated Forecast Run recommendation set. */
+export interface RecommendationSummary {
+  readonly forecastRunId: string;
+  readonly totalRecommendations: number;
+  readonly totalReorderQuantity: number;
+  readonly criticalCount: number;
+  readonly highCount: number;
+  readonly mediumCount: number;
+  readonly lowCount: number;
+  readonly overstockedCount: number;
+  readonly totalPredictedDemand: number;
+  readonly totalCurrentStock: number;
+  readonly latestGeneratedAt: string;
+  readonly topReorderProducts: readonly Recommendation[];
+}
+
+/** Result of the explicit, conflict-sensitive recommendation generation request. */
+export interface RecommendationGenerationResult {
+  readonly forecastRunId: string;
+  readonly totalProducts: number;
+  readonly recommendationsCreated: number;
+  readonly refreshed: boolean;
+  readonly criticalCount: number;
+  readonly highCount: number;
+  readonly mediumCount: number;
+  readonly lowCount: number;
+  readonly overstockedCount: number;
+}
+
 /** Only the list filters implemented by Module 9's UI. */
 export interface RecommendationFilters {
   readonly search: string;
@@ -91,7 +117,26 @@ export interface RecommendationQuery {
   readonly sortOrder: 'desc';
 }
 
+/** Run-scoped endpoint deliberately exposes a narrower query surface. */
+export interface RecommendationRunQuery {
+  readonly riskLevel: RecommendationRiskLevel | null;
+  readonly status: RecommendationStatus | null;
+  readonly limit: number;
+  readonly offset: number;
+  readonly sortBy: 'risk_level';
+  readonly sortOrder: 'desc';
+}
+
 export type RecommendationsViewState =
   | { readonly status: 'loading' }
   | { readonly status: 'ready'; readonly data: RecommendationPage }
+  | { readonly status: 'not_generated' }
+  | { readonly status: 'invalid_run' }
+  | { readonly status: 'error'; readonly message: string };
+
+export type RecommendationSummaryViewState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'loading' }
+  | { readonly status: 'ready'; readonly data: RecommendationSummary }
+  | { readonly status: 'not_generated' }
   | { readonly status: 'error'; readonly message: string };

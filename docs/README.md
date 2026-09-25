@@ -47,8 +47,9 @@ but are not supported by that toolchain yet.
 the existing primitives, added narrowly scoped `TableScrollArea` and `Pagination`
 primitives, and adopted them only where generic duplication was verified. All
 frontend implementation modules 0-12 are now complete. Integration Phases 1,
-2/2B, 3, 4, 5, and 6 connect Foundation/Auth, Product Catalog, Inventory,
-Sales, Dashboard Summary, and Forecast Run/Background Jobs respectively; the
+2/2B, 3, 4, 5, 6, 7, and 8 connect Foundation/Auth, Product Catalog, Inventory,
+Sales, Dashboard Summary, Forecast Run/Background Jobs, Forecast Results, and
+Recommendations respectively; the
 remaining business integrations stay
 separate phases.
 
@@ -81,9 +82,9 @@ run-reconcile adapter.
 Module 8 adds a protected completed-run Forecast Results surface with a real
 shared-client result adapter, summary, allowed metrics, prediction list,
 filters, actual-versus-predicted aggregate chart, and on-demand product detail.
-Auth, Dashboard, Products, Inventory, Sales, Forecast Run, and Forecast Results
-use their approved real adapters; Recommendations, Reports, Settings, and ML
-control surfaces remain deferred.
+Auth, Dashboard, Products, Inventory, Sales, Forecast Run, Forecast Results,
+and Recommendations use their approved real adapters; Reports, Settings, and
+ML control surfaces remain deferred.
 
 Module 9 adds a protected, read-only Recommendations surface with backend-aligned
 five-level risk labels, read-only status display, Product/SKU search, risk/status filtering, backend-shaped
@@ -220,12 +221,12 @@ the ML pipeline remain backend-owned.
 ## Recommendations module
 
 `src/features/recommendations/` owns safe recommendation projections, risk/filter
-schemas, the no-network `RecommendationsService`, local list state, and the
-protected `/recommendations` composition. It displays only backend-generated
-recommendations; it neither calculates reorder quantities/risk nor implements
-acknowledge, dismiss, or other recommendation actions. The Playwright-managed
-build alone reads a validated, session-scoped test fixture. Real Recommendations
-API integration remains intentionally deferred.
+schemas, the real shared-client `RecommendationsService`, abortable global and
+run-scoped reads, explicit generation, run summary, on-demand detail, and
+backend-confirmed acknowledge/dismiss actions. It displays backend-generated
+recommendations only and never calculates reorder quantities or risk. The
+Playwright-managed build alone reads a validated, session-scoped test fixture;
+normal builds use the verified Recommendations HTTP contract.
 
 ## Reports module
 
@@ -301,3 +302,15 @@ metrics may be legitimately unavailable. A completed Forecast Run links to its
 own Results route, while the Results route remains read-only and does not poll,
 run ML, or call Recommendations. The deterministic Results adapter is selected
 only for Playwright fixture builds; the live worker-backed contract is opt-in.
+
+## Integration Phase 8 - Recommendations
+
+Recommendations now consumes all six verified user-facing backend operations
+through the existing authenticated API client: generate, global list, run list,
+run summary, detail, and status update. Run-specific review is entered from the
+completed Forecast Results screen with a validated `forecastRunId`; generation
+always sends `{ refresh: false }`, has no automatic retry, and reconciles the
+existing rows after a conflict. Recommendation status never mutates Inventory
+or creates a purchase order. The real browser contract is opt-in through
+`PLAYWRIGHT_RECOMMENDATIONS_REAL_BACKEND=true` and requires FastAPI,
+PostgreSQL, Redis, and an RQ worker.

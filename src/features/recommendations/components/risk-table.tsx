@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
 import { TableScrollArea } from '@/components/ui/table-scroll-area';
 import { ReorderQuantity } from '@/features/recommendations/components/reorder-quantity';
@@ -21,10 +22,15 @@ const STATUS_LABELS: Readonly<Record<RecommendationStatus, string>> = {
 export interface RiskTableProps {
   readonly page: RecommendationPage;
   readonly onPageChange: (offset: number) => void;
+  readonly onRecommendationDetail?: ((recommendationId: string) => void) | undefined;
 }
 
 /** Semantic read-only Reorder Recommendation risk table with backend offset pagination. */
-export function RiskTable({ page, onPageChange }: RiskTableProps) {
+export function RiskTable({
+  page,
+  onPageChange,
+  onRecommendationDetail,
+}: RiskTableProps) {
   const currentPage = Math.floor(page.offset / page.limit) + 1;
   const pageCount = Math.max(Math.ceil(page.total / page.limit), 1);
   const canGoPrevious = page.offset > 0;
@@ -36,14 +42,35 @@ export function RiskTable({ page, onPageChange }: RiskTableProps) {
         <caption className="sr-only">Reorder recommendations</caption>
         <thead className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-foreground-muted">
           <tr>
-            <th scope="col" className="px-4 py-3 font-medium">Product</th>
-            <th scope="col" className="px-4 py-3 font-medium">SKU</th>
-            <th scope="col" className="px-4 py-3 font-medium">Risk</th>
-            <th scope="col" className="px-4 py-3 font-medium">Status</th>
-            <th scope="col" className="px-4 py-3 font-medium">Current stock</th>
-            <th scope="col" className="px-4 py-3 font-medium">Forecast demand</th>
-            <th scope="col" className="px-4 py-3 font-medium">Recommended reorder</th>
-            <th scope="col" className="px-4 py-3 font-medium">Reason</th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Product
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              SKU
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Risk
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Status
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Current stock
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Forecast demand
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Recommended reorder
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Reason
+            </th>
+            {onRecommendationDetail === undefined ? null : (
+              <th scope="col" className="px-4 py-3 font-medium">
+                Details
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -52,8 +79,12 @@ export function RiskTable({ page, onPageChange }: RiskTableProps) {
               <td className="max-w-52 break-words px-4 py-3 font-medium">
                 {recommendation.productName}
               </td>
-              <td className="break-all px-4 py-3 font-mono text-xs">{recommendation.sku}</td>
-              <td className="px-4 py-3"><RiskBadge riskLevel={recommendation.riskLevel} /></td>
+              <td className="break-all px-4 py-3 font-mono text-xs">
+                {recommendation.sku}
+              </td>
+              <td className="px-4 py-3">
+                <RiskBadge riskLevel={recommendation.riskLevel} />
+              </td>
               <td className="whitespace-nowrap px-4 py-3">
                 <span className="inline-flex rounded-full border border-border bg-surface-muted px-2 py-0.5 text-xs font-medium text-foreground-muted">
                   {STATUS_LABELS[recommendation.status]}
@@ -74,6 +105,18 @@ export function RiskTable({ page, onPageChange }: RiskTableProps) {
               <td className="min-w-64 max-w-md break-words px-4 py-3 text-foreground-muted">
                 {recommendation.reason ?? '—'}
               </td>
+              {onRecommendationDetail === undefined ? null : (
+                <td className="whitespace-nowrap px-4 py-3">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => onRecommendationDetail(recommendation.id)}
+                    aria-label={`View recommendation details for ${recommendation.productName}`}
+                  >
+                    View details
+                  </Button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

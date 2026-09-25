@@ -9,7 +9,7 @@ recommendation system for small-business inventory management.
 
 **Frontend Module 12 - Shared UI / final frontend consolidation: COMPLETED.**
 All frontend implementation modules 0-12 are complete. Integration Phases 1,
-2/2B, 3, 4, 5, 6, and 7 connect Foundation/Auth, Product Catalog, Inventory,
+2/2B, 3, 4, 5, 6, 7, and 8 connect Foundation/Auth, Product Catalog, Inventory,
 Sales Upload/Sales History, Dashboard Summary, Forecast Run/Background Jobs,
 and Forecast Results respectively; later business integrations remain separate.
 
@@ -57,22 +57,22 @@ on-demand product result detail. Normal builds use the shared authenticated
 client to read persisted Forecast Results; they do not invoke ML processing or
 calculate predictions, metrics, or chart values.
 
-Module 9 adds a protected, read-only Recommendations route with backend-aligned
-five-level risk presentation, read-only status display, Product/SKU search, risk/status filtering, offset/limit
-pagination, reorder quantities that retain valid zeroes and up to three decimal
-places, and safe loading, empty, filtered-empty, and error states. Normal builds
-make no Reorder Recommendation request and contain no recommendation data.
+Module 9 adds a protected Recommendations route with backend-aligned five-level
+risk presentation, Product/SKU search, risk/status filtering, offset/limit
+pagination, run-specific generation and summary, on-demand detail, and only the
+backend-confirmed acknowledge/dismiss actions. Normal builds use the shared
+authenticated client for the complete verified Recommendations contract; risk,
+recommended action, reorder quantity, and persistence remain backend-owned.
 
-Recommendations uses an adapter boundary and is **not** connected to the backend
-API yet. Auth, Dashboard, Products, Inventory, Sales Upload, Sales History,
+Recommendations now uses the shared API client. Auth, Dashboard, Products, Inventory, Sales Upload, Sales History,
 Forecast Run, and Forecast Results are connected through the shared API client
 and the backend's HttpOnly refresh-cookie contract. Dashboard consumes
 the backend-authoritative read-only Summary projection; its fixtures remain
 isolated to component and Playwright infrastructure. See
 [`docs/progress.md`](docs/progress.md) for per-module status.
 
-Recommendations follows the same no-network adapter boundary. Its deterministic
-session-scoped fixtures are selected only by the Playwright-managed test build.
+The deterministic Recommendations fixture remains selected only by the
+Playwright-managed test build; normal builds never fall back to it.
 
 Module 10 adds the protected `/reports` route, one selector for the five
 backend-defined report views, report-specific filters, semantic report tables,
@@ -210,8 +210,9 @@ Run and Forecast Results now use the real FastAPI endpoints. See
 [`docs/architecture.md`](docs/architecture.md) for the integration plan.
 
 Recommendations risk levels, list filters, response-safe fields, nullable reason,
-and three-decimal quantity semantics were also aligned through read-only backend
-inspection. The frontend does not call the Recommendations API at runtime.
+three-decimal quantity semantics, generation policy, run summary, detail, and
+status transition rules were aligned through read-only backend inspection. The
+frontend now calls only the verified Recommendations API routes at runtime.
 
 Reports contract inspection established model-performance, inventory-risk,
 reorder-summary, demand-forecast, and sales-summary views. The backend exposes
@@ -327,3 +328,19 @@ or client-side forecast calculation. Product detail is the only new Results UI:
 an accessible dialog opened from a prediction row. Deterministic fixtures remain
 Playwright-only; `e2e/forecast-results.real.spec.ts` is an opt-in live browser
 contract requiring FastAPI, PostgreSQL, Redis, and an RQ worker.
+
+## Integration Phase 8 - Recommendations
+
+The normal Recommendations service now uses the established authenticated API
+client for generation, global and run-scoped lists, a run summary, on-demand
+detail, and supported status updates. A completed Forecast Results screen links
+to `/recommendations?forecastRunId=...`; that run-scoped screen validates the
+UUID, permits one explicit generation request with `{ refresh: false }`, and
+loads existing recommendations after a generation conflict rather than silently
+refreshing them. Recommendation actions never update Inventory or create a
+purchase order.
+
+The deterministic fixture adapter is selected only by the Playwright build.
+`e2e/recommendations.real.spec.ts` is an opt-in browser contract requiring
+FastAPI, PostgreSQL, Redis, and an RQ worker. Reports, Settings, User Profile,
+and all other deferred integrations remain outside Phase 8.

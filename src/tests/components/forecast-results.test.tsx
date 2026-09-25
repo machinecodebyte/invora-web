@@ -51,6 +51,10 @@ describe('ForecastResultsView', () => {
     expect(
       screen.queryByRole('columnheader', { name: /actual/i }),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Recommendations' })).toHaveAttribute(
+      'href',
+      `/recommendations?forecastRunId=${FORECAST_RESULTS_RUN_ID}`,
+    );
   });
 
   it('validates date filters and applies backend-supported product or SKU search', async () => {
