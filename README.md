@@ -347,3 +347,19 @@ The deterministic fixture adapter is selected only by the Playwright build.
 `e2e/recommendations.real.spec.ts` is an opt-in browser contract requiring
 FastAPI, PostgreSQL, Redis, and an RQ worker. Reports, Settings, User Profile,
 and all other deferred integrations remain outside Phase 8.
+
+## Integration Phase 10 — Settings
+
+The existing narrow Settings UI now uses the shared authenticated API client for
+`GET` and `PATCH /api/v1/settings/forecast` and `GET` and `PATCH
+/api/v1/settings/inventory`. Forecast Defaults map to the four backend forecast
+fields. The Safety Stock section maps only `inventory_default_safety_stock`;
+minimum-stock and low-stock-alert preferences are intentionally not rendered or
+sent, so backend partial PATCH semantics preserve them.
+
+The test-only Settings fixture is gated by the Playwright build flag and is not
+selected by normal builds. No settings are stored in browser persistence by the
+normal runtime. Full frontend regression (493 tests), configured coverage,
+deterministic Chromium regression (89 passed, 7 opt-in live contracts skipped),
+backend Settings regression (51 tests), TypeScript, and production build passed.
+Global ESLint remains blocked only by two pre-existing Recommendations errors.

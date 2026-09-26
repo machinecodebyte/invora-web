@@ -342,3 +342,14 @@ npx playwright test e2e/reports.spec.ts
 The last command is deterministic and uses the Playwright-only Reports fixture.
 Normal application builds instead require `NEXT_PUBLIC_API_BASE_URL` to point to
 the authenticated FastAPI service.
+
+## Settings integration checks
+
+```bash
+npx vitest run src/tests/unit/settings-api.test.ts src/tests/unit/settings-schemas.test.ts src/tests/components/settings.test.tsx --maxWorkers=1
+npx playwright test e2e/settings.spec.ts --workers=1
+```
+
+The browser command uses the Playwright-only Settings fixture. Normal builds use
+the authenticated FastAPI category endpoints configured through
+`NEXT_PUBLIC_API_BASE_URL`; no extra command or environment variable is needed.

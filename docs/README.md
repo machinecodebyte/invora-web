@@ -315,3 +315,12 @@ existing rows after a conflict. Recommendation status never mutates Inventory
 or creates a purchase order. The real browser contract is opt-in through
 `PLAYWRIGHT_RECOMMENDATIONS_REAL_BACKEND=true` and requires FastAPI,
 PostgreSQL, Redis, and an RQ worker.
+
+## Integration Phase 10 — Settings
+
+Settings now consumes only the two categories represented by the existing UI:
+Forecast Defaults and Safety Stock Defaults. The shared authenticated client
+loads both categories in parallel and sends category-scoped partial PATCH
+requests. Broader global, reset, sales-upload, report, dashboard, background-job,
+localization, and options endpoints remain deliberately deferred because no
+current Settings UI owns those preferences.

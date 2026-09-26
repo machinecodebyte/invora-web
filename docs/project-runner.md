@@ -456,3 +456,22 @@ storage.
 Only the integrated Auth, Product Catalog, and Inventory adapters make normal
 requests. The standard browser suite deliberately keeps deterministic adapters;
 use an opt-in live browser contract only when the backend stack is running.
+
+## 17. Integration Phase 10 Settings setup
+
+The normal protected `/settings` route requires the same authenticated FastAPI
+origin used by the other integrated modules. It makes only four category calls:
+Forecast `GET`/`PATCH` and Inventory `GET`/`PATCH`. The current UI owns all four
+Forecast fields and only Inventory safety stock. Do not expect the page to edit
+global/reset, Sales Upload, Reports, Dashboard, Background Jobs, localization,
+or other Inventory preferences; they are outside the current UI contract.
+
+Run the focused deterministic browser coverage with:
+
+```powershell
+npx playwright test e2e/settings.spec.ts --workers=1
+```
+
+The test flag is supplied by `playwright.config.ts`; it must not be enabled in a
+normal development or production environment. The normal adapter never stores
+Settings values in browser storage.

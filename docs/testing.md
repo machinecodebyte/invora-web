@@ -508,3 +508,22 @@ deterministic Playwright passed 85 tests with 7 opt-in live contracts skipped.
 The focused backend Reports suite passed 21 tests. No live Reports browser
 contract was run because no controlled backend/PostgreSQL/Redis environment was
 provisioned.
+
+## Integration Phase 10 — Settings validation
+
+`settings-api.test.ts` covers category composition, snake-case/camel-case
+mapping, exact endpoint and PATCH body selection, explicit `false` boolean
+preservation, malformed payload rejection, safe error normalization, and the
+test-only fixture boundary. It explicitly proves that Safety Stock PATCH omits
+the hidden Inventory minimum-stock and alert fields. Existing Settings schema and
+component tests continue to cover accessible fields, validation, pending/retry,
+revert, and safe load/save states.
+
+`e2e/settings.spec.ts` covers unauthenticated redirect, protected category
+loading, Forecast Defaults save with a false boolean, Safety Stock validation and
+save, reload persistence in the Playwright-only fixture, and safe failure UI.
+The final serial frontend run passed 60 files / 493 tests; configured coverage
+passed all thresholds at 94.44% statements, 93.30% branches, 96.00% functions,
+and 94.36% lines. The complete deterministic Chromium suite passed 89 tests;
+seven explicitly opt-in live backend contracts were skipped. The read-only
+backend Settings unit/API regression passed 51 tests.

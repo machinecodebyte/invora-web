@@ -100,6 +100,8 @@ export default defineConfig({
         : 'true',
       // Enables the Reports fixture adapter only in the Playwright-managed build.
       NEXT_PUBLIC_REPORTS_E2E_TEST_MODE: 'true',
+      // Enables the Settings fixture adapter only in the Playwright-managed build.
+      NEXT_PUBLIC_SETTINGS_E2E_TEST_MODE: 'true',
       PORT: String(port),
     },
   },

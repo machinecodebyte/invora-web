@@ -425,11 +425,14 @@ Implemented:
   revert states, plus accessible loading/error states
 - Typed no-network Settings service boundary and deterministic component fixtures
 
-**Real Settings/default persistence integration is intentionally not enabled.**
-The normal service makes no request, stores nothing in local or session storage,
-and does not manufacture business defaults. No Settings E2E suite was added
-because Module 11 requires component testing; all existing Playwright suites are
-still rerun as the frontend regression gate.
+**Real Settings/default persistence integration is enabled for the current
+narrow UI.** Normal builds use the shared authenticated client for Forecast
+Settings and Inventory Settings category reads and partial writes. The Safety
+Stock form sends only `inventory_default_safety_stock`; it does not overwrite
+minimum-stock or alert preferences the UI does not own. Normal runtime stores no
+Settings values in browser storage. The Playwright-only fixture is explicitly
+build-gated and `e2e/settings.spec.ts` covers protected navigation, category
+loading, save/persistence, validation, and safe errors.
 
 ## Current Shared UI / Final Consolidation Scope
 
@@ -450,7 +453,8 @@ generic contract. Module 12 adds no route, provider, store, API call, backend
 connection, or business data.
 
 **Current project status:** Frontend implementation modules 0-12 are complete.
-Integration Phases 1, 2/2B, 3, 4, 5, 6, 7, 8, and 9 are implemented for
+Integration Phases 1, 2/2B, 3, 4, 5, 6, 7, 8, 9, and 10 are implemented for
 Foundation/Auth, Products, Inventory, Sales, Dashboard Summary, Forecast
-Run/Background Jobs, Forecast Results, Recommendations, and Reports. Settings,
-User Profile, and other deferred business integrations remain separate phases.
+Run/Background Jobs, Forecast Results, Recommendations, Reports, and the narrow
+Settings scope. User Profile and other deferred business integrations remain
+separate phases.

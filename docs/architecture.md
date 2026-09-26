@@ -939,3 +939,27 @@ fixture only for Playwright's managed build. It is never selected by normal
 development or production builds. Frontend protection remains a UX boundary;
 the backend independently enforces authentication, user ownership, validation,
 and report access.
+
+## Integration Phase 10 — Settings architecture
+
+`features/settings/api.ts` now selects `createHttpSettingsService()` for normal
+builds and retains the existing `SettingsService` interface used by the Settings
+hook and forms. `getSettings()` composes `GET /api/v1/settings/forecast` and
+`GET /api/v1/settings/inventory` in parallel through the shared authenticated
+`ApiClient`; FastAPI response envelopes are unwrapped by that client and each
+feature mapper guards its backend category payload before producing the existing
+camel-case UI model.
+
+Forecast writes map all and only the UI-owned fields to
+`forecast_default_horizon_days`, `forecast_min_history_days`,
+`forecast_default_model`, and `forecast_auto_process_enabled`. Inventory writes
+map only `inventory_default_safety_stock`. The frontend neither puts
+`inventory_default_minimum_stock` nor `inventory_low_stock_alert_enabled` into
+React state or a PATCH body, preserving backend-owned values through the server's
+partial-update semantics. It does not use global settings, reset, or options
+endpoints.
+
+`NEXT_PUBLIC_SETTINGS_E2E_TEST_MODE=true` selects a validated session-scoped
+fixture only for Playwright's managed production build. This test seam is not a
+normal persistence mechanism. Frontend route protection remains UX only; FastAPI
+independently enforces authentication, ownership, validation, and data integrity.

@@ -287,3 +287,17 @@ Every future module must update, in the same change as its code:
 
 Update the relevant sections incrementally. Do not overwrite unrelated
 documentation, and do not mark a module completed before it is verified.
+
+## Integration Phase 10 — Settings
+
+**Implementation complete; global release acceptance remains blocked only by
+two pre-existing Recommendations lint errors outside this phase.** The narrow
+Settings frontend now integrates its existing Forecast Defaults and Safety Stock
+Defaults sections through the shared authenticated client. Forecast maps to the
+four verified forecast preference fields; Safety Stock maps only to
+`inventory_default_safety_stock`, leaving other Inventory settings untouched.
+
+Focused Settings tests, full serial frontend regression (60 files / 493 tests),
+coverage thresholds, deterministic Chromium regression (89 passed, 7 opt-in live
+contracts skipped), backend Settings regression (51 tests), strict TypeScript,
+and production build passed. No backend source or dependency changed.
