@@ -120,7 +120,8 @@ Overrides: `PLAYWRIGHT_WEB_SERVER_COMMAND`, `PLAYWRIGHT_BASE_URL`,
 | `recommendations-schemas.test.ts`       | Search normalization and the exact backend risk-level filter enumeration                                                                                                                                                         |
 | `recommendations-api.test.ts`           | All six authenticated Recommendations routes, required generation body, snake_case/Decimal mapping, invalid payload rejection, and backend query semantics                                                                       |
 | `reports-schemas.test.ts`               | Backend report type/date/UUID/channel validation and report-specific query mapping                                                                                                                                               |
-| `reports-api.test.ts`                   | Honest unavailable normal Reports and export service boundary with no runtime request                                                                                                                                            |
+| `reports-api.test.ts`                   | Retained unavailable-service failure seam                                                                                                                                                                                        |
+| `reports-http-api.test.ts`              | Exact route/query pruning, all five independent response mappers, Demand Forecast context, Blob CSV transport, filename fallback/sanitization, content-type rejection, and object-URL cleanup                                    |
 | `settings-schemas.test.ts`              | Backend-aligned forecast choices/history window and zero-safe three-decimal absolute safety-stock validation                                                                                                                     |
 | `settings-api.test.ts`                  | Honest unavailable normal Settings service boundary with no runtime request or persistence                                                                                                                                       |
 
@@ -370,10 +371,11 @@ five-report selector, the active report's semantic table and backend-provided
 summary values, valid zero and nullable cells, report-specific filters, required
 demand-forecast run validation, invalid date ranges, loading, empty,
 filtered-empty, normalized errors, and CSV export pending/duplicate prevention,
-safe metadata success, and failure. The normal `ReportsService` is separately
-tested to reject both report and export operations without making a request.
-There is no Module 10 E2E suite by roadmap; all existing E2E suites are rerun as
-the regression gate.
+safe metadata success, and failure. The normal `ReportsService` now uses the
+authenticated shared HTTP client; its route/query, Blob, download, and response
+mapping paths have focused unit coverage. `e2e/reports.spec.ts` covers protected
+navigation, the five report types, required demand-run context, CSV success,
+empty output, and safe errors through the Playwright-only fixture.
 
 ### Coverage
 
@@ -486,3 +488,23 @@ failure, logout revocation/idempotence, password-change revocation, and
 credentialed CORS preflight. The optional live Auth browser spec is skipped
 unless PLAYWRIGHT_AUTH_REAL_BACKEND is explicitly enabled with a configured
 FastAPI service and database.
+
+## Integration Phase 9 — Reports validation
+
+`reports-http-api.test.ts` covers all five endpoint selections, report-specific
+query pruning, the required Demand Forecast run, five independent wire mappers,
+invalid numeric response rejection, authenticated Blob export, safe filename
+handling, cross-origin fallback, CSV content-type rejection, and object-URL
+cleanup. Shared-client tests additionally prove Blob headers remain available
+only after successful HTTP handling, so a server error document is not
+downloaded.
+
+`reports.test.tsx` covers report filters, validation, accessible rendering,
+pending/duplicate export prevention, success, and safe failures.
+`e2e/reports.spec.ts` covers protected navigation, all five report types, the
+Demand Forecast requirement, empty/error behavior, and deterministic CSV export
+state. The full serial frontend suite passed 60 files / 488 tests; full
+deterministic Playwright passed 85 tests with 7 opt-in live contracts skipped.
+The focused backend Reports suite passed 21 tests. No live Reports browser
+contract was run because no controlled backend/PostgreSQL/Redis environment was
+provisioned.

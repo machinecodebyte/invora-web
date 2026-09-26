@@ -13,9 +13,9 @@ Quick start for running the Invora frontend locally. For the long-form version
 
 No database, Redis, or backend service is required for the deterministic
 frontend test suite. Normal Auth, Product Catalog, Inventory, Sales Upload,
-Sales History, Dashboard, Forecast Run, Forecast Results, and Recommendations
-usage require the configured FastAPI service; Reports and Settings remain
-separate integrations.
+Sales History, Dashboard, Forecast Run, Forecast Results, Recommendations, and
+Reports usage require the configured FastAPI service; Settings remains a
+separate integration.
 
 ## Installation
 
@@ -401,14 +401,16 @@ Implemented:
   demand forecast, and sales summary output
 - Report-specific backend-supported filters, semantic table/summary rendering,
   and loading, empty, filtered-empty, validation, and safe error states
-- CSV-only export action with pending, deterministic test-success, and safe
-  failure states; it prevents duplicate export and creates no production download
-- Typed no-network Reports/export service contract with isolated component fixtures
+- CSV-only export action with pending, success, and safe failure states; it
+  prevents duplicate export and downloads backend-generated CSV through Blob
+  transport with defensive filename handling
+- Typed shared-client adapter with independent report-schema mappers, plus
+  deterministic component and Playwright fixtures
 
-**Real Reports API and export integration are intentionally not enabled.** The
-normal service makes no report/export request and cannot manufacture data,
-files, or downloads. Module 10 requires component coverage only; existing
-Playwright suites remain part of full frontend regression.
+**Reports API and CSV export integration are enabled.** Normal builds call only
+the five verified authenticated read endpoints and never calculate report data
+or mutate business records. The Playwright fixture is explicitly build-gated;
+Settings and User Profile remain deferred.
 
 ## Current Settings Scope
 
@@ -448,7 +450,7 @@ generic contract. Module 12 adds no route, provider, store, API call, backend
 connection, or business data.
 
 **Current project status:** Frontend implementation modules 0-12 are complete.
-Integration Phases 1, 2/2B, 3, 4, 5, 6, 7, and 8 are complete for
+Integration Phases 1, 2/2B, 3, 4, 5, 6, 7, 8, and 9 are implemented for
 Foundation/Auth, Products, Inventory, Sales, Dashboard Summary, Forecast
-Run/Background Jobs, Forecast Results, and Recommendations. Reports, Settings,
+Run/Background Jobs, Forecast Results, Recommendations, and Reports. Settings,
 User Profile, and other deferred business integrations remain separate phases.

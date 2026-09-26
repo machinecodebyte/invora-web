@@ -180,6 +180,7 @@ npx playwright test e2e/auth.spec.ts
 npx playwright test e2e/dashboard.spec.ts
 npx playwright test e2e/products.spec.ts
 npx playwright test e2e/inventory.spec.ts
+npx playwright test e2e/reports.spec.ts
 npx playwright test e2e/sales-upload.spec.ts
 npx playwright test e2e/forecast-flow.spec.ts
 npx playwright test e2e/forecast-results.spec.ts
@@ -316,13 +317,12 @@ supported status update through the normal UI.
 
 ### Reports component behavior
 
-`/reports` is the protected Module 10 report-selector surface. It uses the
-normal unavailable `ReportsService`, which calls neither Reports nor export
-endpoints and creates no local report data, CSV, or browser download. Component
-tests inject isolated fixtures for the five backend report types and synchronous
-CSV metadata; no Module 10 E2E suite was added because the approved test layer is
-component testing. Existing browser suites still provide complete regression
-coverage for the previously completed modules.
+`/reports` is the protected Module 10 report-selector surface. Normal builds use
+the authenticated shared client for the five verified report endpoints. Each
+schema is mapped independently; CSV calls the same route with `format=csv`,
+validates the Blob response type, and downloads with a safe attachment filename
+or deterministic fallback. `e2e/reports.spec.ts` uses only the explicitly
+build-gated deterministic fixture; it never replaces the normal adapter.
 
 ### Settings component behavior
 
@@ -363,12 +363,12 @@ Expected results for Foundation + Auth + Dashboard + Products + Inventory + Sale
 
 | Step            | Expected                                                                        |
 | --------------- | ------------------------------------------------------------------------------- |
-| `lint`          | no errors, no warnings                                                          |
+| `lint`          | blocked by two pre-existing Recommendations `set-state-in-effect` errors        |
 | `typecheck`     | no errors                                                                       |
-| `test`          | latest coverage run: 58 files, 463 tests passing                                |
+| `test`          | serial regression: 60 files, 488 tests passing                                  |
 | `test:coverage` | above all 85% thresholds                                                        |
 | `build`         | compiles; all completed routes and the shared-UI consolidation                  |
-| `test:e2e`      | 78 deterministic Chromium tests passing; 5 opt-in live specs skipped by default |
+| `test:e2e`      | 85 deterministic Chromium tests passing; 7 opt-in live specs skipped by default |
 
 ## 13. Troubleshooting
 

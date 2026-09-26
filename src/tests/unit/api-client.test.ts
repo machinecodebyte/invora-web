@@ -182,6 +182,50 @@ describe('ApiClient success paths', () => {
     await expect(blob.text()).resolves.toBe('binary-ish');
   });
 
+  it('returns Blob response metadata through the shared error and auth pipeline', async () => {
+    server.use(
+      http.get(
+        `${TEST_API_BASE_URL}/attachment`,
+        () =>
+          new HttpResponse('sku,quantity\nA-1,5', {
+            headers: {
+              'content-type': 'text/csv',
+              'content-disposition': 'attachment; filename="inventory.csv"',
+            },
+          }),
+      ),
+    );
+
+    const response = await createClient({ token: 'token-abc' }).getWithResponse<Blob>(
+      '/attachment',
+      { responseFormat: 'blob' },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toBe(
+      'attachment; filename="inventory.csv"',
+    );
+    await expect(response.data.text()).resolves.toBe('sku,quantity\nA-1,5');
+  });
+
+  it('normalizes a failed Blob request before any error document can be decoded as a file', async () => {
+    server.use(
+      http.get(`${TEST_API_BASE_URL}/attachment-failure`, () =>
+        HttpResponse.html('<html>internal export failure</html>', { status: 500 }),
+      ),
+    );
+
+    await expect(
+      createClient().getWithResponse<Blob>('/attachment-failure', {
+        responseFormat: 'blob',
+      }),
+    ).rejects.toMatchObject({
+      kind: 'http',
+      status: 500,
+      message: 'Something went wrong. Please try again.',
+    });
+  });
+
   it('skips body decoding entirely for the void response format', async () => {
     server.use(
       http.get(`${TEST_API_BASE_URL}/ping`, () =>

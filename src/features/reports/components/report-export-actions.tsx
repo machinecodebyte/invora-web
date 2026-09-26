@@ -8,7 +8,7 @@ export interface ReportExportActionsProps {
   readonly onExportCsv: () => Promise<void>;
 }
 
-/** CSV export interaction without a production download implementation. */
+/** CSV export interaction backed by the Reports service's Blob download flow. */
 export function ReportExportActions({ state, onExportCsv }: ReportExportActionsProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">

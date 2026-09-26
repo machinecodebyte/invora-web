@@ -7,6 +7,7 @@ import {
   reportsService,
   type ReportsService,
 } from '@/features/reports/api';
+import { isApiError } from '@/lib/api-error';
 import { reportFiltersSchema, toReportQuery } from '@/features/reports/schemas';
 import type {
   ReportExportState,
@@ -31,7 +32,9 @@ const GENERIC_REPORT_ERROR = 'Unable to load report.';
 const GENERIC_EXPORT_ERROR = 'Unable to export report.';
 
 function toSafeMessage(error: unknown, fallback: string): string {
-  return error instanceof ReportsServiceError ? error.message : fallback;
+  return error instanceof ReportsServiceError || isApiError(error)
+    ? error.message
+    : fallback;
 }
 
 type ReportFilterField = keyof ReportFilters;
@@ -69,9 +72,7 @@ export interface UseReportsResult {
 }
 
 /** Local report and export orchestration; server state stays behind ReportsService. */
-export function useReports(
-  service: ReportsService = reportsService,
-): UseReportsResult {
+export function useReports(service: ReportsService = reportsService): UseReportsResult {
   const [filters, setFiltersState] = useState<ReportFilters>(DEFAULT_REPORT_FILTERS);
   const [requestVersion, setRequestVersion] = useState(0);
   const [state, setState] = useState<ReportsViewState>({ status: 'loading' });

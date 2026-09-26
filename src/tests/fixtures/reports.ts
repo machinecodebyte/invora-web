@@ -1,7 +1,4 @@
-import {
-  ReportsServiceError,
-  type ReportsService,
-} from '@/features/reports/api';
+import { ReportsServiceError, type ReportsService } from '@/features/reports/api';
 import type {
   ReportData,
   ReportExportRequest,
@@ -30,7 +27,7 @@ const SALES_SUMMARY_REPORT: ReportData = {
     { key: 'totalQuantitySold', label: 'Quantity sold', format: 'number' },
     { key: 'totalSalesAmount', label: 'Sales amount', format: 'currency' },
     { key: 'transactionCount', label: 'Transactions', format: 'number' },
-    { key: 'averageSaleAmount', label: 'Average sale', format: 'currency' },
+    { key: 'averageTransactionAmount', label: 'Average sale', format: 'currency' },
   ],
   rows: [
     {
@@ -42,7 +39,7 @@ const SALES_SUMMARY_REPORT: ReportData = {
         totalQuantitySold: 0,
         totalSalesAmount: 0,
         transactionCount: 0,
-        averageSaleAmount: null,
+        averageTransactionAmount: null,
       },
     },
     {
@@ -54,7 +51,7 @@ const SALES_SUMMARY_REPORT: ReportData = {
         totalQuantitySold: 12,
         totalSalesAmount: 125.5,
         transactionCount: 5,
-        averageSaleAmount: 25.1,
+        averageTransactionAmount: 25.1,
       },
     },
   ],
@@ -154,7 +151,7 @@ const REORDER_SUMMARY_REPORT: ReportData = {
 const DEMAND_FORECAST_REPORT: ReportData = {
   reportType: 'demand_forecast',
   title: 'Demand forecast',
-  description: 'Forecast output for one completed forecast run.',
+  description: 'Forecast output for one selected forecast run.',
   generatedAt: '2026-09-15T09:00:00Z',
   summary: [
     { label: 'Forecast products', value: 1, format: 'number' },
@@ -222,6 +219,10 @@ const REPORTS_BY_TYPE: Readonly<Record<ReportType, ReportData>> = {
   demand_forecast: DEMAND_FORECAST_REPORT,
   model_performance: MODEL_PERFORMANCE_REPORT,
 };
+
+/** Complete deterministic data set used only by the Playwright Reports fixture. */
+export const REPORTS_E2E_DATA: Readonly<Record<ReportType, ReportData>> =
+  REPORTS_BY_TYPE;
 
 function rowsForQuery(report: ReportData, query: ReportQuery): ReportData {
   let rows = report.rows;

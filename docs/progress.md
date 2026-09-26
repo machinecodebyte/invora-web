@@ -4,21 +4,21 @@ Implementation status of the Invora frontend, module by module.
 
 ## Status
 
-| Module           | Status                                   | Notes                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Foundation       | **Completed**                            | Next.js 16 App Router, strict TypeScript, Tailwind 4 design tokens, typed API client, `ApiError` model, TanStack Query provider, auth infrastructure, RHF + Zod pattern, logger with redaction, security headers, error/not-found/loading routes, Vitest + RTL + MSW + Playwright harness, 262 unit/component tests, 6 E2E tests, documentation                                                            |
-| Shared UI        | **In progress — foundation established** | Button, Input, Label, Card (+ Header/Title/Description/Content/Footer), Spinner, Skeleton, EmptyState, ErrorState, Toaster; AppShell, Header, MainContent, PageContainer. All typed, accessible, and tested. Extended as modules need it.                                                                                                                                                                  |
-| Auth             | **Completed + Phase 1 integrated**       | Login/register, HttpOnly refresh-cookie session restoration, real shared-client Auth adapter, bounded 401 refresh/replay, server logout, safe redirects, protected/public route boundaries, and isolated test-only E2E adapter. Business API integration remains disabled.                                                                                                                                 |
-| Dashboard        | **Completed + Phase 5 integrated**       | Protected responsive Dashboard uses one real shared-client `GET /api/v1/dashboard/summary` adapter for backend-authoritative KPIs, demand trends, Inventory risk, and reorder alerts. Decimal/date mapping, safe loading/error/no-data states, deterministic fixtures, and opt-in live-browser coverage are preserved.                                                                                     |
-| Products         | **Completed**                            | Protected Product Catalog list with search and active-status filters; React Hook Form + Zod create/edit form; loading/empty/error/pending states; typed no-request service boundary; deterministic test-only E2E fixture adapter; 20 Product-specific unit/component tests and 7 E2E tests. Real Product Catalog API integration remains disabled.                                                         |
-| Inventory        | **Completed + Phase 3 integrated**       | Protected Inventory table with backend-aligned stock status, search/status filters, dedicated low-stock view, and immutable stock-movement form; loading/empty/error/pending states; real shared-client list, low-stock, and movement adapter; Inventory-scoped query invalidation; deterministic fixture adapter plus opt-in real-backend E2E coverage.                                                   |
-| Sales Upload     | **Completed + Phase 4 integrated**       | Protected CSV upload with backend-aligned preflight and live `POST /api/v1/sales/uploads` through the shared authenticated client. The normal runtime uses browser-owned multipart boundaries and reports final server results without invented processing progress; the deterministic test-only adapter remains explicitly gated.                                                                         |
-| Sales History    | **Completed + Phase 4 integrated**       | Protected read-only Sales Transaction table and day trend now use live `GET /api/v1/sales/transactions` and `GET /api/v1/sales/transactions/trends` adapters, with explicit snake_case query mapping, date-only preservation, decimal boundary mapping, and independent safe states.                                                                                                                       |
-| Forecast Run     | **Completed + Phase 6 integrated**       | Protected `/forecasts/runs` configuration/status route; backend-aligned 7/15/30-day horizon form; real shared-client create/enqueue/active-job-poll/terminal-run-reconcile flow; safe queue/status errors; deterministic fixture adapter and opt-in live worker contract. Completed runs link to the separate Phase 7 Results route; ML control remains deferred.                                          |
-| Forecast Results | **Completed + Phase 7 integrated**       | Protected `/forecasts/results` completed-run route; validated UUID selection; real shared-client overview, predictions, metrics, chart, and product-detail reads; backend pagination/filtering, decimal/date-only mapping, nullable actuals, isolated chart failure, deterministic fixture adapter, and opt-in live worker contract. Forecast computation remains backend-owned.                           |
-| Recommendations  | **Completed + Phase 8 integrated**       | Protected `/recommendations` uses the shared authenticated client for generation, global/run list, run summary, detail, and supported status updates. It preserves backend-authoritative risk/action/reorder data, explicit `refresh: false` generation, safe conflict handling, deterministic test-only fixtures, and an opt-in live contract. |
-| Reports          | **Completed**                            | Protected read-only `/reports` route with the five inspected backend report types, report-specific filters, semantic tables, backend-provided summary projection, CSV-only export state, and deterministic component fixtures. Normal runtime makes no Report or export request and creates no file/download.                                                                                              |
-| Settings         | **Completed**                            | Protected `/settings` route with backend-aligned Forecast Defaults and absolute three-decimal Safety Stock Defaults; RHF + Zod validation; independent dirty/save/revert states; safe loading/error UI; test-only component fixtures; no runtime persistence or request.                                                                                                                                   |
+| Module           | Status                                   | Notes                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Foundation       | **Completed**                            | Next.js 16 App Router, strict TypeScript, Tailwind 4 design tokens, typed API client, `ApiError` model, TanStack Query provider, auth infrastructure, RHF + Zod pattern, logger with redaction, security headers, error/not-found/loading routes, Vitest + RTL + MSW + Playwright harness, 262 unit/component tests, 6 E2E tests, documentation                                  |
+| Shared UI        | **In progress — foundation established** | Button, Input, Label, Card (+ Header/Title/Description/Content/Footer), Spinner, Skeleton, EmptyState, ErrorState, Toaster; AppShell, Header, MainContent, PageContainer. All typed, accessible, and tested. Extended as modules need it.                                                                                                                                        |
+| Auth             | **Completed + Phase 1 integrated**       | Login/register, HttpOnly refresh-cookie session restoration, real shared-client Auth adapter, bounded 401 refresh/replay, server logout, safe redirects, protected/public route boundaries, and isolated test-only E2E adapter. Business API integration remains disabled.                                                                                                       |
+| Dashboard        | **Completed + Phase 5 integrated**       | Protected responsive Dashboard uses one real shared-client `GET /api/v1/dashboard/summary` adapter for backend-authoritative KPIs, demand trends, Inventory risk, and reorder alerts. Decimal/date mapping, safe loading/error/no-data states, deterministic fixtures, and opt-in live-browser coverage are preserved.                                                           |
+| Products         | **Completed**                            | Protected Product Catalog list with search and active-status filters; React Hook Form + Zod create/edit form; loading/empty/error/pending states; typed no-request service boundary; deterministic test-only E2E fixture adapter; 20 Product-specific unit/component tests and 7 E2E tests. Real Product Catalog API integration remains disabled.                               |
+| Inventory        | **Completed + Phase 3 integrated**       | Protected Inventory table with backend-aligned stock status, search/status filters, dedicated low-stock view, and immutable stock-movement form; loading/empty/error/pending states; real shared-client list, low-stock, and movement adapter; Inventory-scoped query invalidation; deterministic fixture adapter plus opt-in real-backend E2E coverage.                         |
+| Sales Upload     | **Completed + Phase 4 integrated**       | Protected CSV upload with backend-aligned preflight and live `POST /api/v1/sales/uploads` through the shared authenticated client. The normal runtime uses browser-owned multipart boundaries and reports final server results without invented processing progress; the deterministic test-only adapter remains explicitly gated.                                               |
+| Sales History    | **Completed + Phase 4 integrated**       | Protected read-only Sales Transaction table and day trend now use live `GET /api/v1/sales/transactions` and `GET /api/v1/sales/transactions/trends` adapters, with explicit snake_case query mapping, date-only preservation, decimal boundary mapping, and independent safe states.                                                                                             |
+| Forecast Run     | **Completed + Phase 6 integrated**       | Protected `/forecasts/runs` configuration/status route; backend-aligned 7/15/30-day horizon form; real shared-client create/enqueue/active-job-poll/terminal-run-reconcile flow; safe queue/status errors; deterministic fixture adapter and opt-in live worker contract. Completed runs link to the separate Phase 7 Results route; ML control remains deferred.                |
+| Forecast Results | **Completed + Phase 7 integrated**       | Protected `/forecasts/results` completed-run route; validated UUID selection; real shared-client overview, predictions, metrics, chart, and product-detail reads; backend pagination/filtering, decimal/date-only mapping, nullable actuals, isolated chart failure, deterministic fixture adapter, and opt-in live worker contract. Forecast computation remains backend-owned. |
+| Recommendations  | **Completed + Phase 8 integrated**       | Protected `/recommendations` uses the shared authenticated client for generation, global/run list, run summary, detail, and supported status updates. It preserves backend-authoritative risk/action/reorder data, explicit `refresh: false` generation, safe conflict handling, deterministic test-only fixtures, and an opt-in live contract.                                  |
+| Reports          | **Completed + Phase 9 implemented**      | Protected read-only `/reports` route with five authenticated JSON/CSV backend adapters, report-specific schema mapping and query pruning, safe Blob download/filename fallback, deterministic E2E fixture coverage, and no client-side report calculation or mutation.                                                                                                           |
+| Settings         | **Completed**                            | Protected `/settings` route with backend-aligned Forecast Defaults and absolute three-decimal Safety Stock Defaults; RHF + Zod validation; independent dirty/save/revert states; safe loading/error UI; test-only component fixtures; no runtime persistence or request.                                                                                                         |
 
 | Shared UI — final consolidation | **Completed** | Module 12 preserves the canonical primitives and adds `TableScrollArea` for generic responsive table containment plus `Pagination` for generic accessible previous/next presentation. Table semantics, query math, badges, upload progress, charts, and form state remain feature-owned. |
 
@@ -26,10 +26,10 @@ Remaining future feature directories contain no implementation, stub API calls,
 or business data.
 
 **All frontend implementation modules 0-12 are complete. Integration Phases 1,
-2/2B, 3, 4, 5, 6, and 7 are complete for Auth, Products, Inventory, Sales,
+2/2B, 3, 4, 5, 6, 7, 8, and 9 are implemented for Auth, Products, Inventory, Sales,
 Dashboard Summary, Forecast Run/Background Jobs, Forecast Results, and
-Recommendations are complete. Reports, Settings, and other deferred integrations
-remain separate phases.**
+Recommendations and Reports. Settings and other deferred integrations remain
+separate phases.**
 
 Shared UI was incrementally extended for Module 3 with typed, tested Select,
 Textarea, and accessible Dialog primitives. Existing Foundation primitives and
@@ -81,7 +81,8 @@ uses create, durable job enqueue, active-job polling, and terminal run
 reconciliation. Forecast Results reads persisted overview, predictions, metrics,
 chart, and product detail through the shared authenticated client. Recommendations
 uses the shared authenticated client for its six verified Phase 8 operations;
-Reports and Settings make no real backend request.
+Reports uses the verified shared-client JSON/CSV contract, while Settings makes
+no real backend request.
 The backend (`../backend`) was inspected read-only to align Auth fields,
 Dashboard Analytics summary semantics, Product Catalog validation/list semantics,
 and Inventory movement/low-stock semantics, Sales Upload CSV rules, Sales Transaction list/trend semantics, Forecast Run horizon/lifecycle semantics, Forecast Results overview/list/metrics/chart semantics, Recommendations risk/list/quantity semantics, and Reports views/export semantics. Each feature module wires up endpoints only when its approved integration phase is enabled; remaining modules retain unavailable or no-data-by-default adapters.
@@ -220,6 +221,27 @@ Reports, Settings, and all later integrations remain unchanged.
 The opt-in real Forecast Run browser contract is available for a controlled
 FastAPI/PostgreSQL/Redis/RQ-worker stack but was not run in this validation
 because no controlled live worker environment was started.
+
+## Integration Phase 9 — Reports
+
+**Implementation complete; global acceptance remains blocked by pre-existing
+Recommendations lint errors.** The normal Reports service now uses the shared
+authenticated client for Model Performance, Inventory Risk, Reorder Summary,
+Demand Forecast, and Sales Summary. It selects exact routes by report type,
+prunes unsupported query fields, independently validates/maps each backend
+schema, and downloads backend-generated CSV through Blob transport with safe
+filename fallback and object-URL cleanup. Demand Forecast requires a validated
+forecast-run UUID before transport. Reports remains read-only; it does not
+calculate data, mutate business records, start forecasts, or fetch `/reports/options`
+as a mandatory UI dependency.
+
+Focused Reports unit/component tests, 4 Reports Chromium scenarios, the full
+serial 60-file/488-test frontend suite, full 85-pass deterministic Chromium
+regression, backend Reports 21-test regression, strict typecheck, and production
+build passed. Full lint still fails only on the two pre-existing Recommendations
+effect-state violations; Phase 9 changed neither file. No backend source or
+dependency changed. A real cross-stack Reports browser contract remains pending
+a disposable authenticated backend/database environment.
 
 ## Integration Phase 7 verification
 

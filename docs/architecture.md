@@ -707,7 +707,7 @@ Module 10 introduces a self-contained, read-only Reports slice:
 
 ```text
 features/reports/
-  api.ts        ReportsService / CSV export boundary, unavailable in normal runtime
+  api.ts        ReportsService / JSON mapper / Blob CSV export boundary
   hooks.ts      Selected report, filter validation, loading/error, and export state
   schemas.ts    Backend-aligned date, UUID, channel, and required-run validation
   types.ts      Report types, selected-table projection, query, summary, and export types
@@ -916,3 +916,26 @@ coverage only and is not synthesized from a live backend response.
 > Frontend Forecast Results route protection and UI state are user-experience
 > controls only. FastAPI independently enforces authentication, ownership,
 > validation, availability, and authorization for every Results endpoint.
+
+## Integration Phase 9 — Reports architecture
+
+Normal Reports builds select `createHttpReportsService()` through the existing
+authenticated `ApiClient`. `reportType` selects exactly one of the five backend
+routes; it is never sent as a query parameter. `toReportsApiQuery()` applies a
+second report-specific pruning boundary so unsupported filters cannot leak to a
+different endpoint. Each Report response schema has a separate runtime guard and
+mapper into the existing `ReportData` presentation projection; the UI neither
+aggregates nor invents report values.
+
+CSV export calls the same route with `format=csv` and `responseFormat: 'blob'`.
+The shared client preserves its authorization, refresh/retry, timeout, and safe
+error normalization pipeline while exposing non-sensitive response headers. The
+Reports service verifies an accessible CSV content type, parses a safe
+`Content-Disposition` filename when available, otherwise uses a deterministic
+safe fallback, triggers the browser download, and revokes the object URL.
+
+`NEXT_PUBLIC_REPORTS_E2E_TEST_MODE=true` selects a validated session-scoped
+fixture only for Playwright's managed build. It is never selected by normal
+development or production builds. Frontend protection remains a UX boundary;
+the backend independently enforces authentication, user ownership, validation,
+and report access.

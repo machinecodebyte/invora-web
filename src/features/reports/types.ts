@@ -156,7 +156,7 @@ export const REPORT_DEFINITIONS: readonly ReportDefinition[] = [
   {
     type: 'demand_forecast',
     label: 'Demand forecast',
-    description: 'Forecast output for one completed forecast run.',
+    description: 'Forecast output for one selected forecast run.',
   },
   {
     type: 'model_performance',

@@ -101,11 +101,14 @@ export function ReportsView({ service }: ReportsViewProps) {
               : 'Report rows will appear when the selected source data is available.'
           }
           action={
-            hasFilters ? (
-              <Button variant="secondary" onClick={clearFilters}>
-                Reset report filters
-              </Button>
-            ) : undefined
+            <div className="flex flex-col items-center gap-3 sm:flex-row">
+              {hasFilters ? (
+                <Button variant="secondary" onClick={clearFilters}>
+                  Reset report filters
+                </Button>
+              ) : null}
+              <ReportExportActions state={exportState} onExportCsv={exportCsv} />
+            </div>
           }
         />
       </div>

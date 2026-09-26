@@ -64,8 +64,9 @@ backend-confirmed acknowledge/dismiss actions. Normal builds use the shared
 authenticated client for the complete verified Recommendations contract; risk,
 recommended action, reorder quantity, and persistence remain backend-owned.
 
-Recommendations now uses the shared API client. Auth, Dashboard, Products, Inventory, Sales Upload, Sales History,
-Forecast Run, and Forecast Results are connected through the shared API client
+Recommendations and Reports now use the shared API client. Auth, Dashboard,
+Products, Inventory, Sales Upload, Sales History, Forecast Run, and Forecast
+Results are connected through the shared API client
 and the backend's HttpOnly refresh-cookie contract. Dashboard consumes
 the backend-authoritative read-only Summary projection; its fixtures remain
 isolated to component and Playwright infrastructure. See
@@ -77,9 +78,11 @@ Playwright-managed test build; normal builds never fall back to it.
 Module 10 adds the protected `/reports` route, one selector for the five
 backend-defined report views, report-specific filters, semantic report tables,
 backend-provided summary metrics, and a CSV-only export interaction boundary.
-The normal Reports service is unavailable by design: it makes no request and
-does not manufacture report rows, files, or downloads. Deterministic Reports
-fixtures exist only in the unit/component test infrastructure.
+Normal builds use the shared authenticated API client for the five verified
+read-only Reports endpoints. Each backend report schema maps independently;
+CSV uses the same route with `format=csv`, Blob transport, a defensive
+attachment filename, and a safe fallback when a cross-origin response cannot
+expose `Content-Disposition`. Deterministic fixtures remain E2E-only.
 
 Module 12 completes a non-destructive Shared UI audit. The existing Button,
 Input, Label, Select, Card, Dialog, Spinner, Skeleton, EmptyState, ErrorState,

@@ -65,6 +65,19 @@ export interface ApiClientOptions {
   refreshAccessToken?: () => Promise<void>;
 }
 
+/**
+ * Decoded transport response with non-sensitive response metadata.
+ *
+ * Most feature adapters only need the payload and should continue to use
+ * `get`. Download-style endpoints can use this shape to inspect headers such
+ * as Content-Disposition without bypassing the shared auth and error pipeline.
+ */
+export interface ApiResponse<TResponse> {
+  readonly data: TResponse;
+  readonly headers: Headers;
+  readonly status: number;
+}
+
 export type AuthRefreshHandler = () => Promise<void>;
 
 let registeredAuthRefreshHandler: AuthRefreshHandler | null = null;
@@ -177,6 +190,18 @@ export class ApiClient {
     return this.request<TResponse>('GET', path, config);
   }
 
+  /**
+   * Execute a GET request and retain safe response metadata alongside its
+   * decoded body. This is intentionally narrow: feature code should not need
+   * raw `Response` objects or direct fetch access.
+   */
+  getWithResponse<TResponse>(
+    path: string,
+    config?: RequestConfig,
+  ): Promise<ApiResponse<TResponse>> {
+    return this.requestWithResponse<TResponse>('GET', path, config);
+  }
+
   post<TResponse>(
     path: string,
     body?: RequestBody,
@@ -221,11 +246,26 @@ export class ApiClient {
     config: RequestConfig = {},
     body?: RequestBody,
   ): Promise<TResponse> {
+    const response = await this.requestWithResponse<TResponse>(
+      method,
+      path,
+      config,
+      body,
+    );
+    return response.data;
+  }
+
+  private async requestWithResponse<TResponse>(
+    method: HttpMethod,
+    path: string,
+    config: RequestConfig = {},
+    body?: RequestBody,
+  ): Promise<ApiResponse<TResponse>> {
     const url = this.buildUrl(path, config.query);
     const timeoutMs = config.timeoutMs ?? this.defaultTimeoutMs;
     const responseFormat = config.responseFormat ?? 'json';
 
-    return this.requestOnce<TResponse>(
+    return this.requestOnceWithResponse<TResponse>(
       url,
       method,
       config,
@@ -236,7 +276,7 @@ export class ApiClient {
     );
   }
 
-  private async requestOnce<TResponse>(
+  private async requestOnceWithResponse<TResponse>(
     url: string,
     method: HttpMethod,
     config: RequestConfig,
@@ -244,7 +284,7 @@ export class ApiClient {
     timeoutMs: number,
     responseFormat: ResponseFormat,
     hasRetriedAfterRefresh: boolean,
-  ): Promise<TResponse> {
+  ): Promise<ApiResponse<TResponse>> {
     const response = await this.executeFetch(url, method, config, body, timeoutMs);
 
     if (!response.ok) {
@@ -259,7 +299,7 @@ export class ApiClient {
           throw error;
         }
 
-        return this.requestOnce<TResponse>(
+        return this.requestOnceWithResponse<TResponse>(
           url,
           method,
           config,
@@ -275,7 +315,11 @@ export class ApiClient {
 
     // Single cast boundary: the transport cannot verify the caller's declared
     // payload type, so decoding is done as `unknown` and asserted once here.
-    return (await this.decode(response, responseFormat)) as TResponse;
+    return {
+      data: (await this.decode(response, responseFormat)) as TResponse,
+      headers: response.headers,
+      status: response.status,
+    };
   }
 
   private shouldRecoverAuthentication(

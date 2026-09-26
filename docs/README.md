@@ -47,9 +47,9 @@ but are not supported by that toolchain yet.
 the existing primitives, added narrowly scoped `TableScrollArea` and `Pagination`
 primitives, and adopted them only where generic duplication was verified. All
 frontend implementation modules 0-12 are now complete. Integration Phases 1,
-2/2B, 3, 4, 5, 6, 7, and 8 connect Foundation/Auth, Product Catalog, Inventory,
+2/2B, 3, 4, 5, 6, 7, 8, and 9 connect Foundation/Auth, Product Catalog, Inventory,
 Sales, Dashboard Summary, Forecast Run/Background Jobs, Forecast Results, and
-Recommendations respectively; the
+Recommendations and Reports respectively; the
 remaining business integrations stay
 separate phases.
 
@@ -83,7 +83,7 @@ Module 8 adds a protected completed-run Forecast Results surface with a real
 shared-client result adapter, summary, allowed metrics, prediction list,
 filters, actual-versus-predicted aggregate chart, and on-demand product detail.
 Auth, Dashboard, Products, Inventory, Sales, Forecast Run, Forecast Results,
-and Recommendations use their approved real adapters; Reports, Settings, and
+Recommendations, and Reports use their approved real adapters; Settings and
 ML control surfaces remain deferred.
 
 Module 9 adds a protected, read-only Recommendations surface with backend-aligned
@@ -234,11 +234,12 @@ normal builds use the verified Recommendations HTTP contract.
 read-only backend report definitions, report-specific filter validation, safe
 table/summary projection, and CSV export state. Its report types are model
 performance, inventory risk, reorder summary, demand forecast, and sales
-summary. The normal `ReportsService` deliberately returns safe unavailability;
-it contains no report fixture, does not make a request, and cannot create a
-download. Test-only fixtures/adapters exercise deterministic report and export
-success/failure paths. Real Reports API and export integration remain
-intentionally deferred.
+summary. The normal `ReportsService` uses the shared authenticated API client
+for the five verified read-only Report routes and maps every report schema
+independently. CSV exports call the same route with `format=csv`, receive a
+Blob, validate the CSV response type, and use a safe attachment filename or a
+deterministic fallback. Test-only fixtures/adapters remain explicitly selected
+only by the Playwright-managed build; they are never the normal runtime.
 
 ## How modules will be structured
 

@@ -98,6 +98,8 @@ export default defineConfig({
       NEXT_PUBLIC_RECOMMENDATIONS_E2E_TEST_MODE: useRealRecommendationsBackend
         ? 'false'
         : 'true',
+      // Enables the Reports fixture adapter only in the Playwright-managed build.
+      NEXT_PUBLIC_REPORTS_E2E_TEST_MODE: 'true',
       PORT: String(port),
     },
   },

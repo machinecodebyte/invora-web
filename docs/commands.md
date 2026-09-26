@@ -213,6 +213,7 @@ npx playwright test e2e/sales.real.spec.ts    # opt-in real Sales contract
 npx playwright test e2e/forecast-flow.spec.ts # Forecast Run E2E suite
 npx playwright test e2e/forecast-run.real.spec.ts # opt-in live Forecast Run/worker contract
 npx playwright test e2e/forecast-results.spec.ts # Forecast Results E2E suite
+npx playwright test e2e/reports.spec.ts          # Reports E2E suite
 npx playwright test e2e/forecast-results.real.spec.ts # opt-in live Forecast Results/worker contract
 npx playwright test e2e/recommendations.spec.ts # Recommendations E2E suite
 npx playwright test e2e/recommendations.real.spec.ts # opt-in live Recommendations/worker contract
@@ -329,3 +330,15 @@ The test creates isolated prerequisites, completes the run through the normal
 frontend and worker path, follows the completed-run Results link, and verifies
 the five authenticated read endpoints. It does not invoke synchronous forecast
 processing, seed persisted predictions, or call Recommendations.
+
+## Reports integration checks
+
+```bash
+npx vitest run src/tests/unit/reports-http-api.test.ts --maxWorkers=1
+npx vitest run src/tests/components/reports.test.tsx --maxWorkers=1
+npx playwright test e2e/reports.spec.ts
+```
+
+The last command is deterministic and uses the Playwright-only Reports fixture.
+Normal application builds instead require `NEXT_PUBLIC_API_BASE_URL` to point to
+the authenticated FastAPI service.
