@@ -114,8 +114,11 @@ export function ReportFilters({
             ))}
           </Select>
           <p className="mt-1.5 text-xs text-foreground-muted">
-            {REPORT_DEFINITIONS.find((definition) => definition.type === filters.reportType)
-              ?.description}
+            {
+              REPORT_DEFINITIONS.find(
+                (definition) => definition.type === filters.reportType,
+              )?.description
+            }
           </p>
         </div>
         {supportsDateRange(filters.reportType) ? (
@@ -156,7 +159,8 @@ export function ReportFilters({
         {supportsForecastRun(filters.reportType) ? (
           <div className="min-w-0">
             <Label htmlFor="report-forecast-run-id">
-              Forecast run ID{filters.reportType === 'demand_forecast' ? ' (required)' : ''}
+              Forecast run ID
+              {filters.reportType === 'demand_forecast' ? ' (required)' : ''}
             </Label>
             <Input
               id="report-forecast-run-id"
@@ -233,7 +237,9 @@ export function ReportFilters({
               </Select>
             </div>
             <div>
-              <Label htmlFor="report-recommendation-status">Recommendation status</Label>
+              <Label htmlFor="report-recommendation-status">
+                Recommendation status
+              </Label>
               <Select
                 id="report-recommendation-status"
                 value={filters.recommendationStatus}

@@ -458,3 +458,12 @@ Foundation/Auth, Products, Inventory, Sales, Dashboard Summary, Forecast
 Run/Background Jobs, Forecast Results, Recommendations, Reports, and the narrow
 Settings scope. User Profile and other deferred business integrations remain
 separate phases.
+
+## Final hardening status
+
+The final validation pass passed ESLint, strict TypeScript, the production build,
+496 frontend tests with configured coverage thresholds, and the deterministic
+Chromium suite. A separate seven-contract browser matrix passed against an
+isolated FastAPI/PostgreSQL/Redis/RQ stack. Production documents receive a nonce
+CSP through `src/proxy.ts`; real backend browser tests remain opt-in and must
+never target the normal local data stack.

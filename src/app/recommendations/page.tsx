@@ -31,7 +31,10 @@ export default async function RecommendationsPage({
           title="Recommendations"
           description="Review reorder risk and backend-generated reorder quantities."
         >
-          <RecommendationsView forecastRunId={forecastRunId} />
+          <RecommendationsView
+            key={forecastRunId ?? 'all-recommendations'}
+            forecastRunId={forecastRunId}
+          />
         </PageContainer>
       </AppShell>
     </ProtectedRoute>

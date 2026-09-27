@@ -15,7 +15,10 @@ const UUID_PATTERN =
 
 const optionalDate = z
   .string()
-  .refine((value) => value === '' || DATE_ONLY_PATTERN.test(value), 'Enter a valid date.');
+  .refine(
+    (value) => value === '' || DATE_ONLY_PATTERN.test(value),
+    'Enter a valid date.',
+  );
 
 const optionalUuid = z
   .string()
@@ -64,7 +67,8 @@ export type ReportFilterValues = z.infer<typeof reportFiltersSchema>;
 
 /** Converts validated UI filters into only the parameters the selected report accepts. */
 export function toReportQuery(filters: ReportFilters): ReportQuery {
-  const optional = (value: string): string | null => (value === '' ? null : value.trim());
+  const optional = (value: string): string | null =>
+    value === '' ? null : value.trim();
   const common = {
     reportType: filters.reportType,
     dateFrom: null,
@@ -98,9 +102,7 @@ export function toReportQuery(filters: ReportFilters): ReportQuery {
         forecastRunId: optional(filters.forecastRunId),
         riskLevel: filters.riskLevel === 'all' ? null : filters.riskLevel,
         recommendationStatus:
-          filters.recommendationStatus === 'all'
-            ? null
-            : filters.recommendationStatus,
+          filters.recommendationStatus === 'all' ? null : filters.recommendationStatus,
       };
     case 'demand_forecast':
       return {

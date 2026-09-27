@@ -2,12 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate, formatNumber } from '@/lib/utils';
 import type { ReportSummaryMetric, ReportValue } from '@/features/reports/types';
 
-function formatValue(value: ReportValue, format: ReportSummaryMetric['format']): string {
+function formatValue(
+  value: ReportValue,
+  format: ReportSummaryMetric['format'],
+): string {
   if (value === null) {
     return '—';
   }
   if (typeof value === 'string') {
-    return format === 'date' ? formatDate(value, { dateStyle: 'medium', timeZone: 'UTC' }) : value;
+    return format === 'date'
+      ? formatDate(value, { dateStyle: 'medium', timeZone: 'UTC' })
+      : value;
   }
   if (format === 'currency') {
     return formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -28,7 +33,10 @@ export function ReportSummary({ metrics }: ReportSummaryProps) {
     return null;
   }
   return (
-    <section aria-label="Report summary" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section
+      aria-label="Report summary"
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+    >
       {metrics.map((metric) => (
         <Card key={metric.label}>
           <CardHeader>

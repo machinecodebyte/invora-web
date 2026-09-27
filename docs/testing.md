@@ -527,3 +527,20 @@ passed all thresholds at 94.44% statements, 93.30% branches, 96.00% functions,
 and 94.36% lines. The complete deterministic Chromium suite passed 89 tests;
 seven explicitly opt-in live backend contracts were skipped. The read-only
 backend Settings unit/API regression passed 51 tests.
+
+## Final hardening validation
+
+The final local regression run passed 496 frontend tests with zero failures and
+all configured coverage thresholds. Coverage was 94.37% lines, 96.00% functions,
+and 93.30% branches (each threshold is 85%). Strict TypeScript, ESLint, and the
+Next production build also passed.
+
+The deterministic Chromium suite runs against a Playwright-managed production
+build. Its live contracts are explicitly opt-in. For the isolated live-stack
+matrix, set all required flags together, including
+`PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND=true` when running Results or
+Recommendations, and use `NEXT_PUBLIC_APP_ENV=development` (the browser env
+schema intentionally rejects `test`). The seven real contracts for Auth,
+Dashboard, Inventory, Sales, Forecast Run, Forecast Results, and Recommendations
+passed against PostgreSQL, Redis, and an RQ worker. No real test uses the normal
+development database.

@@ -301,3 +301,13 @@ Focused Settings tests, full serial frontend regression (60 files / 493 tests),
 coverage thresholds, deterministic Chromium regression (89 passed, 7 opt-in live
 contracts skipped), backend Settings regression (51 tests), strict TypeScript,
 and production build passed. No backend source or dependency changed.
+
+## Final hardening update
+
+The historical Recommendations lint finding is resolved. Final validation passed
+ESLint, strict TypeScript, production build, 496 frontend tests with coverage
+thresholds, and deterministic Chromium E2E. The opt-in live contract matrix also
+passed for Auth, Dashboard, Inventory, Sales, Forecast Run, Forecast Results,
+and Recommendations against a disposable backend stack. A production nonce CSP
+and route-context isolation for Recommendations were added without changing the
+existing business UI contracts.

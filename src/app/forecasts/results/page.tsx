@@ -17,7 +17,9 @@ interface ForecastResultsPageProps {
 }
 
 /** Protected Module 8 route; the untrusted run id is validated inside the feature. */
-export default async function ForecastResultsPage({ searchParams }: ForecastResultsPageProps) {
+export default async function ForecastResultsPage({
+  searchParams,
+}: ForecastResultsPageProps) {
   const params = await searchParams;
   const runId = typeof params.runId === 'string' ? params.runId : undefined;
 

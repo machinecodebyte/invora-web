@@ -29,11 +29,18 @@ export interface ReportTableProps {
 export function ReportTable({ report }: ReportTableProps) {
   return (
     <TableScrollArea className="rounded-lg border border-border">
-      <table className="min-w-full divide-y divide-border text-left text-sm" aria-label={report.title}>
+      <table
+        className="min-w-full divide-y divide-border text-left text-sm"
+        aria-label={report.title}
+      >
         <thead className="bg-surface-muted text-xs uppercase tracking-wide text-foreground-muted">
           <tr>
             {report.columns.map((column) => (
-              <th key={column.key} scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">
+              <th
+                key={column.key}
+                scope="col"
+                className="whitespace-nowrap px-4 py-3 font-semibold"
+              >
                 {column.label}
               </th>
             ))}
@@ -43,7 +50,10 @@ export function ReportTable({ report }: ReportTableProps) {
           {report.rows.map((row) => (
             <tr key={row.id}>
               {report.columns.map((column) => (
-                <td key={column.key} className="whitespace-nowrap px-4 py-3 text-foreground">
+                <td
+                  key={column.key}
+                  className="whitespace-nowrap px-4 py-3 text-foreground"
+                >
                   {formatCell(row.cells[column.key] ?? null, column)}
                 </td>
               ))}

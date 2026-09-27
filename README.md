@@ -363,3 +363,13 @@ normal runtime. Full frontend regression (493 tests), configured coverage,
 deterministic Chromium regression (89 passed, 7 opt-in live contracts skipped),
 backend Settings regression (51 tests), TypeScript, and production build passed.
 Global ESLint remains blocked only by two pre-existing Recommendations errors.
+
+## Final production-hardening validation
+
+The final hardening pass resolved the Recommendations state-effect lint finding,
+added a production nonce CSP proxy, and isolated route-scoped Recommendations
+state when returning to the global list. The final gates passed: ESLint, strict
+TypeScript, production build, 496 frontend tests with coverage thresholds, and
+the deterministic Chromium suite. An opt-in seven-contract live matrix also
+passed against an isolated FastAPI/PostgreSQL/Redis/RQ stack. The default E2E
+suite remains fixture-backed and makes no call to a developer's normal backend.

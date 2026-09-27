@@ -1,12 +1,6 @@
 import type { NextConfig } from 'next';
 
-/**
- * Baseline security headers applied to every response.
- *
- * A full Content-Security-Policy is intentionally deferred: it requires
- * per-request nonce plumbing for the Next.js runtime and is tracked as
- * follow-up work in `docs/architecture.md`.
- */
+/** Baseline security headers applied to every response. */
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },

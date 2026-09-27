@@ -81,11 +81,19 @@ export function ForecastResultsToolbar({
               value={draft.search}
               onChange={(event) => update('search', event.target.value)}
               maxLength={255}
-              aria-describedby={errors.search === undefined ? undefined : 'forecast-results-search-error'}
+              aria-describedby={
+                errors.search === undefined
+                  ? undefined
+                  : 'forecast-results-search-error'
+              }
               invalid={errors.search !== undefined}
             />
             {errors.search === undefined ? null : (
-              <p id="forecast-results-search-error" role="alert" className="mt-1 text-sm text-danger">
+              <p
+                id="forecast-results-search-error"
+                role="alert"
+                className="mt-1 text-sm text-danger"
+              >
                 {errors.search}
               </p>
             )}
@@ -97,11 +105,19 @@ export function ForecastResultsToolbar({
               type="date"
               value={draft.dateFrom}
               onChange={(event) => update('dateFrom', event.target.value)}
-              aria-describedby={errors.dateFrom === undefined ? undefined : 'forecast-results-date-from-error'}
+              aria-describedby={
+                errors.dateFrom === undefined
+                  ? undefined
+                  : 'forecast-results-date-from-error'
+              }
               invalid={errors.dateFrom !== undefined}
             />
             {errors.dateFrom === undefined ? null : (
-              <p id="forecast-results-date-from-error" role="alert" className="mt-1 text-sm text-danger">
+              <p
+                id="forecast-results-date-from-error"
+                role="alert"
+                className="mt-1 text-sm text-danger"
+              >
                 {errors.dateFrom}
               </p>
             )}
@@ -113,11 +129,19 @@ export function ForecastResultsToolbar({
               type="date"
               value={draft.dateTo}
               onChange={(event) => update('dateTo', event.target.value)}
-              aria-describedby={errors.dateTo === undefined ? undefined : 'forecast-results-date-to-error'}
+              aria-describedby={
+                errors.dateTo === undefined
+                  ? undefined
+                  : 'forecast-results-date-to-error'
+              }
               invalid={errors.dateTo !== undefined}
             />
             {errors.dateTo === undefined ? null : (
-              <p id="forecast-results-date-to-error" role="alert" className="mt-1 text-sm text-danger">
+              <p
+                id="forecast-results-date-to-error"
+                role="alert"
+                className="mt-1 text-sm text-danger"
+              >
                 {errors.dateTo}
               </p>
             )}
@@ -126,7 +150,12 @@ export function ForecastResultsToolbar({
             <Button type="submit" isLoading={isLoading} loadingLabel="Applying filters">
               Apply filters
             </Button>
-            <Button type="button" variant="secondary" onClick={clear} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={clear}
+              disabled={isLoading}
+            >
               Clear filters
             </Button>
           </div>

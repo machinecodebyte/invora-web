@@ -1,5 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatForecastDate, formatForecastValue } from '@/features/forecasting/components/forecast-results-formatters';
+import {
+  formatForecastDate,
+  formatForecastValue,
+} from '@/features/forecasting/components/forecast-results-formatters';
 import type { ForecastResultOverview } from '@/features/forecasting/types';
 
 export interface ForecastResultsSummaryProps {
@@ -20,10 +23,22 @@ export function ForecastResultsSummary({ overview }: ForecastResultsSummaryProps
           <SummaryItem label="Run ID" value={overview.runId} mono />
           <SummaryItem label="Horizon" value={`${overview.horizonDays} days`} />
           <SummaryItem label="Model" value={overview.modelName ?? '—'} />
-          <SummaryItem label="Products" value={formatForecastValue(overview.totalProducts)} />
-          <SummaryItem label="Predictions" value={formatForecastValue(overview.totalPredictions)} />
-          <SummaryItem label="Total predicted demand" value={formatForecastValue(overview.totalPredictedDemand)} />
-          <SummaryItem label="Average predicted demand" value={formatForecastValue(overview.averagePredictedDemand)} />
+          <SummaryItem
+            label="Products"
+            value={formatForecastValue(overview.totalProducts)}
+          />
+          <SummaryItem
+            label="Predictions"
+            value={formatForecastValue(overview.totalPredictions)}
+          />
+          <SummaryItem
+            label="Total predicted demand"
+            value={formatForecastValue(overview.totalPredictedDemand)}
+          />
+          <SummaryItem
+            label="Average predicted demand"
+            value={formatForecastValue(overview.averagePredictedDemand)}
+          />
           <SummaryItem
             label="Forecast range"
             value={
@@ -49,8 +64,16 @@ function SummaryItem({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs font-medium uppercase tracking-wide text-foreground-muted">{label}</dt>
-      <dd className={mono ? 'mt-1 truncate font-mono text-sm text-foreground' : 'mt-1 text-sm text-foreground'}>
+      <dt className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
+        {label}
+      </dt>
+      <dd
+        className={
+          mono
+            ? 'mt-1 truncate font-mono text-sm text-foreground'
+            : 'mt-1 text-sm text-foreground'
+        }
+      >
         {value}
       </dd>
     </div>

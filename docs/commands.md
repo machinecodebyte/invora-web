@@ -353,3 +353,19 @@ npx playwright test e2e/settings.spec.ts --workers=1
 The browser command uses the Playwright-only Settings fixture. Normal builds use
 the authenticated FastAPI category endpoints configured through
 `NEXT_PUBLIC_API_BASE_URL`; no extra command or environment variable is needed.
+
+## Final regression commands
+
+```powershell
+npm run lint
+npm run typecheck
+npm run test:coverage
+npm run build
+$env:CI='true'; $env:PLAYWRIGHT_PORT='3103'; npm run test:e2e -- --workers=1 --retries=0
+```
+
+To run the opt-in real browser contracts, point `NEXT_PUBLIC_API_BASE_URL` at an
+isolated backend, set `NEXT_PUBLIC_APP_ENV=development`, and set the applicable
+`PLAYWRIGHT_*_REAL_BACKEND=true` flags. The Results and Recommendations contracts
+also require `PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND=true` because they create the
+run consumed by the assertion.

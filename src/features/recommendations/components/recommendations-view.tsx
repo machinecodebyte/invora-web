@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { buttonClassName, Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -50,20 +50,15 @@ export function RecommendationsView({
     filters.riskLevel !== 'all' ||
     filters.status !== 'all';
 
-  useEffect(() => {
-    if (
-      generation.state.status === 'success' ||
-      (generation.state.status === 'error' &&
-        generation.state.code === 'recommendations_already_generated')
-    ) {
-      reload();
-      setSummaryVersion((version) => version + 1);
-    }
-  }, [generation.state, reload]);
-
   const refreshRecommendations = (): void => {
     reload();
     setSummaryVersion((version) => version + 1);
+  };
+
+  const generateRecommendations = async (): Promise<void> => {
+    if (await generation.generate()) {
+      refreshRecommendations();
+    }
   };
 
   if (state.status === 'invalid_run') {
@@ -91,7 +86,7 @@ export function RecommendationsView({
     return (
       <RunRecommendationEmpty
         generation={generation}
-        onGenerate={() => void generation.generate()}
+        onGenerate={() => void generateRecommendations()}
       />
     );
   }
@@ -182,6 +177,7 @@ export function RecommendationsView({
         {state.data.total} recommendation{state.data.total === 1 ? '' : 's'}
       </p>
       <RecommendationDetailDialog
+        key={selectedRecommendationId ?? 'closed'}
         recommendationId={selectedRecommendationId}
         {...(service === undefined ? {} : { service })}
         onClose={() => setSelectedRecommendationId(null)}

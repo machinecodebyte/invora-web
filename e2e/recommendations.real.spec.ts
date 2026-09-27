@@ -156,7 +156,19 @@ test.describe('Recommendations live backend contract', () => {
     await dialog.getByRole('button', { name: 'Acknowledge' }).click();
     await expect(dialog.getByText('acknowledged')).toBeVisible();
     await page.getByRole('button', { name: 'Close Recommendation details' }).click();
+    const globalRecommendationsResponse = page.waitForResponse(
+      (response) => {
+        const url = new URL(response.url());
+        return (
+          url.origin === backendBaseUrl &&
+          url.pathname === '/api/v1/recommendations' &&
+          response.request().method() === 'GET'
+        );
+      },
+    );
     await page.getByRole('link', { name: 'All recommendations' }).click();
+    await expect(page).toHaveURL('/recommendations');
+    expect((await globalRecommendationsResponse).status()).toBe(200);
     await expect(
       page.getByRole('table', { name: 'Reorder recommendations' }),
     ).toBeVisible();

@@ -12,6 +12,12 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // The unrestricted fork pool exhausts worker startup capacity on the
+    // supported Windows environment, causing test-worker timeouts. Two forks
+    // retain parallel execution while keeping the default `npm run test` gate
+    // deterministic for local development and CI.
+    pool: 'forks',
+    maxWorkers: 2,
     globals: false,
     setupFiles: ['./src/tests/setup.ts'],
     include: ['src/tests/**/*.test.{ts,tsx}'],

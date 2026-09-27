@@ -963,3 +963,19 @@ endpoints.
 fixture only for Playwright's managed production build. This test seam is not a
 normal persistence mechanism. Frontend route protection remains UX only; FastAPI
 independently enforces authentication, ownership, validation, and data integrity.
+
+## Final integration hardening
+
+`src/proxy.ts` is the narrow browser-security boundary. It emits a per-request
+nonce CSP in production and keeps development free of that policy so the normal
+Next development toolchain remains usable. The root layout is deliberately
+dynamic so the nonce is generated at request time rather than being accidentally
+cached with a static document. The policy permits only the configured API origin
+for browser connections; it does not turn frontend routing into an authorization
+boundary.
+
+The Recommendations page keys its view by the route's optional `forecastRunId`.
+Changing from a run-scoped route to the global route therefore remounts the
+query-bound UI instead of briefly rendering recommendations from the previous
+run. This is route-context state isolation, not a client-side data cache or a
+substitute for backend ownership checks.

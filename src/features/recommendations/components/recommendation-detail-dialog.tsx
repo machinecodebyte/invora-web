@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -56,10 +56,6 @@ export function RecommendationDetailDialog({
   const detail = useRecommendationDetail(recommendationId, service);
   const { state: mutation, updateStatus } = useRecommendationStatusMutation(service);
   const [updated, setUpdated] = useState<Recommendation | null>(null);
-
-  useEffect(() => {
-    setUpdated(null);
-  }, [recommendationId]);
 
   const recommendation =
     updated?.id === recommendationId

@@ -19,7 +19,9 @@ describe('ReportsView', () => {
     expect(screen.getByRole('heading', { name: 'Sales summary' })).toBeVisible();
     expect(screen.getByText('Northwind Tea')).toBeVisible();
     expect(screen.getByText('Northwind Coffee')).toBeVisible();
-    expect(within(table).getByRole('columnheader', { name: 'Sales amount' })).toBeVisible();
+    expect(
+      within(table).getByRole('columnheader', { name: 'Sales amount' }),
+    ).toBeVisible();
     expect(within(table).getAllByRole('cell', { name: '0.00' })).toHaveLength(1);
     expect(within(table).getAllByRole('cell', { name: '—' })).not.toHaveLength(0);
     expect(screen.getByRole('heading', { name: 'Total sales' })).toBeVisible();
@@ -35,15 +37,24 @@ describe('ReportsView', () => {
     const table = await screen.findByRole('table', { name: 'Reorder summary' });
     expect(screen.getByLabelText('Risk level')).toBeVisible();
     expect(screen.getByLabelText('Recommendation status')).toBeVisible();
-    expect(within(table).getByRole('columnheader', { name: 'Reorder quantity' })).toBeVisible();
+    expect(
+      within(table).getByRole('columnheader', { name: 'Reorder quantity' }),
+    ).toBeVisible();
     expect(screen.queryByLabelText('Sales channel')).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Risk level'), 'critical');
     expect(await screen.findByText('Critical Widget')).toBeVisible();
-    await waitFor(() => expect(screen.queryByText('Medium Cable')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText('Medium Cable')).not.toBeInTheDocument(),
+    );
 
-    await user.selectOptions(screen.getByLabelText('Recommendation status'), 'acknowledged');
-    expect(await screen.findByText('No report rows match the current filters.')).toBeVisible();
+    await user.selectOptions(
+      screen.getByLabelText('Recommendation status'),
+      'acknowledged',
+    );
+    expect(
+      await screen.findByText('No report rows match the current filters.'),
+    ).toBeVisible();
   });
 
   it('validates a required demand forecast run and an invalid date range before loading', async () => {
@@ -53,21 +64,28 @@ describe('ReportsView', () => {
 
     await user.selectOptions(screen.getByLabelText('Report type'), 'demand_forecast');
     expect(
-      await screen.findByText('A forecast run ID is required for the demand forecast report.'),
+      await screen.findByText(
+        'A forecast run ID is required for the demand forecast report.',
+      ),
     ).toBeVisible();
     expect(screen.getByLabelText('Forecast run ID (required)')).toHaveAttribute(
       'aria-invalid',
       'true',
     );
 
-    await user.type(screen.getByLabelText('Forecast run ID (required)'), REPORT_FORECAST_RUN_ID);
+    await user.type(
+      screen.getByLabelText('Forecast run ID (required)'),
+      REPORT_FORECAST_RUN_ID,
+    );
     expect(await screen.findByRole('table', { name: 'Demand forecast' })).toBeVisible();
 
     const startDate = screen.getByLabelText('Start date');
     const endDate = screen.getByLabelText('End date');
     await user.type(startDate, '2026-10-10');
     await user.type(endDate, '2026-10-01');
-    expect(await screen.findByText('End date must be on or after the start date.')).toBeVisible();
+    expect(
+      await screen.findByText('End date must be on or after the start date.'),
+    ).toBeVisible();
     expect(endDate).toHaveAttribute('aria-invalid', 'true');
   });
 
@@ -85,8 +103,12 @@ describe('ReportsView', () => {
     rerender(<ReportsView service={createReportsTestService()} />);
     await screen.findByRole('table', { name: 'Sales summary' });
     await user.type(screen.getByLabelText('Sales channel'), 'No matching channel');
-    expect(await screen.findByText('No report rows match the current filters.')).toBeVisible();
-    await user.click(screen.getAllByRole('button', { name: 'Reset report filters' })[0]!);
+    expect(
+      await screen.findByText('No report rows match the current filters.'),
+    ).toBeVisible();
+    await user.click(
+      screen.getAllByRole('button', { name: 'Reset report filters' })[0]!,
+    );
     expect(await screen.findByRole('table', { name: 'Sales summary' })).toBeVisible();
   });
 
@@ -113,7 +135,9 @@ describe('ReportsView', () => {
 
     rerender(
       <ReportsView
-        service={createReportsTestService({ getReportError: new Error('database trace') })}
+        service={createReportsTestService({
+          getReportError: new Error('database trace'),
+        })}
       />,
     );
     expect(await screen.findByText('Unable to load report.')).toBeVisible();
@@ -129,7 +153,9 @@ describe('ReportsView', () => {
         })}
       />,
     );
-    expect(await screen.findByText('Reports are temporarily unavailable.')).toBeVisible();
+    expect(
+      await screen.findByText('Reports are temporarily unavailable.'),
+    ).toBeVisible();
   });
 
   it('prevents duplicate CSV exports while pending, then shows safe success metadata', async () => {
@@ -154,7 +180,9 @@ describe('ReportsView', () => {
       contentType: 'text/csv',
     });
     expect(
-      await screen.findByText('CSV export is ready: invora_sales_summary_2026-09-15.csv'),
+      await screen.findByText(
+        'CSV export is ready: invora_sales_summary_2026-09-15.csv',
+      ),
     ).toBeVisible();
     expect(exportButton).toBeEnabled();
   });

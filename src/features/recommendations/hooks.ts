@@ -224,18 +224,19 @@ export function useRecommendationGeneration(
   service: RecommendationsService = recommendationsService,
 ): {
   readonly state: RecommendationGenerationState;
-  readonly generate: () => Promise<void>;
+  /** True only when the list and summary should be reloaded. */
+  readonly generate: () => Promise<boolean>;
 } {
   const [state, setState] = useState<RecommendationGenerationState>({ status: 'idle' });
   const inFlightRef = useRef(false);
 
-  const generate = useCallback(async (): Promise<void> => {
+  const generate = useCallback(async (): Promise<boolean> => {
     if (forecastRunId === undefined || !isForecastRunId(forecastRunId)) {
       setState({ status: 'error', message: 'A valid forecast run is required.' });
-      return;
+      return false;
     }
     if (inFlightRef.current) {
-      return;
+      return false;
     }
     inFlightRef.current = true;
     setState({ status: 'pending' });
@@ -247,12 +248,17 @@ export function useRecommendationGeneration(
         status: 'success',
         message: `${result.recommendationsCreated} recommendation${result.recommendationsCreated === 1 ? '' : 's'} generated.`,
       });
+      return true;
     } catch (error: unknown) {
+      const alreadyGenerated =
+        error instanceof RecommendationsServiceError &&
+        error.code === 'recommendations_already_generated';
       setState({
         status: 'error',
         message: toSafeMessage(error),
         ...(error instanceof RecommendationsServiceError ? { code: error.code } : {}),
       });
+      return alreadyGenerated;
     } finally {
       inFlightRef.current = false;
     }

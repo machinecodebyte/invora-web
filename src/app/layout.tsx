@@ -5,6 +5,11 @@ import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from '@/lib/constants';
 
 import './globals.css';
 
+// A request-specific CSP nonce must reach every framework script. Static HTML
+// cannot receive that per-request value, so the App Router must render the
+// document at request time when the production Proxy applies the CSP.
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: {
     default: `${APP_NAME} · ${APP_TAGLINE}`,

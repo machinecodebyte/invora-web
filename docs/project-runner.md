@@ -475,3 +475,15 @@ npx playwright test e2e/settings.spec.ts --workers=1
 The test flag is supplied by `playwright.config.ts`; it must not be enabled in a
 normal development or production environment. The normal adapter never stores
 Settings values in browser storage.
+
+## 18. Final hardening runner notes
+
+Run the default Chromium suite with its fixture adapters for deterministic local
+coverage. Real browser contracts are separate and must target an isolated stack;
+they authenticate through the real HttpOnly refresh-cookie flow and create only
+disposable test data. Do not set `NEXT_PUBLIC_APP_ENV=test`: the public browser
+environment accepts `development`, `production`, or `local` and rejects unknown
+values by design.
+
+The Recommendations route has a route-context remount boundary, so verify both a
+run-scoped link and the global navigation link after changing its query handling.
