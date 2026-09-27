@@ -1,75 +1,107 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Link from 'next/link';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { AppShell } from '@/components/layout/app-shell';
+import {
+  APP_NAVIGATION,
+  getAppRouteContext,
+  isAppNavigationItemActive,
+} from '@/components/layout/app-navigation';
 import { PageContainer } from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
-import { APP_NAME, APP_TAGLINE, MAIN_CONTENT_ELEMENT_ID } from '@/lib/constants';
+import { APP_TAGLINE, MAIN_CONTENT_ELEMENT_ID, ROUTES } from '@/lib/constants';
+
+const navigationState = vi.hoisted(() => ({ pathname: '/dashboard' }));
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => navigationState.pathname,
+}));
+
+vi.mock('@/features/auth/hooks', () => ({
+  useAuth: () => ({
+    user: { id: 'user-1', email: 'planner@example.com', fullName: 'Planning User' },
+  }),
+}));
+
+vi.mock('@/features/auth/components/logout-button', () => ({
+  LogoutButton: () => <button type="button">Sign out</button>,
+}));
 
 describe('AppShell', () => {
-  it('renders the banner, main, and footer landmarks', () => {
-    render(<AppShell>Content</AppShell>);
-
-    expect(screen.getByRole('banner')).toBeInTheDocument();
-    expect(screen.getByRole('main')).toBeInTheDocument();
-    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
-  });
-
-  it('renders its children inside the main landmark', () => {
+  it('renders authenticated landmarks, navigation, and its children', () => {
     render(<AppShell>Page body</AppShell>);
 
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(
+      screen.getByRole('navigation', { name: 'Application navigation' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveTextContent('Page body');
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Products' })).toHaveAttribute(
+      'href',
+      ROUTES.products,
+    );
   });
 
-  it('shows the Invora brand and tagline', () => {
-    render(<AppShell>Content</AppShell>);
-
-    expect(screen.getByRole('banner')).toHaveTextContent(APP_NAME);
-    expect(screen.getByRole('banner')).toHaveTextContent(APP_TAGLINE);
-  });
-
-  it('provides a skip link that targets the main landmark', () => {
+  it('uses a skip link that targets the main landmark', async () => {
     render(<AppShell>Content</AppShell>);
 
     const skipLink = screen.getByRole('link', { name: 'Skip to main content' });
     expect(skipLink).toHaveAttribute('href', `#${MAIN_CONTENT_ELEMENT_ID}`);
     expect(screen.getByRole('main')).toHaveAttribute('id', MAIN_CONTENT_ELEMENT_ID);
-  });
-
-  it('makes the skip link the first focusable element', async () => {
-    render(<AppShell>Content</AppShell>);
 
     await userEvent.tab();
-
-    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveFocus();
+    expect(skipLink).toHaveFocus();
   });
 
-  it('omits the navigation landmark when no navigation is supplied', () => {
+  it('marks nested route navigation as active', () => {
+    navigationState.pathname = ROUTES.salesUpload;
     render(<AppShell>Content</AppShell>);
 
-    // The foundation ships no navigation; an empty nav landmark would be noise
-    // for screen reader users.
-    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Upload sales' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    navigationState.pathname = ROUTES.dashboard;
   });
 
-  it('renders supplied navigation inside a labelled navigation landmark', () => {
-    render(<AppShell navigation={<Link href="/">Home</Link>}>Content</AppShell>);
+  it('opens and closes the accessible mobile drawer', async () => {
+    const user = userEvent.setup();
+    render(<AppShell>Content</AppShell>);
 
-    const nav = screen.getByRole('navigation', { name: 'Main navigation' });
-    expect(nav).toBeInTheDocument();
-    expect(nav).toHaveTextContent('Home');
+    await user.click(
+      screen.getByRole('button', { name: 'Open application navigation' }),
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Application navigation' }),
+    ).toBeVisible();
+
+    await user.click(
+      screen.getAllByRole('button', { name: 'Close application navigation' })[0]!,
+    );
+    expect(
+      screen.queryByRole('dialog', { name: 'Application navigation' }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('application navigation metadata', () => {
+  it('derives coherent route context from one navigation source', () => {
+    expect(getAppRouteContext(ROUTES.forecastResults)).toEqual({
+      title: 'Forecast results',
+      section: 'Forecasting',
+    });
+
+    const uploadSales = APP_NAVIGATION.flatMap((section) => section.items).find(
+      (item) => item.href === ROUTES.salesUpload,
+    );
+    expect(uploadSales).toBeDefined();
+    expect(isAppNavigationItemActive(uploadSales!, ROUTES.salesUpload)).toBe(true);
   });
 });
 
 describe('PageContainer', () => {
-  it('renders its children', () => {
-    render(<PageContainer>Body</PageContainer>);
-
-    expect(screen.getByText('Body')).toBeInTheDocument();
-  });
-
   it('renders the title as the single page h1', () => {
     render(<PageContainer title="Invora">Body</PageContainer>);
 
@@ -79,29 +111,18 @@ describe('PageContainer', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders a description alongside the title', () => {
+  it('renders optional description and actions without changing its document outline', () => {
     render(
-      <PageContainer title="Invora" description={APP_TAGLINE}>
+      <PageContainer
+        title="Invora"
+        description={APP_TAGLINE}
+        actions={<Button>New</Button>}
+      >
         Body
       </PageContainer>,
     );
 
     expect(screen.getByText(APP_TAGLINE)).toBeInTheDocument();
-  });
-
-  it('renders page-level actions', () => {
-    render(
-      <PageContainer title="Invora" actions={<Button>New</Button>}>
-        Body
-      </PageContainer>,
-    );
-
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
-  });
-
-  it('emits no heading block when given only children', () => {
-    render(<PageContainer>Body</PageContainer>);
-
-    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   });
 });

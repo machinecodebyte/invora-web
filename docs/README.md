@@ -324,3 +324,12 @@ loads both categories in parallel and sends category-scoped partial PATCH
 requests. Broader global, reset, sales-upload, report, dashboard, background-job,
 localization, and options endpoints remain deliberately deferred because no
 current Settings UI owns those preferences.
+
+## Public landing and unified application shell
+
+The public landing implementation lives in `src/components/marketing/`; its
+only client boundary is the responsive navigation control. The authenticated
+shell is described in [`architecture.md`](architecture.md), and its browser
+coverage is recorded in [`testing.md`](testing.md). This presentation work did
+not change a backend endpoint, request/response contract, or test-only API
+adapter boundary.

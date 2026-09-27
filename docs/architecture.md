@@ -979,3 +979,23 @@ Changing from a run-scoped route to the global route therefore remounts the
 query-bound UI instead of briefly rendering recommendations from the previous
 run. This is route-context state isolation, not a client-side data cache or a
 substitute for backend ownership checks.
+
+## Public landing and unified application shell
+
+`src/app/page.tsx` composes the public `LandingPage` from
+`src/components/marketing/`. It is content-first and intentionally contains no
+feature service, query, mutation, or authentication state. `LandingNavbar` is
+the small client boundary responsible for the responsive public navigation.
+`/login`, `/register`, and the not-found experience remain outside `AppShell`.
+
+Protected routes continue to compose their existing `ProtectedRoute` and
+feature-owned page views with `AppShell`. `app-navigation.ts` is the canonical
+typed route definition used by `AppSidebar`, `AppTopbar`, and
+`MobileNavigation`, preventing desktop/mobile route drift. The mobile drawer
+closes on navigation and Escape, locks background scroll while open, and
+restores a useful focus target. Account controls reuse the existing Auth provider
+and logout action; they do not implement a second session model.
+
+The shell improves navigation and route context only. Frontend route protection
+is a user-experience boundary; FastAPI remains independently responsible for
+authentication, ownership, authorization, validation, and data integrity.

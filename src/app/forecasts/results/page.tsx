@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/layout/app-shell';
 import { PageContainer } from '@/components/layout/page-container';
-import { LogoutButton } from '@/features/auth/components/logout-button';
 import { ProtectedRoute } from '@/features/auth/components/protected-route';
 import { ForecastResultsView } from '@/features/forecasting/components/forecast-results-view';
 
@@ -25,7 +24,7 @@ export default async function ForecastResultsPage({
 
   return (
     <ProtectedRoute>
-      <AppShell navigation={<LogoutButton />}>
+      <AppShell>
         <PageContainer
           title="Forecast Results"
           description="Review completed demand forecast predictions, evaluation metrics, and recorded actual demand."

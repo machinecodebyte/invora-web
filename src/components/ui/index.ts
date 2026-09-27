@@ -17,6 +17,7 @@ export {
 export { EmptyState, type EmptyStateProps } from './empty-state';
 export { ErrorState, type ErrorStateProps } from './error-state';
 export { Input, type InputProps } from './input';
+export { Icon, type IconName } from './icon';
 export { Label, type LabelProps } from './label';
 export { Pagination, type PaginationProps } from './pagination';
 export { Dialog, type DialogProps } from './dialog';

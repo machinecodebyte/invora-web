@@ -13,8 +13,16 @@ export interface AuthPageShellProps {
 /** Focused public layout shared by the login and registration routes. */
 export function AuthPageShell({ title, description, children }: AuthPageShellProps) {
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-8 sm:px-6">
-      <div className="w-full max-w-md">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-4 py-8 sm:px-6">
+      <div
+        aria-hidden="true"
+        className="absolute -left-32 top-0 size-96 rounded-full bg-primary/10 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute -bottom-40 -right-24 size-96 rounded-full bg-accent/10 blur-3xl"
+      />
+      <div className="relative w-full max-w-md">
         <Link
           href={ROUTES.home}
           className="mb-8 flex items-center justify-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -34,7 +42,7 @@ export function AuthPageShell({ title, description, children }: AuthPageShellPro
           </span>
         </Link>
 
-        <Card>
+        <Card className="shadow-xl shadow-primary/5">
           <CardHeader>
             <h1 className="text-xl font-semibold text-foreground">{title}</h1>
             <p className="text-sm text-foreground-muted">{description}</p>

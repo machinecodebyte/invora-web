@@ -544,3 +544,21 @@ schema intentionally rejects `test`). The seven real contracts for Auth,
 Dashboard, Inventory, Sales, Forecast Run, Forecast Results, and Recommendations
 passed against PostgreSQL, Redis, and an RQ worker. No real test uses the normal
 development database.
+
+## Public landing and unified application shell tests
+
+`landing-page.test.tsx` verifies the public hierarchy, primary authentication
+routes, mobile navigation state, and valid internal/anchor links.
+`layout.test.tsx` verifies the single navigation model, route context, active
+states, skip link, mobile drawer, and account/logout affordance. Browser coverage
+is split between `e2e/foundation.spec.ts` for the public landing and
+`e2e/app-shell.spec.ts` for protected desktop/mobile navigation and logout.
+
+These tests exercise the existing deterministic Auth seam; they do not call a
+live backend or introduce mock production data. Run the relevant checks with the
+commands in [`commands.md`](commands.md).
+
+Final UI-consolidation validation passed 62 test files / 495 tests with 92.4%
+statements, 86.85% branches, 94.14% functions, and 92.3% lines. The complete
+deterministic Chromium suite passed 90 scenarios; seven separately opt-in live
+backend contracts were skipped by design.

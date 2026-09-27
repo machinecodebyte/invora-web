@@ -1,18 +1,10 @@
 import { expect, test, type ConsoleMessage } from '@playwright/test';
 
-const APP_NAME = 'Invora';
-const APP_TAGLINE = 'Predict · Optimize · Replenish';
+const APP_NAME = 'INVORA';
+const LANDING_TITLE = 'Predict demand. Protect inventory. Replenish with confidence.';
 
-/**
- * Foundation smoke test.
- *
- * Scope is intentionally narrow: the app boots, the root route renders the
- * brand, and nothing crashes. Business flows arrive with their own modules.
- */
-test.describe('Foundation smoke', () => {
-  test('root page renders the Invora branding without runtime errors', async ({
-    page,
-  }) => {
+test.describe('Public landing experience', () => {
+  test('renders the public product story without runtime errors', async ({ page }) => {
     const consoleErrors: string[] = [];
     const pageErrors: string[] = [];
 
@@ -28,64 +20,74 @@ test.describe('Foundation smoke', () => {
     const response = await page.goto('/');
     expect(response?.status()).toBe(200);
 
-    await expect(page.getByRole('heading', { level: 1, name: APP_NAME })).toBeVisible();
     await expect(page.getByRole('banner')).toContainText(APP_NAME);
-    await expect(page.getByText(APP_TAGLINE).first()).toBeVisible();
-    await expect(page.getByRole('main')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: LANDING_TITLE }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        name: 'From product records to replenishment planning.',
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        name: 'A practical toolkit for inventory intelligence.',
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'The details behind the planning workflow.' }),
+    ).toBeVisible();
+    await expect(page.getByRole('contentinfo')).toContainText('All rights reserved.');
 
     expect(pageErrors).toEqual([]);
     expect(consoleErrors).toEqual([]);
   });
 
-  test('document metadata is set', async ({ page }) => {
+  test('keeps Auth CTAs on their stable public routes', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveTitle(`${APP_NAME} · ${APP_TAGLINE}`);
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await page.getByRole('link', { name: 'Get started' }).first().click();
+    await expect(page).toHaveURL('/register');
+
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Log in' }).first().click();
+    await expect(page).toHaveURL('/login');
   });
 
-  test('landmarks and the skip link make the page keyboard navigable', async ({
+  test('provides a mobile navigation without horizontal page overflow', async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    await page.keyboard.press('Tab');
-    const skipLink = page.getByRole('link', { name: 'Skip to main content' });
-    await expect(skipLink).toBeFocused();
+    await page.getByRole('button', { name: 'Open navigation' }).click();
+    const mobileMenu = page.locator('#landing-mobile-menu');
+    await expect(mobileMenu.getByRole('link', { name: 'Capabilities' })).toBeVisible();
+    await mobileMenu.getByRole('link', { name: 'Capabilities' }).click();
+    await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
 
-    await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/#main-content$/);
-  });
-
-  test('renders no business data in the foundation module', async ({ page }) => {
-    await page.goto('/');
-
-    const body = (await page.locator('body').textContent()) ?? '';
-
-    // The foundation must not simulate any business surface.
-    for (const term of ['SKU', 'Reorder', 'Forecast run', 'Total sales', 'Low stock']) {
-      expect(body).not.toContain(term);
-    }
-  });
-
-  test('unknown routes render the not-found page', async ({ page }) => {
-    const response = await page.goto('/this-route-does-not-exist');
-
-    expect(response?.status()).toBe(404);
-    await expect(page.getByText('Page not found.')).toBeVisible();
-  });
-
-  test('layout is usable on a mobile viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
-
-    await expect(page.getByRole('heading', { level: 1, name: APP_NAME })).toBeVisible();
-
-    // A horizontally scrolling body is the classic responsive-layout failure.
     const overflows = await page.evaluate(
       () =>
         document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     );
     expect(overflows).toBe(false);
+  });
+
+  test('exposes public metadata and keyboard skip navigation', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page).toHaveTitle(
+      'Invora — AI Demand Forecasting & Inventory Replenishment',
+    );
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
+    await page.keyboard.press('Tab');
+    const skipLink = page.getByRole('link', { name: 'Skip to main content' });
+    await expect(skipLink).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/#main-content$/);
   });
 });

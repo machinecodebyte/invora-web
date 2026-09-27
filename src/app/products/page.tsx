@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 
 import { AppShell } from '@/components/layout/app-shell';
 import { PageContainer } from '@/components/layout/page-container';
-import { LogoutButton } from '@/features/auth/components/logout-button';
 import { ProtectedRoute } from '@/features/auth/components/protected-route';
 import { ProductsView } from '@/features/products/components/products-view';
 
@@ -14,7 +13,7 @@ export const metadata: Metadata = {
 export default function ProductsPage() {
   return (
     <ProtectedRoute>
-      <AppShell navigation={<LogoutButton />}>
+      <AppShell>
         <PageContainer title="Products" description="Manage your product catalog.">
           <ProductsView />
         </PageContainer>

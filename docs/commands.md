@@ -369,3 +369,14 @@ isolated backend, set `NEXT_PUBLIC_APP_ENV=development`, and set the applicable
 `PLAYWRIGHT_*_REAL_BACKEND=true` flags. The Results and Recommendations contracts
 also require `PLAYWRIGHT_FORECAST_RUN_REAL_BACKEND=true` because they create the
 run consumed by the assertion.
+
+## Landing and application shell checks
+
+```powershell
+npm run test -- src/tests/components/landing-page.test.tsx src/tests/components/layout.test.tsx
+npx playwright test e2e/foundation.spec.ts e2e/app-shell.spec.ts --workers=1
+```
+
+The public landing check is self-contained. The app-shell browser check uses the
+existing Playwright-only Auth fixture, so it does not require FastAPI,
+PostgreSQL, Redis, or an RQ worker.

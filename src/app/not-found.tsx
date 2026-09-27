@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { AppShell } from '@/components/layout/app-shell';
-import { PageContainer } from '@/components/layout/page-container';
 import { buttonClassName } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ROUTES } from '@/lib/constants';
@@ -14,8 +12,8 @@ export const metadata: Metadata = {
 /** Rendered for unmatched routes and explicit `notFound()` calls. */
 export default function NotFound() {
   return (
-    <AppShell>
-      <PageContainer>
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6">
+      <div className="w-full max-w-xl">
         <EmptyState
           title="Page not found."
           description="The page you requested does not exist or may have been moved."
@@ -28,7 +26,7 @@ export default function NotFound() {
             </Link>
           }
         />
-      </PageContainer>
-    </AppShell>
+      </div>
+    </main>
   );
 }

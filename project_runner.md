@@ -467,3 +467,21 @@ Chromium suite. A separate seven-contract browser matrix passed against an
 isolated FastAPI/PostgreSQL/Redis/RQ stack. Production documents receive a nonce
 CSP through `src/proxy.ts`; real backend browser tests remain opt-in and must
 never target the normal local data stack.
+
+## Current Public Landing and Application Shell Scope
+
+Implemented:
+
+- Public product landing page at `/` with responsive navigation and authentication CTAs
+- Public `/login` and `/register` pages retained outside the protected shell
+- One route navigation model shared by the desktop sidebar, topbar context, and mobile drawer
+- Account menu and existing logout action in the authenticated shell
+- Responsive and accessibility-focused unit/component and Playwright coverage
+
+This scope changed presentation and navigation composition only. Existing
+feature UI, backend requests, API contracts, Auth session handling, business
+logic, and protected route paths remain intact.
+
+Validation recorded for this scope: strict TypeScript, ESLint, production build,
+62 test files / 495 tests with coverage thresholds, and 90 deterministic
+Chromium scenarios. Seven live backend contracts remain opt-in and were skipped.

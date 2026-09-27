@@ -60,6 +60,7 @@ test.describe('Auth', () => {
     page,
   }) => {
     await signIn(page);
+    await page.locator('details summary').click();
     await page.getByRole('button', { name: 'Sign out' }).click();
 
     await expect(page).toHaveURL('/login');

@@ -373,3 +373,16 @@ TypeScript, production build, 496 frontend tests with coverage thresholds, and
 the deterministic Chromium suite. An opt-in seven-contract live matrix also
 passed against an isolated FastAPI/PostgreSQL/Redis/RQ stack. The default E2E
 suite remains fixture-backed and makes no call to a developer's normal backend.
+
+## Public landing and unified application shell
+
+The public `/` route is now the INVORA product landing page. It presents the
+real product workflow and routes visitors to `/login` or `/register`; it makes
+no API requests and does not manufacture business data. Public authentication
+pages remain outside the authenticated application shell.
+
+Existing protected routes retain their paths and feature ownership, but now
+share a responsive desktop sidebar, contextual topbar, mobile navigation drawer,
+account actions, and a single navigation definition. This is a frontend layout
+consolidation only: API contracts, auth/session behavior, business adapters, and
+backend authorization responsibilities are unchanged.

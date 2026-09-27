@@ -487,3 +487,15 @@ values by design.
 
 The Recommendations route has a route-context remount boundary, so verify both a
 run-scoped link and the global navigation link after changing its query handling.
+
+## Public landing and unified shell runner notes
+
+Run `npm run dev`, then inspect `/`, `/login`, and `/register` as public pages.
+Sign in through the configured development Auth flow before inspecting a
+protected route. The protected routes keep their established paths but share the
+application sidebar/topbar/mobile drawer through `AppShell`.
+
+For deterministic browser verification, use the landing and shell commands in
+[`commands.md`](commands.md). Do not enable an E2E fixture flag in a normal
+development or production session: normal builds keep the existing authenticated
+API integration behavior.

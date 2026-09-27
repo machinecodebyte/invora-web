@@ -311,3 +311,13 @@ passed for Auth, Dashboard, Inventory, Sales, Forecast Run, Forecast Results,
 and Recommendations against a disposable backend stack. A production nonce CSP
 and route-context isolation for Recommendations were added without changing the
 existing business UI contracts.
+
+## Public landing and unified application shell
+
+**COMPLETED.** The public root is now the INVORA landing experience and all
+existing protected feature routes use the shared responsive application shell.
+This completion does not alter the implementation status of any feature module:
+their domain UI and integration contracts remain owned by their existing slices.
+Validation for this consolidation passed strict TypeScript, ESLint, production
+build, 62 test files / 495 tests with configured coverage thresholds, and 90
+deterministic Chromium scenarios (seven opt-in live contracts skipped).
