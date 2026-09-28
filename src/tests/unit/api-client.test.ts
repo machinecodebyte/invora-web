@@ -663,4 +663,23 @@ describe('ApiClient base URL resolution', () => {
 
     expect(observedUrl).toBe(`${TEST_API_BASE_URL}/api/v1/thing`);
   });
+
+  it('does not treat an absolute caller path as an external authenticated URL', async () => {
+    let observedUrl = '';
+    let authorization: string | null = null;
+    const client = new ApiClient({
+      baseUrl: TEST_API_BASE_URL,
+      getAccessToken: () => 'access-token',
+      fetchImpl: async (input, init) => {
+        observedUrl = String(input);
+        authorization = new Headers(init.headers).get('Authorization');
+        return HttpResponse.json({ success: true, data: {} });
+      },
+    });
+
+    await client.get('https://malicious.example/collect');
+
+    expect(observedUrl).toBe(`${TEST_API_BASE_URL}/https://malicious.example/collect`);
+    expect(authorization).toBe('Bearer access-token');
+  });
 });
